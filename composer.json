@@ -1,0 +1,14 @@
+{
+    "name": "d-scribe/d-scribe-core",
+    "description": "Library of classes for the DScribe Framework to function.",
+    "authors": [
+        {
+            "name": "Ezra Obiwale",
+            "email": "contact@ezraobiwale.com",
+            "homepage": "http://ezraobiwale.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0"
+    }
+}
