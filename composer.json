@@ -1,6 +1,7 @@
 {
     "name": "d-scribe/core",
     "description": "Library of classes for the DScribe Framework to function.",
+    "license" : "MIT",
     "authors": [
         {
             "name": "Ezra Obiwale",
