@@ -293,7 +293,7 @@ class Util {
      * @return string
      */
     public static function randomPassword($length = 8) {
-        $chars = str_split(str_shuffle('bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ123456789.&^%$#@!)(\';:<>,"_-+='));
+        $chars = str_split(str_shuffle('bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ123456789&^%$#@!\'"_-+='));
         $password = '';
         foreach (array_rand($chars, $length) as $key) {
             $password .= $chars[$key];

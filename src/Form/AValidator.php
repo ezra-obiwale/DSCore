@@ -2,8 +2,6 @@
 
 namespace DScribe\Form;
 
-use Object;
-
 /**
  * Validates a group of elements
  * @author Ezra Obiwale
@@ -50,13 +48,13 @@ abstract class AValidator {
      * Element Errors
      * @var array
      */
-    private $error;
+    protected $error;
 
     /**
      * Indicates whether validation succeeds or fails
      * @var boolean
      */
-    private $valid;
+    protected $valid;
 
     /**
      * Checkbox and radio elements
@@ -85,34 +83,12 @@ abstract class AValidator {
         $this->validated = $this->setupFilter = false;
     }
 
-    private function updateFilters(Object $element, $parentElementName = null) {
-        if (!is_array($element->options->value->filters())) {
-            throw new \Exception('Filter error: Filters for fieldset "' . $element->options->value->getName() . '" must return an array');
-        }
-
-        $filters = array();
-        $name = ($parentElementName === null) ? $element->name : $parentElementName . '[' . $element->name . ']';
-        foreach ($element->options->value->filters() as $nam => $filter) {
-            $filters[$name . '[' . $nam . ']'] = $filter;
-        }
-        $this->filters = array_merge($this->getFilters(), $filters);
-        $this->setupFilters($element->options->value->getElements(), $name);
-        return $this;
-    }
-
-    private function setupFilters(array $elements, $parentElementName = null) {
-        if ($this->setupFilter)
-            return $this;
-        foreach ($elements as $element) {
-            if ($element->type !== 'fieldset')
-                continue;
-
-            $this->updateFilters($element, $parentElementName);
-        }
-        $this->setupFilter = true;
-        return $this;
-    }
-
+    /**
+     * Add filters to specified element
+     * @param string $elementName
+     * @param array $filters
+     * @return \DScribe\Form\AValidator
+     */
     final public function addFilters($elementName, array $filters) {
         $this->filters[$elementName] = $filters;
         return $this;
@@ -123,8 +99,12 @@ abstract class AValidator {
      * @return boolean
      */
     private function validate() {
+        if ($this->error === null)
+            $this->error = array();
+
         $filterer = new Filterer($this->data, $this->error);
         $valid = true;
+
         foreach ($this->getFilters() as $name => $filters) {
             if (@in_array($name, $this->noFilter))
                 continue;
@@ -138,7 +118,19 @@ abstract class AValidator {
             }
         }
 
-        $this->prepareErrorMsgs();
+        if ($this->fieldsets) {
+            foreach ($this->fieldsets as $name) {
+                if (!isset($this->elements[$name]))
+                    continue;
+                if (!$this->elements[$name]
+                                ->options
+                                ->value
+                                ->setData($this->data[$name] ? $this->data[$name] : new \Object())
+                                ->isValid()) {
+                    $valid = false;
+                }
+            }
+        }
         $this->valid = $valid;
         return $valid;
     }
@@ -156,6 +148,11 @@ abstract class AValidator {
      * @return array Array of prepared error messages
      */
     final public function prepareErrorMsgs() {
+        $this->msg = array();
+        
+        if (is_null($this->error))
+            $this->error = array();
+
         foreach ($this->error as $name => $msgs) {
             ob_start();
             ?>
@@ -171,18 +168,17 @@ abstract class AValidator {
     }
 
     /**
-     * return array of filters to validate data against
-     */
-    abstract public function filters();
-
-    /**
-     * Fetches the filters to validate data against
+     * Fetches the error messages
      * @return array
      */
-    public function getFilters() {
-        $this->setupFilters($this->elements);
-        return array_merge($this->filters, $this->filters());
+    final public function getErrorMessages() {
+        return $this->msg ? $this->msg : $this->prepareErrorMsgs();
     }
+
+    /**
+     * return array of filters to validate data against
+     */
+    abstract public function getFilters();
 
     /**
      * Checks if an element has errors
@@ -195,7 +191,7 @@ abstract class AValidator {
 
     /**
      * Sets data to validate
-     * @param array|object $data
+     * @param \Object|array $data
      */
     abstract public function setData($data);
 
@@ -205,16 +201,6 @@ abstract class AValidator {
      */
     final public function getErrors() {
         return $this->error;
-    }
-
-    /**
-     * Sets the form errors
-     * @param array $errors
-     * @return \DScribe\Form\AValidator
-     */
-    final public function setErrors(array $errors) {
-        $this->error = $errors;
-        return $this;
     }
 
 }

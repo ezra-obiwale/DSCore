@@ -184,6 +184,114 @@ class TwBootstrap {
         return ob_get_clean();
     }
 
+    private static $addJs = true;
+
+    public static function customModal(array $options = array(), $withLink = true) {
+        self::$modals++;
+        $id = isset($options['modalId']) ? $options['modalId'] : 'myModal' . self::$modals;
+
+        $linkAttrs = isset($options['linkAttrs']) ? $options['linkAttrs'] : array();
+        if ($linkAttrs['class'])
+            $linkAttrs['class'] .= ' open-modal';
+        else
+            $linkAttrs['class'] = 'open-modal';
+
+        $options['linkAttrs'] = $linkAttrs;
+
+        ob_start();
+        ?>
+        <!-- Button to trigger modal -->
+        <a href="<?= isset($options['href']) ? $options['href'] : '#' ?>" data-target="#<?= $id ?>" role="button" <?= isset($options['linkAttrs']) ? self::parseAttributes($options['linkAttrs']) : '' ?> ><?= isset($options['linkLabel']) ? $options['linkLabel'] : 'Launch Modal' ?></a>
+
+        <?php
+        self::$modalLinks[$id] = ob_get_clean();
+        ob_start();
+        if ($withLink)
+            echo self::$modalLinks[$id];
+        ?>
+        <!-- Modal -->
+        <section id="<?= $id ?>" style="overflow-x:auto!important" class="modal hide fade <?= isset($options['modalClass']) ? $options['modalClass'] : '' ?>" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <?php
+            if (isset($options['header']) &&
+                    !is_bool($options['header']) ||
+                    (isset($options['header']) && is_bool($options['header']) &&
+                    $options['header'])):
+                ?>
+                <header class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h3 id="myModalLabel" <?= isset($options['headerAttrs']) ? self::parseAttributes($options['headerAttrs']) : '' ?>><?= isset($options['header']) ? $options['header'] : 'Modal Header' ?></h3>
+                </header>
+            <?php endif; ?>
+            <article style="overflow-x: auto!important;position:relative" class="modal-body <?= isset($options['contentClass']) ? $options['contentClass'] : '' ?>">
+                <p><?= isset($options['content']) ? $options['content'] : '<i icon="icon-refresh"></i> loading content ...' ?></p>
+            </article>
+            <?php
+            if (isset($options['footer']) &&
+                    !is_bool($options['footer']) ||
+                    (isset($options['footer']) && is_bool($options['footer']) &&
+                    $options['footer'])):
+                ?>
+                <footer class="modal-footer" <?= isset($options['footerAttrs']) ? self::parseAttributes($options['footerAttrs']) : '' ?>>
+                    <?php if (empty($options['footer']) || is_bool($options['footer'])): ?>
+                        <button class="btn" data-dismiss="modal" aria-hidden="true"><?= isset($options['closeButtonLabel']) ? $options['closeButtonLabel'] : 'Close' ?></button>
+                        <?php if (!isset($options['noActionButton']) || (isset($options['noActionButton']) && !$options['noActionButton'])): ?>
+                            <button class="btn btn-primary">Save changes</button>
+                            <?php
+                        endif;
+                    else:
+                        echo $options['footer'];
+                    endif;
+                    ?>
+                </footer>
+            <?php endif; ?>
+        </section>
+        <?php
+        if (self::$addJs) {
+            ?>
+            <script>
+                $(document).ready(function() {
+                    $('a.open-modal').on('click', function(e) {
+                        e.preventDefault();
+                        var modal = $(this).attr('data-target');
+                        $(modal).modal({
+                            show: true
+                        }).on('shown', function() {
+                            $('body').addClass('no-scroll');
+                        }).on('hidden', function() {
+                            $('body').removeClass('no-scroll');
+                        });
+                        if (!$(modal).hasClass('loaded') || $(modal).hasClass('reuse')) {
+                            var modalBody = $(this).children('.modal-body');
+                            $(modalBody).html('<div class="progress progress-strip active"><div class="bar" style="width:100%">Loading content. Please wait ...</div></div>');
+                            $(modal).load($(this).attr('href'), function(data) {
+                                h = $(window).height() - 200;
+                                $(this).css({
+                                    position: 'absolute',
+                                    left: ($(window).width() - $(this).width()) / 2,
+                                    height: h,
+                                    top: 100,
+                                    margin: 0,
+                                    'overflow-x': 'auto'
+                                });
+
+                                $(modalBody).html(data).css({
+                                    height: $(this).height(),
+                                    //                        width: $(modalBody).width() - 5,
+                                    'max-height': $(this).height() - 30
+                                });
+                                $(this).addClass('loaded');
+                            });
+                        }
+                    });
+                });
+            </script>
+            <?php
+            self::$addJs = false;
+        }
+
+        return ob_get_clean();
+    }
+
     /**
      * Retrieves the link to a modal
      * @param string $modalId Id of the modal
@@ -398,7 +506,7 @@ class TwBootstrap {
                      if ($key && $key % $itemsPerRow === 0) {
                          ?>
                 </div>
-                <div class="row-fluid">
+                <div class="row-fluid <?= @$options['row']['class'] ?>">
                     <?php
                 }
 

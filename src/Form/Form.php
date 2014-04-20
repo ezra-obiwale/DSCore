@@ -23,8 +23,15 @@ class Form extends Fieldset {
      */
     private $prepared;
 
+    /**
+     * Array of element name to actual field name
+     * @var Array
+     */
+    private $nameMeta;
+
     public function __construct($name = 'form', array $attributes = array()) {
         $this->name = $name;
+        $this->nameMeta = array();
         if (!isset($attributes['name']))
             $attributes['name'] = $name;
         if (!isset($attributes['id']))
@@ -68,9 +75,19 @@ class Form extends Fieldset {
             if ($element->type === 'fieldset')
                 $this->prepFieldset($element, $custom);
             else
-                $this->prepElement($element, $custom);
+                $this->prepElement($element, $custom, $this);
         }
         return $this->prepared;
+    }
+
+    private function useNameMeta(array $array) {
+        $return = array();
+        foreach ($array as $name => $value) {
+            if (array_key_exists($name, $this->nameMeta)) {
+                $return[$this->nameMeta[$name]] = $value;
+            }
+        }
+        return $return;
     }
 
     /**
@@ -80,9 +97,16 @@ class Form extends Fieldset {
      * @return Object|\DScribe\Form\Forms
      * @throws Exception
      */
-    private function prepElement(\Object $element, $custom, $return = false) {
-        if (!isset($this->msg[$element->name]))
-            $this->msg[$element->name] = '';
+    private function prepElement(\Object $element, $custom, Fieldset $fieldsetObject, $return = false) {
+        $errorMsgs = $fieldsetObject->getErrorMessages();
+        $data = $fieldsetObject->getData(true);
+        if (!method_exists($fieldsetObject, 'getName')) { // for fieldsets only not form
+            $errorMsgs = $this->useNameMeta($errorMsgs);
+            $data = $this->useNameMeta($data);
+        }
+
+        if (!isset($errorMsgs[$element->name]))
+            $errorMsgs[$element->name] = '';
 
         if (isset($element->options->label)) {
             $this->labels[$element->name] = array(
@@ -91,10 +115,10 @@ class Form extends Fieldset {
             );
         }
 
-        $value = (isset($this->data[$element->name]) && !is_object($this->data[$element->name])) ?
-                $this->data[$element->name] :
+        $value = (isset($data[$element->name]) && !is_object($data[$element->name])) ?
+                $data[$element->name] :
                 ((isset($element->options->value)) ? $element->options->value : null);
-        
+
         switch ($element->type) {
             case 'checkbox':
             case 'radio':
@@ -114,7 +138,7 @@ class Form extends Fieldset {
                                 throw new Exception('Values for ' . $element->type . ' "' . $element->name . '" cannot be an object or an array');
                             }
 
-                            $checked = (isset($this->data[$name]) || (isset($element->options->default) && $element->options->default == $value)) ?
+                            $checked = (isset($data[$name]) || (isset($element->options->default) && $element->options->default == $value)) ?
                                     'checked="checked" ' : '';
 
                             $prepared .= '<label class="inner">' .
@@ -125,19 +149,19 @@ class Form extends Fieldset {
                                     ' />' .
                                     $label . '</label>';
                         }
-                        $prepared .= $this->msg[$name];
+                        $prepared .= $errorMsgs[$name];
                     }
                 }
                 else {
-                    $checked = ((isset($this->data[$element->name]) && $this->data[$element->name] != 0) ||
-                            (!isset($this->data[$element->name]) && (isset($element->options->default) && $element->options->default))) ?
+                    $checked = ((isset($data[$element->name]) && $data[$element->name] != 0) ||
+                            (!isset($data[$element->name]) && (isset($element->options->default) && $element->options->default))) ?
                             'checked="checked" ' : '';
 
                     $prepared = '<input type="' . $element->type . '" ' .
                             'name="' . $element->name . '" ' .
                             'value="1" ' . $checked .
                             $this->parseAttributes($element->attributes->toArray()) .
-                            ' />' . $this->msg[$element->name];
+                            ' />' . $errorMsgs[$element->name];
                 }
                 break;
             case 'select':
@@ -251,9 +275,8 @@ class Form extends Fieldset {
                         }
                         foreach ($value as $lab => $val) {
                             $selected = '';
-                            if ((isset($this->data[$element->name]) && ($this->data[$element->name] == $val || (is_array($this->data[$element->name]) && in_array($val, $this->data[$element->name])))) ||
-                                    !isset($this->data[$element->name]) && isset($element->options->default)
-                                    && $element->options->default == $val)
+                            if ((isset($data[$element->name]) && ($data[$element->name] == $val || (is_array($data[$element->name]) && in_array($val, $data[$element->name])))) ||
+                                    !isset($data[$element->name]) && isset($element->options->default) && $element->options->default == $val)
                                 $selected = 'selected="selected"';
 
                             $prepared .= '<option value="' . $val . '" ' .
@@ -265,7 +288,7 @@ class Form extends Fieldset {
                         }
                     }
                 }
-                $prepared .= '</select>' . $this->msg[$element->name];
+                $prepared .= '</select>' . $errorMsgs[$element->name];
 
                 break;
             case 'textarea':
@@ -273,14 +296,14 @@ class Form extends Fieldset {
                 $prepared = '<' . $element->type .
                         ' name="' . $element->name . '" ' .
                         $this->parseAttributes($element->attributes->toArray()) .
-                        '>' . $value . '</' . $element->type . '>' . $this->msg[$element->name];
+                        '>' . $value . '</' . $element->type . '>' . $errorMsgs[$element->name];
                 break;
             default:
                 $prepared = '<input type="' . $element->type . '" ' .
                         'name="' . $element->name . '" ' .
                         'value="' . $value . '" ' .
                         $this->parseAttributes($element->attributes->toArray()) .
-                        ' />' . $this->msg[$element->name];
+                        ' />' . $errorMsgs[$element->name];
                 break;
         }
 
@@ -294,8 +317,8 @@ class Form extends Fieldset {
 
         if (in_array($element->type, array('checkbox', 'radio')) && isset($element->options->values)) {
             $ready[$element->name]['multiple'] = true;
-            if (isset($this->data[$name]))
-                $ready[$element->name]['default'] = $this->data[$name];
+            if (isset($data[$name]))
+                $ready[$element->name]['default'] = $data[$name];
             elseif (isset($element->options->default))
                 $ready[$element->name]['default'] = $element->options->default;
         }
@@ -309,44 +332,45 @@ class Form extends Fieldset {
 
     /**
      * Prepares a fieldset for rendering
-     * @param Object $fieldset
+     * @param Object $fieldsetElement
      * @param string|null $name
      * @param boolean $return Indicates whether to return the fieldset or add it to list of elements
      * @return Object
      */
-    private function prepFieldset(Object $fieldset, $custom, $name = null, $return = false) {
-        $ready[$fieldset->name] = array(
-            'id' => $fieldset->attributes->id,
-            'name' => $fieldset->name,
+    private function prepFieldset(Object $fieldsetElement, $custom, $name = null, $return = false) {
+        $ready[$fieldsetElement->name] = array(
+            'id' => $fieldsetElement->attributes->id,
+            'name' => $fieldsetElement->name,
             'type' => 'fieldset',
-            'attributes' => $this->parseAttributes($fieldset->attributes->toArray()),
+            'attributes' => $this->parseAttributes($fieldsetElement->attributes->toArray()),
             'elements' => array(),
         );
 
-        if (isset($fieldset->options->label)) {
-            $ready[$fieldset->name]['label'] = array(
-                'label' => $fieldset->options->label,
-                'attributes' => (isset($fieldset->options->labelAttributes)) ? $this->parseAttributes($fieldset->options->labelAttributes->toArray()) : '',
+        if (isset($fieldsetElement->options->label)) {
+            $ready[$fieldsetElement->name]['label'] = array(
+                'label' => $fieldsetElement->options->label,
+                'attributes' => (isset($fieldsetElement->options->labelAttributes)) ? $this->parseAttributes($fieldsetElement->options->labelAttributes->toArray()) : '',
             );
         }
 
         if ($this->model !== null) {
-            $this->setData(new \Object(array(
-                $fieldset->name => $fieldset->options->value->loadModel($fieldset->name, $this->model)
-            )));
+            $this->data[$fieldsetElement->name] = $fieldsetElement->options->value->loadModel($fieldsetElement->name, $this->model);
         }
 
-        foreach ($fieldset->options->value->getElements() as $element) {
-            $element->name = ($name === null) ? $fieldset->name . '[' . $element->name . ']' :
+        foreach ($fieldsetElement->options->value->getElements() as $element) {
+            $nam = $element->name;
+            $element->name = ($name === null) ?
+                    $fieldsetElement->name . '[' . $element->name . ']' :
                     $name . '[' . $element->name . ']';
+            $this->nameMeta[$nam] = $element->name;
 
             if ($element->type !== 'fieldset') {
                 if ($element->dId)
                     $element->attributes->id = $element->name;
-                $ready[$fieldset->name]['elements'] = array_merge($ready[$fieldset->name]['elements'], $this->prepElement($element, $custom, true)->toArray());
+                $ready[$fieldsetElement->name]['elements'] = array_merge($ready[$fieldsetElement->name]['elements'], $this->prepElement($element, $custom, $fieldsetElement->options->value, true)->toArray());
             }
             else {
-                $ready[$fieldset->name]['elements'] = array_merge($ready[$fieldset->name]['elements'], $this->prepFieldset($element, $custom, $element->name, true)->toArray());
+                $ready[$fieldsetElement->name]['elements'] = array_merge($ready[$fieldsetElement->name]['elements'], $this->prepFieldset($element, $custom, $element->name, true)->toArray());
             }
         }
 
@@ -354,14 +378,6 @@ class Form extends Fieldset {
             return new Object($ready);
 
         $this->prepared->add($ready);
-    }
-
-    /**
-     * Returns array of filters for elements
-     * @return array
-     */
-    public function filters() {
-        return parent::filters();
     }
 
     /**

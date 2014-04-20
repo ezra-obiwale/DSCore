@@ -25,7 +25,8 @@ class Exception extends \Exception {
     public function push(\Exception $ex = null, $noLayout = false) {
         $ex = ($ex === null) ? $this : $ex;
 
-        if (!$noLayout) {
+        $request = new Request();
+        if (!$noLayout && !$request->isAjax()) {
             $view = new \DScribe\View\View(false);
             $view->render($this->prepareOutput($ex));
         }
@@ -51,7 +52,7 @@ class Exception extends \Exception {
         }
         $header = 'Exception';
         $message = $ex->getMessage();
-        if ($this->errorFile && strtolower(Engine::getConfig('server', false)) === 'development') {
+        if ($this->errorFile) {
             $message .= '<div style="color:darkblue;margin-top:10px;font-size:smaller">' . $this->errorFile . ': ' . $this->errorLine . '</div>' . "\n";
         }
         ob_start();
