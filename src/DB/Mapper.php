@@ -275,7 +275,18 @@ abstract class Mapper extends Row implements IModel {
             $return .= ' CHARACTER SET ' . $attr->charset . ' COLLATE ' . $attr->collation;
         }
 
+        if (isset($attr->collation)) {
+            if (!isset($attr->charset))
+                $attr->charset = stristr($attr->collation, '_', true);
+
+            $return .= ' CHARACTER SET ' . $attr->charset . ' COLLATE ' . $attr->collation;
+        }
+
         $return .= (isset($attr->nullable) && strtolower($attr->nullable) == 'true') ? ' NULL' : ' NOT NULL'; // null
+
+        if (!$isCreate && !empty($attr->after)) {
+            $return .= ' AFTER `' . $attr->after . '`';
+        }
 
         if (isset($attr->default)) { // auto increment
             if (strtolower($attrs['type']) === 'boolean') {
