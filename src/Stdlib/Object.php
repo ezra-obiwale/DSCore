@@ -24,7 +24,7 @@ class Object {
      */
     public function add(array $data, $preserveArray = false, $preserveKeyOnly = null) {
         foreach ($data as $key => $value) {
-            if (is_array($value) && (!$preserveArray || ($preserveArray && $key !== $preserveKeyOnly))) {
+            if (is_array($value) && (!$preserveArray || ($preserveArray && $preserveKeyOnly && $key !== $preserveKeyOnly))) {
                 $this->$key = (array_key_exists(0, $value)) ? $value : new Object($value, $preserveArray, $preserveKeyOnly);
                 continue;
             }

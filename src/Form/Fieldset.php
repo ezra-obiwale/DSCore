@@ -32,12 +32,6 @@ class Fieldset extends AValidator {
     protected $labels;
 
     /**
-     * Unprocessed data passed into form
-     * @var array
-     */
-    protected $rawData;
-
-    /**
      * Class constructor
      * @param string $name Name of fieldset
      * @param array $attributes
@@ -112,7 +106,7 @@ class Fieldset extends AValidator {
      */
     final public function setModel(IModel $model) {
         $this->model = $model;
-        $this->setData($model->toArray(false, true));
+        $this->setData(new \Object($model->toArray(false, true)));
         return $this;
     }
 
@@ -121,12 +115,18 @@ class Fieldset extends AValidator {
      * @return IModel
      */
     public function getModel() {
+        if (!$this->model)
+            return null;
+
         $data = $this->data;
         if ($this->isValid() && $this->model) {
-            foreach ($this->fieldsets as $name => $fieldset) {
-                if (isset($this->rawData->$name))
-                    $fieldset->setData($this->rawData->$name);
-                $data[$name] = $fieldset->getModel();
+            foreach ($this->fieldsets as $name) {
+                if (!isset($this->elements[$name]))
+                    continue;
+
+                $fieldset = $this->elements[$name]->options->value;
+                $fieldsetModel = $fieldset->getModel();
+                $data[$name] = $fieldsetModel ? $fieldsetModel : $fieldset->getData();
             }
             $this->model->populate($data);
         }
@@ -162,7 +162,11 @@ class Fieldset extends AValidator {
         }
 
         if (!empty($this->fieldsets)) {
-            foreach ($this->fieldsets as $fieldset) {
+            foreach ($this->fieldsets as $name) {
+                if (!isset($this->elements[$name]))
+                    continue;
+
+                $fieldset = $this->elements[$name]->options->value;
                 $return[$fieldset->name] = $fieldset->loadModel($fieldset->name, $this->model);
             }
         }
@@ -186,6 +190,7 @@ class Fieldset extends AValidator {
      * @return \DScribe\Form\Fieldset
      * @throws Exception
      * @todo Check validity immediately to allow easy exception trace
+     * @todo Create individual element class with it's own prepare method for output
      */
     public function add(array $element) {
         if (!is_array($element))
@@ -246,7 +251,7 @@ class Fieldset extends AValidator {
             $element->options->value = null;
 
         if ($element->type === 'fieldset') {
-            $this->fieldsets[$element->name] = $element->options->value;
+            $this->fieldsets[] = $element->name;
         }
 
         $this->elements[$element->name] = $element;
@@ -261,7 +266,7 @@ class Fieldset extends AValidator {
      * Fetches all elements in the fieldset
      * @return array
      */
-    public function getElements() {
+    final public function getElements() {
         return $this->elements;
     }
 
@@ -270,7 +275,7 @@ class Fieldset extends AValidator {
      * @param string $name
      * @return \Object
      */
-    public function get($name) {
+    final public function get($name) {
         return @$this->elements[$name];
     }
 
@@ -278,7 +283,7 @@ class Fieldset extends AValidator {
      * Array of filters for the elements
      * @return array
      */
-    public function filters() {
+    public function getFilters() {
         return array();
     }
 
@@ -287,7 +292,7 @@ class Fieldset extends AValidator {
      * @param string $elementName
      * @return \DScribe\Form\Fieldset
      */
-    public function ignoreFilter($elementName) {
+    final public function ignoreFilter($elementName) {
         $this->noFilter[] = $elementName;
         return $this;
     }
@@ -297,7 +302,7 @@ class Fieldset extends AValidator {
      * @param string $elementName
      * @return \DScribe\Form\Fieldset
      */
-    public function remove($elementName) {
+    final public function remove($elementName) {
         if (isset($this->elements[$elementName])) {
             unset($this->elements[$elementName]);
             unset($this->data[$elementName]);
@@ -311,58 +316,37 @@ class Fieldset extends AValidator {
 
     /**
      * Sets data to validate
-     * @param array|object $data
+     * @param \Object | array $data
      * @return \DScribe\Form\Fieldset
      * @throws Exception
      */
     final public function setData($data) {
-        $this->rawData = $data;
-        if (is_object($data) && method_exists($data, 'toArray'))
-            $data = $data->toArray();
-        elseif (!is_array($data))
-            throw new Exception('Data must an array or an object with a "toArray" method');
-        foreach ($this->booleans as $name) {
-            if (!isset($data[$name])) {
-                $data[$name] = '0';
-            }
-        }
+        if (is_object($data) && !is_a($data, 'Object'))
+            throw new \Exception('Data must be either an array or an object that extends \Object');
 
-        foreach ($data as $name => $value) {
-            if (is_object($value) && is_a($value, 'Object')) {
-                $this->getObjectData($value, $name);
-                continue;
+        $this->data = (is_array($data)) ? $data : $data->toArray();
+        if (is_null($this->booleans))
+            $this->booleans = array();
+
+        foreach ($this->booleans as $name) {
+            if (!isset($this->data[$name])) {
+                $this->data[$name] = '0';
             }
-            elseif (is_object($value) && is_a($value, 'DBSCribe\ArrayCollection')) {
-                $value = $value->getArrayCopy();
-            }
-            if ((isset($this->rawData->$name)))
-                $this->data[$name] = &$this->rawData->$name;
-            else
-                $this->data[$name] = $value;
         }
+        $this->valid = null;
 
         return $this;
-    }
-
-    private function getObjectData(Object &$object, $name) {
-        $this->data[$name] = $object;
-        foreach ($object->toArray() as $nam => $value) {
-            $oNam = $nam;
-            $nam = $name . '[' . $nam . ']';
-            if (is_object($value)) {
-                $this->getObjectData($value, $nam);
-                continue;
-            }
-            $this->data[$nam] = &$object->$oNam;
-        }
     }
 
     /**
      * Fetches the filtered data
      * @return Object
      */
-    final public function getData() {
-        return $this->rawData;
+    final public function getData($toArray = false) {
+        if ($toArray)
+            return ($this->data) ? $this->data : array();
+        else
+            return ($this->data) ? new \Object($this->data) : new \Object();
     }
 
 }

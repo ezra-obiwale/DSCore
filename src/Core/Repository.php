@@ -205,7 +205,7 @@ class Repository implements IRepository {
         if (!is_array($model)) {
             $model = array($model);
         }
-
+        
         $this->checkModels($model);
         call_user_func_array(array($this->table, 'insert'), array($model));
         return $this;
