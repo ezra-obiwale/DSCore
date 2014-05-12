@@ -104,9 +104,8 @@ abstract class AValidator {
 
         $filterer = new Filterer($this->data, $this->error);
         $valid = true;
-
-        foreach ($this->getFilters() as $name => $filters) {
-            if (@in_array($name, $this->noFilter))
+        foreach ($this->prepareFilters() as $name => $filters) {
+            if (in_array($name, $this->noFilter))
                 continue;
 
             foreach ($filters as $filter => $options) {
@@ -131,8 +130,22 @@ abstract class AValidator {
                 }
             }
         }
+
         $this->valid = $valid;
         return $valid;
+    }
+
+    private function prepareFilters() {
+        if (isset($this->elements['csrf'])) {
+            $csrf = new Csrf();
+            return array_merge($this->getFilters(), array(
+                'required' => true,
+                'Match' => array(
+                    'value' => $csrf->fetch()
+                )
+            ));
+        }
+        return $this->getFilters();
     }
 
     /**
@@ -149,7 +162,7 @@ abstract class AValidator {
      */
     final public function prepareErrorMsgs() {
         $this->msg = array();
-        
+
         if (is_null($this->error))
             $this->error = array();
 

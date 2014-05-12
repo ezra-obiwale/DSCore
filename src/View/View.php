@@ -44,6 +44,12 @@ class View {
     protected $flash;
 
     /**
+     *
+     * @var Renderer
+     */
+    private $renderer;
+
+    /**
      * Class constructor
      */
     final public function __construct($initialize = true) {
@@ -64,10 +70,12 @@ class View {
 
     /**
      * Fetches the variables to pass into the view file
-     * @return array
+     * @param string $varName Name of variable to fetch. If this is null, all 
+     * variables will be returned in an array
+     * @return mixed
      */
-    final public function getVariables() {
-        return $this->variables;
+    final public function getVariables($varName = null) {
+        return ($varName) ? $this->variables[$varName] : $this->variables;
     }
 
     /**
@@ -210,12 +218,20 @@ class View {
     }
 
     /**
+     * 
+     * @return Renderer
+     */
+    final public function getRenderer() {
+        if (!$this->renderer)
+            $this->renderer = new Renderer ();
+        return $this->renderer;
+    }
+
+    /**
      * Renders the view
      */
     final public function render($errorMessage = null) {
-        $renderer = new Renderer();
-        $renderer->setView($this);
-        $renderer->render($errorMessage);
+        $this->getRenderer()->setView($this)->render($errorMessage);
     }
 
     /**

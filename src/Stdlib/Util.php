@@ -309,4 +309,22 @@ class Util {
         return (stristr($filePath, '/')) ? substr($filePath, strripos($filePath, '/') + 1) : $filePath;
     }
 
+    /**
+     * Updates a configuration file
+     * @param string $path Full path to the configuration file
+     * @param array $data Array of data to add/change in the config
+     * @param boolean $recursiveMerge Indicates whether the data should be merge deeply
+     * @param array $configArray Array of config to store into path. If this is not NULL,
+     * the config file will be overwritten with the array
+     * @return boolean
+     */
+    public static function updateConfig($path, array $data = array(), $recursiveMerge = false, array $configArray = null) {
+        if (!$configArray)
+            $configArray = include $path;
+        
+        $config = ($recursiveMerge) ? array_merge_recursive($configArray, $data) : array_merge($configArray, $data);
+        $content = str_replace("=> \n", '=>', var_export($config, true));
+        return (file_put_contents($path, '<' . '?php' . "\r\n\treturn " . $content . ';') === FALSE) ? false : true;
+    }
+
 }

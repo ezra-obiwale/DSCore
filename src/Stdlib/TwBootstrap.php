@@ -248,37 +248,41 @@ class TwBootstrap {
         <?php
         if (self::$addJs) {
             ?>
+            <style>
+                .no-scroll {
+                    overflow:hidden!important;
+                }
+            </style>
             <script>
                 $(document).ready(function() {
                     $('a.open-modal').on('click', function(e) {
                         e.preventDefault();
                         var modal = $(this).attr('data-target');
-                        $(modal).modal({
-                            show: true
-                        }).on('shown', function() {
+                        $(modal).on('shown', function() {
                             $('body').addClass('no-scroll');
                         }).on('hidden', function() {
                             $('body').removeClass('no-scroll');
+                        }).modal();
+
+                        h = $(window).height() - 200;
+                        $(modal).css({
+                            position: 'fixed',
+                            left: ($(window).width() - $(modal).width()) / 2,
+                            'max-height': h,
+                            top: 100,
+                            margin: 0,
+                            'overflow-x': 'auto'
+                        });
+                        $(modalBody).css({
+                            height: $(modal).height(),
+                            'max-height': $(modal).height() - 30
                         });
                         if (!$(modal).hasClass('loaded') || $(modal).hasClass('reuse')) {
-                            var modalBody = $(this).children('.modal-body');
-                            $(modalBody).html('<div class="progress progress-strip active"><div class="bar" style="width:100%">Loading content. Please wait ...</div></div>');
-                            $(modal).load($(this).attr('href'), function(data) {
-                                h = $(window).height() - 200;
-                                $(this).css({
-                                    position: 'absolute',
-                                    left: ($(window).width() - $(this).width()) / 2,
-                                    height: h,
-                                    top: 100,
-                                    margin: 0,
-                                    'overflow-x': 'auto'
-                                });
+                            var modalBody = $(modal).children('.modal-body');
+                            $(modalBody).html('<div class="progress progress-striped active"><div class="bar" style="width:100%">Loading content. Please wait ...</div></div>');
 
-                                $(modalBody).html(data).css({
-                                    height: $(this).height(),
-                                    //                        width: $(modalBody).width() - 5,
-                                    'max-height': $(this).height() - 30
-                                });
+                            $.get($(this).attr('href'), function(data) {
+                                $(modalBody).html(data);
                                 $(this).addClass('loaded');
                             });
                         }
@@ -419,7 +423,7 @@ class TwBootstrap {
             <?php endif; ?>
         </div>
         <script>
-            $(function() {
+            $(document).ready(function() {
                 $('#<?= $id ?>').carousel();
             });
         </script>
@@ -476,7 +480,7 @@ class TwBootstrap {
             ?>
         </div>
         <script>
-            $(function() {
+            $(document).ready(function() {
                 $('#accordion<?= self::$accordions ?>').collapse();
             })
         </script>
@@ -491,7 +495,7 @@ class TwBootstrap {
      * @param array $options Array of additional options with the following possible keys:<br />
      * <b>wrap (boolean)</b>: True to wrap each item with div containers having
      * class depicting the right span size<br />
-     * <b>row (array)</b>: Array of attributes for each row<b/>
+     * <b>rows (array)</b>: Array of attributes for each row<br />
      * <b>spans (array)</b>: Array of attributes for each span. This is only
      *  only applicable if option wrap is True.
      * @return string
@@ -499,14 +503,14 @@ class TwBootstrap {
     public static function groupIntoRows(array $items, $itemsPerRow, array $options = array()) {
         ob_start();
         ?>
-        <div class="row-fluid <?= @$options['row']['class'] ?>" 
-             <?= self::parseAttributes(@$options['row'], array('class')) ?>>
+        <div class="row-fluid <?= @$options['rows']['class'] ?>" 
+             <?= self::parseAttributes(@$options['rows'], array('class')) ?>>
                  <?php
                  foreach ($items as $key => $item) {
                      if ($key && $key % $itemsPerRow === 0) {
                          ?>
                 </div>
-                <div class="row-fluid <?= @$options['row']['class'] ?>">
+                <div class="row-fluid <?= @$options['rows']['class'] ?>">
                     <?php
                 }
 
@@ -514,16 +518,35 @@ class TwBootstrap {
                     ?>
                     <div class="span<?= round(12 / $itemsPerRow) ?> <?= @$options['spans']['class'] ?>"
                          <?= self::parseAttributes(@$options['spans'], array('class')) ?>>
-                         <?php
-                     endif;
-                     echo $item;
-                     if (@$options['wrap'] !== false):
-                         ?>
+                             <?php
+                         endif;
+                         echo $item;
+                         if (@$options['wrap'] !== false):
+                             ?>
                     </div>
                     <?php
                 endif;
             }
             ?>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Creates a progress bar
+     * @param string $message Message to show in the bar
+     * @param int $percentage Percentage of the progress
+     * @param string $style Style of the progress (danger|info|success|warning|)
+     * @param boolean $striped Indicates whether bar should be striped
+     * @param boolean $active Indicates whether bar should be active
+     * @return string
+     */
+    public static function progress($message = 'Loading. Please wait ...', $percentage = 100, $style = 'info', $striped = true, $active = true) {
+        ob_start();
+        ?>
+        <div class="progress <?= ($striped) ? 'progress-striped' : '' ?> progress-<?= $style ?> <?= ($striped) ? 'active' : '' ?>">
+            <div class="bar" style="width:<?= $percentage ?>%"><?= $message ?></div>
         </div>
         <?php
         return ob_get_clean();

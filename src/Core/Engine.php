@@ -142,15 +142,15 @@ class Engine {
         }
         else if (stristr($_SERVER['SCRIPT_NAME'], '/index.php', true)) {
             //remove path to the index.php
-            
+
             self::$serverPath = stristr($_SERVER['SCRIPT_NAME'], '/index.php', true);
-            
+
             $uri = str_replace(array(self::$serverPath, '/index.php'), '', $uri);
             self::$isVirtual = false;
         }
 
-
-        self::$urls = self::updateArrayKeys(explode('/', $uri), true);
+        parse_str($_SERVER['QUERY_STRING'], $_GET);
+        self::$urls = self::updateArrayKeys(explode('/', str_replace('?' . $_SERVER['QUERY_STRING'], '', $uri)), true);
         return self::$urls;
     }
 
@@ -345,6 +345,10 @@ class Engine {
         return self::getConfig('modules', $module, 'defaults', 'action', $exception);
     }
 
+    public static function getDefaultLayout() {
+        return self::getConfig('defaults', 'defaultLayout');
+    }
+
     /**
      * Fetches the parameters for the action from the request uri
      * @return array
@@ -493,6 +497,10 @@ class Engine {
         if (!array_key_exists(ucfirst(Util::hyphenToCamel(self::getModule())), self::getConfig('modules')))
             throw new \Exception('Module "' . self::getModule() . '" not activated');
     }
+    
+    public static function getModulePath() {
+        return MODULES . self::getModule() . DIRECTORY_SEPARATOR;
+    }
 
     public static function reloadPage() {
         header('Location: ' . self::getServerPath() . join('/', self::getUrls()));
@@ -505,60 +513,54 @@ class Engine {
      * @todo Check caching controller actions
      */
     public static function run(array $config) {
-        try {
-            self::init($config);
-            self::moduleIsActivated();
-            $cache = self::canCache();
+        self::init($config);
+        self::moduleIsActivated();
+        $cache = self::canCache();
 
-            $name = join('/', self::getUrls());
-            if ($cache && $out = $cache->fetch($name)) {
-                echo $out;
-            }
-            else {
-                self::restoreHiddenCache();
-                $view = new View();
-
-                $controller = self::getControllerClass();
-                $controller->setView($view);
-                $action = self::getAction();
-
-                if (!in_array($action, $controller->getActions())) {
-                    ControllerException::invalidAction($action);
-                }
-
-                $params = self::getParams();
-//die(print_r(self::getUserIdentity()));
-                self::authenticate($controller, $action, $params);
-                $view->setController($controller)
-                        ->setAction($action);
-
-                $refMethod = new ReflectionMethod($controller, $action . 'Action');
-
-                if (count($params) < $refMethod->getNumberOfRequiredParameters()) {
-                    ControllerException::invalidParamCount();
-                }
-                $actionRet = call_user_func_array(array($controller, $action . 'Action'), $params);
-
-                if ($actionRet !== null && gettype($actionRet) !== 'array' &&
-                        (is_object($actionRet) && get_class($actionRet) !== 'DScribe\View\View')) {
-                    ControllerException::invalidActionResult();
-                }
-
-                if (gettype($actionRet) === 'array')
-                    $view->variables($actionRet);
-                elseif (is_object($actionRet))
-                    $view = $actionRet;
-                ob_start();
-                $view->render();
-                $data = ob_get_clean();
-                if ($cache && !Session::fetch('noCache'))
-                    $cache->save($name, $data);
-                echo $data;
-                self::terminate();
-            }
+        $name = join('/', self::getUrls());
+        if ($cache && $out = $cache->fetch($name)) {
+            echo $out;
         }
-        catch (\Exception $ex) {
-            throw new \DScribe\Core\Exception($ex->getMessage());
+        else {
+            self::restoreHiddenCache();
+            $view = new View();
+
+            $controller = self::getControllerClass();
+            $controller->setView($view);
+            $action = self::getAction();
+
+            if (!in_array($action, $controller->getActions())) {
+                ControllerException::invalidAction($action);
+            }
+
+            $params = self::getParams();
+            self::authenticate($controller, $action, $params);
+            $view->setController($controller)
+                    ->setAction($action);
+
+            $refMethod = new ReflectionMethod($controller, $action . 'Action');
+
+            if (count($params) < $refMethod->getNumberOfRequiredParameters()) {
+                ControllerException::invalidParamCount();
+            }
+            $actionRet = call_user_func_array(array($controller, $action . 'Action'), $params);
+
+            if ($actionRet !== null && gettype($actionRet) !== 'array' &&
+                    (is_object($actionRet) && get_class($actionRet) !== 'DScribe\View\View')) {
+                ControllerException::invalidActionResult();
+            }
+
+            if (gettype($actionRet) === 'array')
+                $view->variables($actionRet);
+            elseif (is_object($actionRet))
+                $view = $actionRet;
+            ob_start();
+            $view->render();
+            $data = ob_get_clean();
+            if ($cache && !Session::fetch('noCache'))
+                $cache->save($name, $data);
+            echo $data;
+            self::terminate();
         }
     }
 

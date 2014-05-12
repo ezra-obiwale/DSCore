@@ -118,6 +118,11 @@ class Form extends Fieldset {
         $value = (isset($data[$element->name]) && !is_object($data[$element->name])) ?
                 $data[$element->name] :
                 ((isset($element->options->value)) ? $element->options->value : null);
+        
+        if ($element->name === 'csrf') {
+            $csrf = new Csrf();
+            $value = $csrf->create()->fetch();
+        }
 
         switch ($element->type) {
             case 'checkbox':
@@ -202,8 +207,9 @@ class Form extends Fieldset {
                     $rows = (isset($order)) ? $order->select($criteria) : $table->select($criteria);
                     foreach ($rows as $row) {
                         if (!isset($element->options->object->labels) && !isset($element->options->object->values))
-                            throw new \Exception('Options "labels" or "values" is required for select objects');
+                            throw new \Exception('Option(s) "labels" and/or "values" is required for select objects');
 
+                        $label = $value = null;
                         if (isset($element->options->object->labels)) {
                             if (method_exists($row, $element->options->object->labels))
                                 $label = $row->{$element->options->object->labels}();

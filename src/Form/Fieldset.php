@@ -94,7 +94,7 @@ class Fieldset extends AValidator {
     final protected function parseAttributes(array $attrs) {
         $return = '';
         foreach ($attrs as $attr => $val) {
-            $return .= $attr . '="' . $val . '" ';
+            $return .= \Util::camelToHyphen($attr) . '="' . $val . '" ';
         }
         return $return;
     }

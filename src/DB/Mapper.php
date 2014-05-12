@@ -33,9 +33,6 @@ abstract class Mapper extends Row implements IModel {
      * @param Table $table Live table connection
      */
     public function init(Table &$table) {
-        if ($this->ignore()) {
-            return true;
-        }
         $this->_table = & $table;
         $className = str_replace('\\', '.', get_called_class());
         $path = DATA . 'mapper' . DIRECTORY_SEPARATOR . $className;
@@ -52,7 +49,7 @@ abstract class Mapper extends Row implements IModel {
         }
         else {
             $this->checkModelRequirements($path);
-            $save = !$this->isUpToDate($path, $table);
+            $save = $this->isUpToDate($path, $table);
         }
 
         if ($save || !is_readable($path))
@@ -188,6 +185,7 @@ abstract class Mapper extends Row implements IModel {
     }
 
     private function ignore() {
+        // && !in_array('comment', $this->getIgnore())
         if (in_array($this->getTableName(), $this->getIgnore())) {
             return true;
         }
@@ -263,7 +261,12 @@ abstract class Mapper extends Row implements IModel {
      */
     private function parseAttributes($columnName, array $attrs, $isCreate = true) {
         $return = $this->checkType($columnName, $attrs); // type
+
         $attr = new Object($attrs['attrs']);
+
+        if (strtolower($attrs['type']) === 'timestamp' && !isset($attr->default)) {
+            $attr->default = '"0000-00-00 00:00:00"';
+        }
 
         if (isset($attr->size))
             $return .= '(' . $attr->size . ')'; // size
@@ -275,18 +278,7 @@ abstract class Mapper extends Row implements IModel {
             $return .= ' CHARACTER SET ' . $attr->charset . ' COLLATE ' . $attr->collation;
         }
 
-        if (isset($attr->collation)) {
-            if (!isset($attr->charset))
-                $attr->charset = stristr($attr->collation, '_', true);
-
-            $return .= ' CHARACTER SET ' . $attr->charset . ' COLLATE ' . $attr->collation;
-        }
-
         $return .= (isset($attr->nullable) && strtolower($attr->nullable) == 'true') ? ' NULL' : ' NOT NULL'; // null
-
-        if (!$isCreate && !empty($attr->after)) {
-            $return .= ' AFTER `' . $attr->after . '`';
-        }
 
         if (isset($attr->default)) { // auto increment
             if (strtolower($attrs['type']) === 'boolean') {
@@ -300,11 +292,13 @@ abstract class Mapper extends Row implements IModel {
 
             $return .= (trim(strtolower($attrs['type'])) == 'timestamp') ? ' DEFAULT ' . $attr->default : ' DEFAULT "' . $attr->default . '"';
         }
-        
-        if (!$isCreate && !empty($attr->after)) {
-            $return .= ' AFTER `' . $attr->after . '`';
-        }
 
+        if (!$isCreate) {
+            if (!empty($attr->after))
+                $return .= ' AFTER `' . $attr->after . '`';
+            else if (isset($attr->first) && $attr->first)
+                $return .= ' FIRST';
+        }
         if (isset($attr->autoIncrement) && $attr->autoIncrement == 'true') // auto increment
             $return .= ' AUTO_INCREMENT';
 
@@ -318,7 +312,7 @@ abstract class Mapper extends Row implements IModel {
      * Checks the column type to ensure it has required settings
      * @param string $columnName
      * @param array $attrs
-     * @return string
+     * @return string The type column it is
      * @throws Exception
      */
     private function checkType($columnName, array $attrs) {
@@ -358,8 +352,10 @@ abstract class Mapper extends Row implements IModel {
             $return = $this->prepareUpdate($path, $table);
         }
 
-        $this->updateReferences($table);
-        return ($return === null) ? true : $return;
+        if (!$this->ignore()) {
+            $this->updateReferences($table);
+        }
+        return ($return === null) ? false : $return;
     }
 
     /**
@@ -392,8 +388,7 @@ abstract class Mapper extends Row implements IModel {
      */
     private function prepareUpdate($path, Table &$table) {
         $newDesc = $this->getAnnotations(true);
-
-        // to indicate whether oldDesc is gotten from existing Table
+        // to indicate whether oldDesc directly from Table in DB
         $liveDesc = false;
 
         if (is_readable($path)) {
@@ -479,14 +474,7 @@ abstract class Mapper extends Row implements IModel {
             return Util::camelTo_($ppt);
         }, array_keys($oldDesc));
 
-
-        if ($this->updateTable($toDo, $table)) {
-            if ($liveDesc)
-                return false;
-
-            return true;
-        }
-        return false;
+        return $this->updateTable($toDo, $table);
     }
 
     /**
@@ -569,24 +557,62 @@ abstract class Mapper extends Row implements IModel {
         }
 
         if ($canUpdate) {
-            if ($this->getConnection()->alterTable($table)) {
+            $droppedRefs = array();
+            foreach ($table->getBackReferences() as $refArray) {
+                foreach ($refArray as $ref) {
+                    $refTable = new Table($ref['refTable'], $this->getConnection());
+                    foreach ($refTable->getReferences() as $col => $array) {
+                        if ($refTable->getName() !== $table->getName() && $array['refTable'] === $table->getName()) {
+                            $refTable->dropReference($col);
+                            $droppedRefs[$col][] = array_merge(array(
+                                'table' => $refTable,
+                                    ), $array);
+
+                            $this->getConnection()->alterTable($refTable);
+                        }
+                    }
+                }
+            }
+            $return = $this->getConnection()->alterTable($table);
+
+            foreach ($droppedRefs as $col => $array) {
+                foreach ($array as $ref) {
+                    $onDelete = (!empty($ref['onDelete'])) ? $ref['onDelete'] : 'RESTRICT';
+                    $onUpdate = (!empty($ref['onUpdate'])) ? $ref['onUpdate'] : 'RESTRICT';
+                    $ref['table']->addReference($col, $ref['refTable'], $ref['refColumn'], $onDelete, $onUpdate);
+
+                    $this->getConnection()->alterTable($ref['table']);
+                }
+            }
+            if ($return) {
                 $this->getConnection()->flush();
-                return false;
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
-    private function checkIndexes($dbColumnName, $desc, Table &$table) {
-        if (in_array($dbColumnName, $table->getIndexes()) && $table->getPrimaryKey() !== $dbColumnName) {
-            if (array_key_exists($dbColumnName, $table->getReferences())) {
-                $table->dropReference($dbColumnName);
-            }
-            $table->dropIndex($dbColumnName);
-        }
-
+    /**
+     * Checks if a column should be indexed, removing old index and adding new
+     * @param string $dbColumnName
+     * @param array $desc
+     * @param \DBScribe\Table $table
+     * @return void
+     */
+    private function checkIndexes($dbColumnName, array $desc, Table &$table) {
+        // if column is not primary key
         if ($table->getPrimaryKey() !== $dbColumnName) {
+            // drop index if column is indexed
+            if (in_array($dbColumnName, $table->getIndexes())) {
+                // drop reference if column is referenced
+                if (array_key_exists($dbColumnName, $table->getReferences())) {
+                    $table->dropReference($dbColumnName);
+                }
+                $table->dropIndex($dbColumnName);
+            }
+
+            // add index to column if described as such
             if (isset($desc['attrs']['index'])) {
                 $table->addIndex($dbColumnName, Table::INDEX_REGULAR);
             }
@@ -601,8 +627,8 @@ abstract class Mapper extends Row implements IModel {
             }
 
             $ref = $table->getReferences();
-            if (array_key_exists($dbColumnName, $ref)) {
-                $table->addReference($ref[$dbColumnName]['columnName'], $ref[$dbColumnName]['refTable'], $ref[$dbColumnName]['refColumn'], $ref[$dbColumnName]['onDelete'], $ref[$dbColumnName]['onUpdate']);
+            if (array_key_exists($dbColumnName, $ref) && !empty($ref[$dbColumnName]['refTable'])) {
+                $table->addReference($dbColumnName, $ref[$dbColumnName]['refTable'], $ref[$dbColumnName]['refColumn'], $ref[$dbColumnName]['onDelete'], $ref[$dbColumnName]['onUpdate']);
             }
         }
     }
@@ -652,20 +678,18 @@ abstract class Mapper extends Row implements IModel {
 
             foreach ($annotArray as &$desc) {
                 $desc = $this->parseSettings(substr($desc, 1));
-                if ($prev) {
+                if ($prev && !@$desc['attrs']['primary']) {
                     $desc['attrs']['after'] = $prev;
                 }
 
                 $prev = Util::camelTo_($property);
-                if ((strtolower($desc['type']) === 'reference' || strtolower($desc['type']) === 'referencemany') && $createReference) {
-                    if (!$createReference)
-                        continue;
-
-                    $desc = $this->parseForReference($property, $desc, $primary);
+                if ((strtolower($desc['type']) === 'reference' || strtolower($desc['type']) === 'referencemany')) {
+                    $defer[$property] = $desc;
                 }
 
                 if (isset($desc['attrs']['primary']) && $desc['attrs']['primary']) {
                     $primary['column'] = $property;
+                    $desc['attrs']['first'] = true;
                     $primary['desc'] = $desc;
                 }
 
@@ -674,11 +698,15 @@ abstract class Mapper extends Row implements IModel {
             }
         }
 
-        return $return;
+        foreach ($defer as &$desc) {
+            $desc = $this->parseForReference($property, $desc, $primary, $createReference);
+        }
+
+        return array_merge($return, $defer);
     }
 
-    private function parseForReference($property, $oDesc, $primary) {
-        $desc = $this->createReference($property, $oDesc, $primary);
+    private function parseForReference($property, $oDesc, $primary, $createReference) {
+        $desc = $this->createReference($property, $oDesc, $primary, $createReference);
         if (strtolower($oDesc['type']) === 'referencemany') {
             $desc['attrs'] = array_merge($oDesc['attrs'], $desc['attrs']['reference']);
 
@@ -686,6 +714,8 @@ abstract class Mapper extends Row implements IModel {
             unset($desc['attrs']['reference']);
             $desc['type'] = 'ReferenceMany';
         }
+        unset($desc['attrs']['first']);
+        unset($desc['attrs']['after']);
 
         return $desc;
     }
@@ -734,15 +764,15 @@ abstract class Mapper extends Row implements IModel {
     }
 
     private function checkModelExists($model) {
-        if (class_exists($model))
-            return $model;
-
         if (!strstr($model, '\\')) {
             $nm = $this->getNamespace();
             $model = $nm . '\\' . $model;
             if (class_exists($model))
                 return $model;
         }
+
+        if (class_exists($model))
+            return $model;
 
         return false;
     }
@@ -763,7 +793,7 @@ abstract class Mapper extends Row implements IModel {
      * @throws Exception
      * @todo allow referencing table with no model
      */
-    private function createReference($property, array $annot, array $primary = array()) {
+    private function createReference($property, array $annot, array $primary = array(), $create = true) {
         if (!isset($annot['attrs']['model']))
             throw new Exception('Attribute "model" not set for reference property "' .
             $property . '" of class "' . get_called_class() . '"');
@@ -776,13 +806,15 @@ abstract class Mapper extends Row implements IModel {
             throw new Exception('Model "' . $annot['attrs']['model'] . '" must implement "DScribe\Core\IModel"');
 
         $refTable = new $annot['attrs']['model'];
-        $refTable->setConnection($this->getConnection());
-        $conTable = $this->getConnection()->table($refTable->getTableName(), $refTable);
 
-        if ($conTable->getName() === $this->_table->getName() && !empty($primary['column'])) {
+        if ($refTable->getTableName() === $this->_table->getName() && !empty($primary['column'])) {
             $annot['attrs']['property'] = Util::camelTo_($primary['column']);
+            $attrs = $primary['desc'];
+            $conColumns = $this->_table->getColumns();
         }
         else {
+            $refTable->setConnection($this->getConnection());
+            $conTable = $this->getConnection()->table($refTable->getTableName(), $refTable);
             $refTable->init($conTable);
             if (!isset($annot['attrs']['property'])) {
                 if (!$conTable->getPrimaryKey())
@@ -799,9 +831,9 @@ abstract class Mapper extends Row implements IModel {
                 if ($conTable->exists())
                     $this->getConnection()->alterTable($conTable);
             }
+            $attrs = $refTable->getSettings(\Util::_toCamel($annot['attrs']['property']));
+            $conColumns = $conTable->getColumns();
         }
-
-        $attrs = ($conTable->getName() === $this->_table->getName() && $primary) ? $primary['desc'] : $refTable->getSettings(\Util::_toCamel($annot['attrs']['property']));
 
         if ($attrs === null)
             throw new Exception('Property "' . $annot['attrs']['property'] . '", set as attribute "property" for property "' .
@@ -815,8 +847,9 @@ abstract class Mapper extends Row implements IModel {
         $column = $annot['attrs']['property'];
         unset($annot['attrs']['property']);
         unset($annot['attrs']['size']);
+        unset($annot['attrs']['first']);
+        unset($annot['attrs']['after']);
 
-        $conColumns = $conTable->getColumns();
         if (!empty($conColumns[$column]['charset']))
             $attrs['attrs']['charset'] = $conColumns[$column]['charset'];
         if (!empty($conColumns[$column]['collation']))
@@ -988,7 +1021,7 @@ abstract class Mapper extends Row implements IModel {
 
         if ($this->settings === null || $this->annotations === null || $forceNew === true) {
             $this->annotations = new Annotation(get_called_class());
-            $this->settings = $this->parseAnnotations($this->annotations->getProperties('DBS'));
+            $this->settings = $this->parseAnnotations($this->annotations->getProperties('DBS'), !$this->ignore());
         }
 
         return $this->settings;
@@ -1034,6 +1067,31 @@ abstract class Mapper extends Row implements IModel {
                     )
                 );
             }
+        }
+        return $return;
+    }
+
+    /**
+     * Fetches an array of properties and their values
+     * @param boolean $withNull Indicates whether to return properties with null values too
+     * @param boolean $asIs Indicates whether to return properties as gotten from parent method.
+     * This leaves them with underscores and not camel cases
+     * @return array
+     */
+    public function toArray($withNull = false, $asIs = false) {
+        $array = parent::toArray();
+        unset($array['tableName']);
+
+        if ($asIs) {
+            return $array;
+        }
+
+        $return = array();
+        foreach ($array as $name => $value) {
+            if (($value === null && !$withNull)) {
+                continue;
+            }
+            $return[\Util::camelTo_($name)] = $value;
         }
         return $return;
     }

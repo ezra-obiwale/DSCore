@@ -55,7 +55,7 @@ class Filterer {
      * @return boolean
      */
     public function required($name, $options) {
-        if (array_key_exists($name, $this->data) && $options) {
+        if (array_key_exists($name, $this->data) && ((is_array($options)) || (!is_array($options) && $options))) {
             if ((is_array($this->data[$name]) && (empty($this->data[$name]) || (empty($this->data[$name][0]) && count($this->data[$name]) === 1))) || (!is_array($this->data[$name]) && @trim($this->data[$name]) === '')) {
                 if (is_bool($options))
                     $this->error[$name][] = 'Field is required';
@@ -70,7 +70,6 @@ class Filterer {
 
             return true;
         }
-
         return false;
     }
 
@@ -87,6 +86,9 @@ class Filterer {
                 if ($this->data[$name] == $this->data[$options['element']]) {
                     return true;
                 }
+            }
+            else {
+                return true;
             }
         }
         else if (isset($options['value'])) {
@@ -113,6 +115,8 @@ class Filterer {
                     return true;
                 }
             }
+            else
+                return true;
         }
         else if (isset($options['value'])) {
             if ($this->data[$name] != $options['value']) {
@@ -131,7 +135,7 @@ class Filterer {
      * @return boolean
      */
     public function Email($name, array $options) {
-        if (filter_var($this->data[$name], FILTER_VALIDATE_EMAIL)) {
+        if (empty($this->data[$name]) || filter_var($this->data[$name], FILTER_VALIDATE_EMAIL)) {
             $this->data[$name] = filter_var($this->data[$name], FILTER_SANITIZE_EMAIL);
             return true;
         }
@@ -147,7 +151,7 @@ class Filterer {
      * @return boolean
      */
     public function Url($name, array $options) {
-        if (filter_var($this->data[$name], FILTER_VALIDATE_URL)) {
+        if (empty($this->data[$name]) || filter_var($this->data[$name], FILTER_VALIDATE_URL)) {
             $this->data[$name] = filter_var($this->data[$name], FILTER_SANITIZE_URL);
             return true;
         }

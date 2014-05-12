@@ -41,10 +41,12 @@ class Renderer extends AInjector {
     /**
      * Sets the view to render
      * @param \DScribe\View\View $view
+     * @return \DScribe\View\Renderer
      */
     final public function setView(View $view) {
         $this->view = $view;
         $this->publicAssetsPath = ROOT . 'public' . DIRECTORY_SEPARATOR . '.assets' . DIRECTORY_SEPARATOR;
+        return $this;
     }
 
     /**
@@ -204,8 +206,10 @@ class Renderer extends AInjector {
             }
         }
         else {
-            if (!$errorLayout = Engine::getConfig('defaults', 'errorLayout', false)) {
-                throw new Exception('Error Layout Not Found', true);
+            if (!$errorLayout = Engine::getConfig('modules', Engine::getModule(), 'defaults', 'errorLayout', false)) {
+                if (!$errorLayout = Engine::getConfig('defaults', 'errorLayout', false)) {
+                    throw new Exception('Error Layout Not Found', true);
+                }
             }
             ob_start();
             $this->loadLayout($errorLayout, array('content' => $content));
@@ -367,9 +371,7 @@ class Renderer extends AInjector {
      * @return string
      */
     final public function getAsset($src, $fromTheme = false) {
-        if ($this->canLoadAsset($src, 'misc')) {
-            return $this->getFile($src, $fromTheme);
-        }
+        return $this->getFile($src, $fromTheme);
     }
 
     /**

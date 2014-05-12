@@ -131,6 +131,11 @@ abstract class AController extends AInjector {
      * @param array $params
      */
     final protected function redirect($module, $controller = null, $action = null, array $params = array()) {
+        $module = ($module) ? $module : Engine::getModule();
+        $controller = ($controller) ? $controller : Engine::getController();
+        $action = ($action) ? $action : Engine::getAction();
+        $params = (!empty($params)) ? $params : Engine::getParams();
+        
         header('Location: ' . $this->view->url($module, $controller, $action, $params));
         exit;
     }

@@ -116,17 +116,20 @@ class Table {
                             <?php
                         }
                         ?>
+                            
                     </tr>
                 </thead>
                 <?php
             }
             if (!empty(self::$rows)) {
                 ?>
+
                 <tbody>
                     <?php
                     foreach (self::$rows as $rowData) {
                         if (count($rowData) > 1) {
                             ?>
+                    
                             <tr <?php echo self::parseAttributes($rowData[0]); ?>>
                                 <?php
                                 foreach ($rowData[1] as $row) {
@@ -135,16 +138,19 @@ class Table {
                                     <?php
                                 }
                                 ?>
+                                    
                             </tr>
                             <?php
                         }
                     }
                     ?>
+                            
                 </tbody>
                 <?php
             }
             if (!empty(self::$footers)) {
                 ?>
+                
                 <tfoot>
                     <tr>
                         <?php
@@ -155,6 +161,7 @@ class Table {
                             <?php
                         }
                         ?>
+                            
                     </tr>
                 </tfoot>
             <?php }
