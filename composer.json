@@ -16,6 +16,9 @@
     "autoload": {
         "psr-4": {
             "DScribe\\": "src/"
+        },
+        "psr-0": {
+            "": "src/Stdlib/"
         }
     },
     "suggest": {
