@@ -107,9 +107,8 @@ class Engine {
      */
     private static function initDB() {
         $dbConfig = self::getConfig('db', self::getServer());
-        self::$db = new Connection($dbConfig['dsn'], $dbConfig['user'], $dbConfig['password']);
+        self::$db = new Connection($dbConfig['dsn'], $dbConfig['user'], $dbConfig['password'], $dbConfig['options']);
         self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-//		self::$db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_WARNING);
 
         if (!empty($dbConfig['tablePrefix']))
             self::$db->setTablePrefix($dbConfig['tablePrefix']);

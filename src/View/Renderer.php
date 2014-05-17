@@ -212,7 +212,7 @@ class Renderer extends AInjector {
                 }
             }
             ob_start();
-            $this->loadLayout($errorLayout, array('content' => $content));
+            $this->loadLayout($errorLayout, array_merge(array('content' => $content), $this->view->getVariables()));
             $content = ob_get_clean();
         }
         echo($content);

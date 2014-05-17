@@ -106,7 +106,7 @@ class Fieldset extends AValidator {
      */
     final public function setModel(IModel $model) {
         $this->model = $model;
-        $this->setData(new \Object($model->toArray(false, true)));
+        $this->setData($model->toArray(false, true));
         return $this;
     }
 

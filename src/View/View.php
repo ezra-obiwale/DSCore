@@ -194,9 +194,9 @@ class View {
      */
     final public function url($module, $controller = null, $action = null, array $params = array(), $hash = null) {
         $module = ucfirst(Util::hyphenToCamel($module));
-        $moduleOptions = Engine::getConfig('modules', $module);
+        $moduleOptions = Engine::getConfig('modules', $module, false);
         $module = (isset($moduleOptions['alias'])) ? $moduleOptions['alias'] : $module;
-
+       
         $return = Util::camelToHyphen($module);
         if ($controller)
             $return .= '/' . Util::camelToHyphen($controller);
@@ -206,7 +206,6 @@ class View {
             $return .= str_replace('//', '/' . urlencode(' ') . '/', '/' . join('/', $this->encodeParams($params)));
         if ($hash)
             $return .= '#' . $hash;
-
         return Engine::getServerPath() . $return;
     }
 

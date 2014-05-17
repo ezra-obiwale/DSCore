@@ -134,8 +134,6 @@ abstract class AController extends AInjector {
         $module = ($module) ? $module : Engine::getModule();
         $controller = ($controller) ? $controller : Engine::getController();
         $action = ($action) ? $action : Engine::getAction();
-        $params = (!empty($params)) ? $params : Engine::getParams();
-        
         header('Location: ' . $this->view->url($module, $controller, $action, $params));
         exit;
     }

@@ -340,7 +340,7 @@ abstract class Mapper extends Row implements IModel {
                     VENDOR . str_replace('\\', '/', $parent) . '.php';
 
             if (!is_readable($path) ||
-                    (is_readable($path) && filemtime($path) < filemtime($parentPath))) {
+                    (is_readable($path) && is_readable($parentPath) && filemtime($path) < filemtime($parentPath))) {
                 $return = $this->prepareUpdate($path, $table);
                 break;
             }

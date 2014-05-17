@@ -27,11 +27,12 @@ class Exception extends \Exception {
 
         $request = new Request();
         if (!$noLayout && !$request->isAjax()) {
-            $view = new \DScribe\View\View(false);
-            $view->render($this->prepareOutput($ex));
+            $view = new \DScribe\View\View(true);
+            $return = $this->prepareOutput($ex);
+            $view->variables(array('exeption' => $return))->render($return->fullMessage);
         }
         else {
-            echo $this->prepareOutput($ex);
+            echo $this->prepareOutput($ex)->fullMessage;
         }
         exit;
     }
@@ -43,6 +44,9 @@ class Exception extends \Exception {
 
     private function prepareOutput(\Exception $ex) {
         $traceArray = $ex->getTrace();
+        $return = new \Object();
+        $return->message = $ex->getMessage();
+        $return->trace = $this->prepareTrace($ex);
 
         if (isset($traceArray[0]['args']) && isset($traceArray[0]['file']) && isset($traceArray[0]['file'])) {
             $ex = $this;
@@ -51,7 +55,7 @@ class Exception extends \Exception {
             $ex = $traceArray[0]['args'][0];
         }
         $header = 'Exception';
-        $message = $ex->getMessage();
+        $message = $return->message;
         if ($this->errorFile) {
             $message .= '<div style="color:darkblue;margin-top:10px;font-size:smaller">' . $this->errorFile . ': ' . $this->errorLine . '</div>' . "\n";
         }
@@ -59,47 +63,49 @@ class Exception extends \Exception {
         echo '<div style="padding:5px;font-family:arial;color:darkblue">';
         echo '<h1>' . $header . '</h1>';
         echo '<div style="border:1px solid #ccc;border-radius:5px;padding:5px;font-size:larger">';
+
         echo $message;
         echo '</div>';
-        if (strtolower(Engine::getConfig('server', false)) === 'development') {
-            $this->prepareTrace($ex);
-        }
+        echo $return->trace;
         echo '</div>';
-        return ob_get_clean();
+        $return->fullMessage = ob_get_clean();
+
+        return $return;
     }
 
     private function prepareTrace(\Exception $ex) {
-        echo '<div style="background-color:#fff;padding:5px;border-radius:5px;border:1px solid #ccc;margin-top:10px">';
-        echo '<div style="color:maroon;font-size:26px;margin:10px 0">Trace</div>';
-        echo '<pre style="background-color:rgb(245,245,245);border-radius:0 15px;padding:5px;border:1px solid #ccc">';
+        $return = '<div style="background-color:#fff;padding:5px;border-radius:5px;border:1px solid #ccc;margin-top:10px">';
+        $return .= '<div style="color:maroon;font-size:26px;margin:10px 0">Trace</div>';
+        $return .= '<pre style="background-color:rgb(245,245,245);border-radius:0 15px;padding:5px;border:1px solid #ccc">';
         foreach ($ex->getTrace() as $trace) {
             if (isset($trace['function']) && in_array($trace['function'], array('errorHandler', 'exceptionHandler')))
                 continue;
 
-            echo '<div onmouseover="$(this).css({border:\'6px solid #0ce\',\'border-radius\':0,\'background-color\':\'#fff\'})" onmouseout="$(this).css({border:\'2px outset #ccc\',\'border-radius\':\'0 15px\',\'background-color\':\'#fff\'})" style="background-color:white;border:2px outset #ccc;margin:5px 0;padding:10px;border-radius:0 15px">';
-            echo '<span style="color:darkblue;font-size:small;margin-bottom:5px">';
+            $return .= '<div onmouseover="$(this).css({border:\'6px solid #0ce\',\'border-radius\':0,\'background-color\':\'#fff\'})" onmouseout="$(this).css({border:\'2px outset #ccc\',\'border-radius\':\'0 15px\',\'background-color\':\'#fff\'})" style="background-color:white;border:2px outset #ccc;margin:5px 0;padding:10px;border-radius:0 15px">';
+            $return .= '<span style="color:darkblue;font-size:small;margin-bottom:5px">';
 
             if (!empty($trace['class']))
-                echo $trace['class'] . $trace['type'];
+                $return .= $trace['class'] . $trace['type'];
 
             if (!empty($trace['function']))
-                echo $trace['function'] . '(' . $this->parseArgs($trace['args']) . ')</span>';
+                $return .= $trace['function'] . '(' . $this->parseArgs($trace['args']) . ')</span>';
 
-            echo "\n";
+            $return .=  "\n";
 
             if (!empty($trace['file']))
-                echo '<span style="color:maroon;font-size:smaller;">' . $trace['file'] . ': ' . $trace['line'] . "</span>\n";
-            echo '</div>';
+                $return .= '<span style="color:maroon;font-size:smaller;">' . $trace['file'] . ': ' . $trace['line'] . "</span>\n";
+            $return .= '</div>';
         }
-        echo '</pre>';
-        echo '</div>';
-        echo '
+        $return .= '</pre>';
+        $return .= '</div>';
+        $return .= '
 <script>
 	$(function(){
 		$(a).css("border-radius":"0 15px");
 	});
 </script>
 ';
+        return $return;
     }
 
     private function parseArgs(array $args) {
