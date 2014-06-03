@@ -2,9 +2,9 @@
 
 namespace DScribe\Core;
 
-use DScribe\DB\Mapper;
+use DBScribe\Mapper;
 
-class AModel extends Mapper {
+class AModel extends Mapper implements IModel {
 
     public function preSave() {
         return parent::preSave();

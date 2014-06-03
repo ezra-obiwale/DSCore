@@ -575,7 +575,7 @@ class Engine {
 
         $noCacheActions = @call_user_func(array(self::getControllerClass(false), 'noCache'));
         return ((is_bool($noCacheActions) && !$noCacheActions) || (is_array($noCacheActions) && !in_array(\Util::camelToHyphen(self::getAction()), \Util::arrayValuesCamelTo($noCacheActions, '-')))) ?
-                new Cache(self::getUserIdentity()->getUser(), $request->isAjax()) : null;
+                new Cache(self::getUserIdentity()->getUser()) : null;
     }
 
     /**

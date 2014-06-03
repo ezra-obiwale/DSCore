@@ -6,7 +6,7 @@ use DBScribe\ArrayCollection,
     DBScribe\Table,
     DScribe\Core\IModel,
     DScribe\Core\Repository,
-    DScribe\DB\Mapper,
+    DBScribe\Mapper,
     Exception;
 
 /**
@@ -32,9 +32,8 @@ class Repository implements IRepository {
      * @param Mapper $table
      */
     public function __construct(Mapper $table) {
-        $db = Engine::getDB();
-        $table->setConnection($db);
-        $this->table = $db->table($table->getTableName(), $table);
+        $table->setConnection(Engine::getDB());
+        $this->table = Engine::getDB()->table($table->getTableName(), $table);
         $table->init($this->table);
         $this->table->delayExecute();
         $this->alwaysJoin = array();
@@ -42,13 +41,14 @@ class Repository implements IRepository {
 
     /**
      * Fetches all rows in the database
-     * @param boolean $toJson Indicates whether to return a JSON formatted string
+     * @param int $returnType Indicates the type of return expected. 
+     * Possible values (Table::RETURN_MODEL | Table::RETURN_JSON | Table::RETURN_DEFAULT)
      * @return mixed
      */
-    public function fetchAll($toJson = false) {
+    public function fetchAll($returnType = Table::RETURN_MODEL) {
         if (!$this->table)
             return new ArrayCollection();
-        $return = $this->select(array(), $toJson)->execute();
+        $return = $this->select(array(), $returnType)->execute();
 
         if (is_bool($return))
             return new ArrayCollection();
@@ -60,14 +60,15 @@ class Repository implements IRepository {
      * Finds row(s) by a column value
      * @param string $column
      * @param mixed $value
-     * @param boolean $toJson Indicates whether to return a JSON formatted string
+     * @param int $returnType Indicates the type of return expected. 
+     * Possible values (Table::RETURN_MODEL | Table::RETURN_JSON | Table::RETURN_DEFAULT)
      * @return mixed
      */
-    public function findBy($column, $value, $toJson = false) {
+    public function findBy($column, $value, $returnType = Table::RETURN_MODEL) {
         if (!$this->table)
             return new ArrayCollection();
 
-        $return = $this->table->select(array(array(\DBScribe\Util::camelTo_($column) => $value)), $toJson)->execute();
+        $return = $this->table->select(array(array(\DBScribe\Util::camelTo_($column) => $value)), $returnType)->execute();
         if (is_bool($return))
             return new ArrayCollection();
 
@@ -78,45 +79,49 @@ class Repository implements IRepository {
      * Finds a row by a column value
      * @param column $column
      * @param mixed $value
-     * @param boolean $toJson Indicates whether to return a JSON formatted string
+     * @param int $returnType Indicates the type of return expected. 
+     * Possible values (Table::RETURN_MODEL | Table::RETURN_JSON | Table::RETURN_DEFAULT)
      * @return mixed Null if no row
      */
-    public function findOneBy($column, $value, $toJson = false) {
-        return $this->findOneWhere(array(array($column => $value)), $toJson);
+    public function findOneBy($column, $value, $returnType = Table::RETURN_MODEL) {
+        return $this->findOneWhere(array(array($column => $value)), $returnType);
     }
 
     /**
      * Finds a row by the id column
      * @param mixed $idValue
-     * @param boolean $toJson Indicates whether to return a JSON formatted string
+     * @param int $returnType Indicates the type of return expected. 
+     * Possible values (Table::RETURN_MODEL | Table::RETURN_JSON | Table::RETURN_DEFAULT)
      * @return mixed Null if no row
      */
-    public function findOne($idValue, $toJson = false) {
+    public function findOne($idValue, $returnType = Table::RETURN_MODEL) {
         if (is_object($idValue)) {
             $getPK = 'get' . ucfirst(\Util::_toCamel($this->table->getPrimaryKey()));
             $idValue = $idValue->$getPK();
         }
 
-        return $this->findOneBy($this->table->getPrimaryKey(), $idValue, $toJson);
+        return $this->findOneBy($this->table->getPrimaryKey(), $idValue, $returnType);
     }
 
     /**
      * Finds a row by the primary column
      * @param mixed $id
-     * @param boolean $toJson Indicates whether to return a JSON formatted string
+     * @param int $returnType Indicates the type of return expected. 
+     * Possible values (Table::RETURN_MODEL | Table::RETURN_JSON | Table::RETURN_DEFAULT)
      * @return mixed
      */
-    public function find($id, $toJson = false) {
-        return $this->findBy($this->table->getPrimaryKey(), $id, $toJson);
+    public function find($id, $returnType = Table::RETURN_MODEL) {
+        return $this->findBy($this->table->getPrimaryKey(), $id, $returnType);
     }
 
     /**
      * Finds row(s) with the given criteria
      * @param array|IModel $criteria
-     * @param boolean $toJson Indicates whether to return a JSON formatted string
+     * @param int $returnType Indicates the type of return expected. 
+     * Possible values (Table::RETURN_MODEL | Table::RETURN_JSON | Table::RETURN_DEFAULT)
      * @return mixed
      */
-    public function findWhere($criteria, $toJson = false) {
+    public function findWhere($criteria, $returnType = Table::RETURN_MODEL) {
         if (!$this->table)
             return new ArrayCollection();
 
@@ -124,25 +129,26 @@ class Repository implements IRepository {
             $criteria = array($criteria);
         }
 
-        $return = $this->table->select($criteria, $toJson)->execute();
-        if (!is_object($return) && !$toJson)
-            return new ArrayCollection();
+        $return = $this->table->select($criteria, $returnType)->execute();
         return $return;
     }
 
     /**
      * Finds a row with the given criteria
      * @param array|IModel $criteria
-     * @param boolean $toJson Indicates whether to return a JSON formatted string
+     * @param int $returnType Indicates the type of return expected. 
+     * Possible values (Table::RETURN_MODEL | Table::RETURN_JSON | Table::RETURN_DEFAULT)
      * @return mixed
      */
-    public function findOneWhere($criteria, $toJson = false) {
-        $return = ($toJson) ? '{}' : null;
-        $result = $this->findWhere($criteria);
-        if (!is_bool($result)) {
-            $return = ($toJson) ? json_encode($result->first()) : $result->first();
+    public function findOneWhere($criteria, $returnType = Table::RETURN_MODEL) {
+        $this->table->limit(1);
+        $result = $this->findWhere($criteria, ($returnType === Table::RETURN_MODEL) ? $returnType : Table::RETURN_DEFAULT);
+        if (is_array($result)) {
+            return ($returnType === Table::RETURN_JSON) ? json_encode($result[0]) : $result[0];
         }
-        return $return;
+        else if (is_object($result)) {
+            return $result->first();
+        }
     }
 
     public function __call($name, $arguments) {
@@ -184,10 +190,11 @@ class Repository implements IRepository {
     /**
      * Selects data from database with non-NULL model properties as criteria
      * @param array|IModel $model a model or an array of models as criteria
-     * @param boolean $toJson Indicates whether to return a JSON formatted string
+     * @param int $returnType Indicates the type of return expected. 
+     * Possible values (Table::RETURN_MODEL | Table::RETURN_JSON | Table::RETURN_DEFAULT)
      * @return Repository
      */
-    public function select($model = array(), $toJson = false) {
+    public function select($model = array(), $returnType = Table::RETURN_MODEL) {
         if (!$this->table)
             return $this;
 
@@ -197,7 +204,7 @@ class Repository implements IRepository {
         }
 
         $this->checkModels($model);
-        call_user_func_array(array($this->table, 'select'), array($model, $toJson));
+        call_user_func_array(array($this->table, 'select'), array($model, $returnType));
         $this->isSelect = true;
         return $this;
     }

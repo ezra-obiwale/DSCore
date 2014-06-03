@@ -10,19 +10,19 @@ class Flash {
      * Flash message
      * @var string
      */
-    protected $message;
+    protected $messages;
 
     /**
      * Flash success message
      * @var string
      */
-    protected $successMessage;
+    protected $successMessages;
 
     /**
      * Flash error message
      * @var string
      */
-    protected $errorMessage;
+    protected $errorMessages;
 
     /**
      * Class constructor
@@ -30,9 +30,12 @@ class Flash {
     final public function __construct() {
         $flash = Session::fetch('Flash');
         if ($flash !== null) {
-            $this->message = $flash->getMessage();
-            $this->successMessage = $flash->getSuccessMessage();
-            $this->errorMessage = $flash->getErrorMessage();
+            $this->messages = $flash->getMessage(false);
+            $this->successMessages = $flash->getSuccessMessage(false);
+            $this->errorMessages = $flash->getErrorMessage(false);
+        }
+        else {
+            $this->reset();
         }
     }
 
@@ -42,7 +45,7 @@ class Flash {
      * @return \DScribe\Core\Flash
      */
     final public function setMessage($message) {
-        $this->message = $message;
+        $this->messages = array($message);
         return $this;
     }
 
@@ -50,8 +53,18 @@ class Flash {
      * Fetches the flash message
      * @return string
      */
-    final public function getMessage() {
-        return $this->message;
+    final public function getMessage($parsed = true) {
+        return ($parsed) ? $this->parseMessages($this->messages) :
+                $this->messages;
+    }
+
+    /**
+     * Adds a(n array of) message(s)
+     * @param string|array $message
+     * @return \DScribe\Core\Flash
+     */
+    final public function addMessage($message) {
+        return $this->addMsg('messages', $message);
     }
 
     /**
@@ -60,7 +73,7 @@ class Flash {
      * @return \DScribe\Core\Flash
      */
     final public function setSuccessMessage($message) {
-        $this->successMessage = $message;
+        $this->successMessages = array($message);
         return $this;
     }
 
@@ -68,8 +81,18 @@ class Flash {
      * Fetches the flash success message
      * @return string
      */
-    final public function getSuccessMessage() {
-        return $this->successMessage;
+    final public function getSuccessMessage($parsed = true) {
+        return ($parsed) ? $this->parseMessages($this->successMessages) :
+                $this->successMessages;
+    }
+
+    /**
+     * Adds a(n array of) success message(s)
+     * @param string|array $message
+     * @return \DScribe\Core\Flash
+     */
+    final public function addSuccessMessage($message) {
+        return $this->addMsg('successMessages', $message);
     }
 
     /**
@@ -78,7 +101,7 @@ class Flash {
      * @return \DScribe\Core\Flash
      */
     final public function setErrorMessage($message) {
-        $this->errorMessage = $message;
+        $this->errorMessages = array($message);
         return $this;
     }
 
@@ -86,8 +109,18 @@ class Flash {
      * Fetches the flash error message
      * @return string
      */
-    final public function getErrorMessage() {
-        return $this->errorMessage;
+    final public function getErrorMessage($parsed = true) {
+        return ($parsed) ? $this->parseMessages($this->errorMessages) :
+                $this->messages;
+    }
+
+    /**
+     * Adds a(n array of) error message(s)
+     * @param string|array $message
+     * @return \DScribe\Core\Flash
+     */
+    final public function addErrorMessage($message) {
+        return $this->addMsg('errorMessages', $message);
     }
 
     /**
@@ -95,7 +128,7 @@ class Flash {
      * @return boolean
      */
     final public function hasErrorMessage() {
-        return ($this->errorMessage !== null);
+        return !empty($this->errorMessages);
     }
 
     /**
@@ -103,7 +136,7 @@ class Flash {
      * @return boolean
      */
     final public function hasSuccessMessage() {
-        return ($this->successMessage !== null);
+        return !empty($this->successMessages);
     }
 
     /**
@@ -111,7 +144,7 @@ class Flash {
      * @return boolean
      */
     final public function hasMessage() {
-        return ($this->message !== null || $this->hasErrorMessage() || $this->hasSuccessMessage());
+        return !empty($this->messages);
     }
 
     /**
@@ -119,7 +152,7 @@ class Flash {
      * @return \DScribe\Core\Flash
      */
     final public function reset() {
-        $this->message = $this->successMessage = $this->errorMessage = null;
+        $this->messages = $this->successMessages = $this->errorMessages = array();
 
         return $this;
     }
@@ -129,6 +162,24 @@ class Flash {
      */
     final public function __destruct() {
         Session::save('Flash', $this);
+    }
+
+    public function parseMessages($messages) {
+        return (count($messages) > 1) ?
+                '<ul class="error-messages"><li>'
+                . join('</li><li>', $messages) .
+                '</li></ul>' :
+                $messages[0];
+    }
+
+    private function addMsg($type, $message) {
+        if (is_array($message)) {
+            $this->$type = array_merge($this->$type, $message);
+        }
+        else {
+            $this->{$type}[] = $message;
+        }
+        return $this;
     }
 
 }

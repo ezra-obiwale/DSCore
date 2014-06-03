@@ -29,10 +29,10 @@ class Exception extends \Exception {
         if (!$noLayout && !$request->isAjax()) {
             $view = new \DScribe\View\View(true);
             $return = $this->prepareOutput($ex);
-            $view->variables(array('exeption' => $return))->render($return->fullMessage);
+            $view->variables(array('exception' => $return))->render($return->messageWithTrace);
         }
         else {
-            echo $this->prepareOutput($ex)->fullMessage;
+            echo $this->prepareOutput($ex)->messageWithTrace;
         }
         exit;
     }
@@ -68,7 +68,7 @@ class Exception extends \Exception {
         echo '</div>';
         echo $return->trace;
         echo '</div>';
-        $return->fullMessage = ob_get_clean();
+        $return->messageWithTrace = ob_get_clean();
 
         return $return;
     }
