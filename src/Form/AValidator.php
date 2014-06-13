@@ -136,16 +136,23 @@ abstract class AValidator {
     }
 
     private function prepareFilters() {
+        $filters = $this->getFilters();
+
         if (isset($this->elements['csrf'])) {
             $csrf = new Csrf();
-            return array_merge($this->getFilters(), array(
-                'required' => true,
-                'Match' => array(
-                    'value' => $csrf->fetch()
-                )
+            $filters = array_merge($filters, array(
+                'csrf' => array(
+                    'required' => true,
+                    'Match' => array(
+                        'value' => $csrf->fetch()
+                    ))
             ));
         }
-        return $this->getFilters();
+
+        foreach ($this->noFilter as $elementName) {
+            unset($filters[$elementName]);
+        }
+        return $filters;
     }
 
     /**

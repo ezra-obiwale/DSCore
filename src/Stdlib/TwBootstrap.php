@@ -375,6 +375,8 @@ class TwBootstrap {
         return $return;
     }
 
+    private static $addCarouselJs = true;
+
     /**
      * Creates a carousel
      * @param array $items Array of items to add to the carousel<br /><br />
@@ -384,10 +386,16 @@ class TwBootstrap {
      * 					'img' => '<img src="path/to/src" />',<br />
      * 					'caption' => '',<br />
      * 					'active' => true|false,<br />
-     * 					'controls' => true|false,<br />
      * 				)<br />
      * 			)<br />
-     * @param array $attributes Array of attributes for the carousel
+     * @param array $attributes Array of attributes for the carousel<br /><br />
+     * 		Example:<br />
+     * 			Array (<br />
+     * 				array(<br />
+     * 					'controls' => true|false,<br />
+     * 					'class' => '',<br />
+     * 				)<br />
+     * 			)<br />
      * @return string
      */
     public static function carousel(array $items, array $attributes = array()) {
@@ -422,9 +430,47 @@ class TwBootstrap {
                 <a class="carousel-control right" href="#<?= $id ?>" data-slide="next">&rsaquo;</a>
             <?php endif; ?>
         </div>
+        <?php
+        if (self::$addCarouselJs):
+            self::$addCarouselJs = false;
+            ?>
+            <script>
+                function positionActiveImg(container) {
+                    if (!container)
+                        container = '.carousel';
+                    $.each($(container).children('.carousel-inner'), function(i, inner) {
+                        var img = $(inner).children('.item.active').children('img');
+                        $(img).on('complete', function() {
+                        alert(($(inner).parent().height() + ' : ' + $(inner).height()));
+                            $(img).css({'margin-left': (($(inner).width() - $(img).width()) / 2)});
+                            $(inner).css({'margin-top': (($(inner).parent().height() - $(inner).height()) / 2)});
+                        });
+                    });
+                }
+
+                function resizeImgs(container) {
+                    if (!container)
+                        container = '.carousel';
+                    $.each($(container), function(i, v) {
+                        if ($(v).height())
+                            var h = ($(v).height() > $(v).width()) ? $(v).width() : $(v).height();
+                        else
+                            var h = $(v).width();
+
+                        h = (!h) ? 'auto' : h;
+                        $.each($(this).children('.carousel-inner').children().children('img'), function(i, value) {
+                            $(value).css({height: h, width: 'auto'});
+                        });
+                    });
+
+                    setTimeout(positionActiveImg, 1000, container);
+                }
+            </script>
+        <?php endif; ?>
         <script>
             $(document).ready(function() {
                 $('#<?= $id ?>').carousel();
+                resizeImgs('#<?= $id ?>');
             });
         </script>
         <?php

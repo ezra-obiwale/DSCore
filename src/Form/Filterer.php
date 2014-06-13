@@ -191,12 +191,12 @@ class Filterer {
     }
 
     /**
-     * Checks if the contents of the element are all digits
+     * Checks if the content of the element is decimal
      * @param string $name Name of the element to filter
      * @param  array $options Keys may include [message]
      * @return boolean
      */
-    public function Digit($name, array $options) {
+    public function Decimal($name, array $options) {
         if (ctype_digit($this->data[$name]))
             return true;
 
@@ -208,7 +208,15 @@ class Filterer {
      * @see Filterer::Digit()
      */
     public function Number($name, array $options) {
-        return $this->Digit($name, $options);
+        if (stristr($this->data[$name], '.')) {
+            $this->error[$name][] = $this->checkMessage('Value can only contain numbers', $options);
+            return false;
+        }
+        
+        if (!isset($options['message']))
+            $options['message'] = 'Value can only contain numbers';
+        
+        return $this->Decimal($name, $options);
     }
 
     /**
