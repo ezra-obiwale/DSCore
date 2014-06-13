@@ -1,0 +1,74 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
+    ],
+    "hash": "a78470cf58f60ad198fe6e3c90cef040",
+    "packages": [
+        {
+            "name": "d-scribe/db-scribe",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ezra-obiwale/DBScribe.git",
+                "reference": "88d422653e77f11d4c29779fbee596a67989459a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ezra-obiwale/DBScribe/zipball/88d422653e77f11d4c29779fbee596a67989459a",
+                "reference": "88d422653e77f11d4c29779fbee596a67989459a",
+                "shasum": ""
+            },
+            "require": {
+                "d-scribe/core": "dev-master",
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "DBScribe\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ezra Obiwale",
+                    "email": "contact@ezraobiwale.com",
+                    "homepage": "http://ezraobiwale.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "PDO Abstraction Library to manage CRUD functions from within PHP",
+            "keywords": [
+                "abstraction",
+                "crud",
+                "database",
+                "dbscribe",
+                "dscribe",
+                "library",
+                "pdo"
+            ],
+            "time": "2014-06-07 11:56:07"
+        }
+    ],
+    "packages-dev": [
+
+    ],
+    "aliases": [
+
+    ],
+    "minimum-stability": "stable",
+    "stability-flags": {
+        "d-scribe/db-scribe": 20
+    },
+    "platform": {
+        "php": ">=5.3.0"
+    },
+    "platform-dev": [
+
+    ]
+}
