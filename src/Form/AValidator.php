@@ -76,9 +76,16 @@ abstract class AValidator {
     private $setupFilter;
 
     /**
+     * Name of the fieldset/form to be used in csrf validation
+     * @var string
+     */
+    private $name;
+
+    /**
      * Class constructor
      */
-    public function __construct() {
+    public function __construct($name) {
+        $this->name = $name;
         $this->msg = $this->filters = $this->elements = $this->data = $this->booleans = $this->fieldsets = $this->error = array();
         $this->validated = $this->setupFilter = false;
     }
@@ -108,6 +115,8 @@ abstract class AValidator {
             if (in_array($name, $this->noFilter))
                 continue;
 
+            if (!is_object($this->data[$name]))
+                $filterer->StripTags($name, $filters['StripTags'] ? $filters['StripTags'] : '');
             foreach ($filters as $filter => $options) {
                 if (method_exists($filterer, $filter)) {
                     if (!call_user_func_array(array($filterer, $filter), array($name, $options))) {
@@ -139,20 +148,35 @@ abstract class AValidator {
         $filters = $this->getFilters();
 
         if (isset($this->elements['csrf'])) {
-            $csrf = new Csrf();
+            $csrf = new Csrf($this->name);
             $filters = array_merge($filters, array(
                 'csrf' => array(
                     'required' => true,
                     'Match' => array(
-                        'value' => $csrf->fetch()
+                        'value' => $csrf->fetch(),
+                        'message' => 'Form expired. Please retry'
                     ))
             ));
+            $csrf->remove();
         }
+
+        if ($this->filters)
+            $filters = array_merge_recursive($filters, $this->filters);
 
         foreach ($this->noFilter as $elementName) {
             unset($filters[$elementName]);
         }
         return $filters;
+    }
+
+    /**
+     * Returns all filters, both original and add-on
+     * @return array
+     */
+    final public function getAllFilters() {
+        return ($this->filters) ?
+                array_merge_recursive($this->filters, $this->getFilters()) :
+                $this->getFilters();
     }
 
     /**

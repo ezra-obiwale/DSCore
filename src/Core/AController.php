@@ -31,13 +31,22 @@ abstract class AController extends AInjector {
     protected $request;
 
     /**
+     * Indicates whether the $view as been initialized
+     * @var boolean
+     */
+    protected $initializedView;
+
+    /**
      * Sets the view instance to use
      * @param View $view
      * @return AController
      */
     final public function setView(View $view) {
         $this->view = $view;
-        $this->init();
+        if (!$this->initializedView) {
+            $this->initializedView = true;
+            $this->init();
+        }
         return $this;
     }
 
@@ -47,7 +56,10 @@ abstract class AController extends AInjector {
     final protected function construct() {
         $this->request = new Request();
         $this->view = new View();
-        $this->init();
+        if (!$this->initializedView) {
+            $this->initializedView = true;
+            $this->init();
+        }
     }
 
     /**
@@ -129,12 +141,13 @@ abstract class AController extends AInjector {
      * @param string|null $controller
      * @param string|null $action
      * @param array $params
+     * @param string $hash
      */
-    final protected function redirect($module, $controller = null, $action = null, array $params = array()) {
+    final protected function redirect($module, $controller = null, $action = null, array $params = array(), $hash = null) {
         $module = ($module) ? $module : Engine::getModule();
         $controller = ($controller) ? $controller : Engine::getController();
         $action = ($action) ? $action : Engine::getAction();
-        header('Location: ' . $this->view->url($module, $controller, $action, $params));
+        header('Location: ' . $this->view->url($module, $controller, $action, $params, $hash));
         exit;
     }
 

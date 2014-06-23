@@ -111,7 +111,7 @@ class Flash {
      */
     final public function getErrorMessage($parsed = true) {
         return ($parsed) ? $this->parseMessages($this->errorMessages) :
-                $this->messages;
+                $this->errorMessages;
     }
 
     /**

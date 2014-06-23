@@ -34,20 +34,19 @@ class TwBootstrap {
     /**
      *
      * @param array $contents array(<br />
-      "tab1" => "content",<br />
-      "tab2" => "content",<br />
-      "tab3" => "content",<br />
-      );
-     * @param array $options array (
+     *                          "tab1" => "content",<br />
+     *                          "tab2" => "content",<br />
+     *                          "tab3" => "content",<br />
+     *                      );
+     * @param array $options <br />
+     *   array( <br />
+     *       "active" => "tab2", <br />
+     *       "tabClass" => "the class", <br />
+     *   ); <br />
      * @return type
      */
     public static function createTabs(array $contents, array $options = array()) {
         ob_start();
-
-        array(
-            "active" => "tab2",
-            "tab_class" => "the class",
-        );
         ?>
         <div class="tabbable"> <!-- Only required for left/right tabs -->
             <ul class="nav nav-tabs">
@@ -55,7 +54,7 @@ class TwBootstrap {
                 $tabs = array_keys($contents);
                 foreach ($tabs as $key => $tab) {
                     ?>
-                    <li class="<?= ($tab == @$options["active"]) ? "active" : "" ?> <?= @$options["tab_class"] ?>">
+                    <li class="<?= ($tab == @$options["active"]) ? "active" : "" ?> <?= @$options["tabClass"] ?>">
                         <a href="#tab<?= $key + 1 ?>" data-toggle="tab"><?= $tab ?></a>
                     </li>
                     <?php

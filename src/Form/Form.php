@@ -12,12 +12,6 @@ use DScribe\Core\Engine,
 class Form extends Fieldset {
 
     /**
-     * Name of form
-     * @var string
-     */
-    protected $name;
-
-    /**
      * Array of prepared elements, ready for rendering
      * @var \Object
      */
@@ -30,22 +24,13 @@ class Form extends Fieldset {
     private $nameMeta;
 
     public function __construct($name = 'form', array $attributes = array()) {
-        $this->name = $name;
         $this->nameMeta = array();
         if (!isset($attributes['name']))
             $attributes['name'] = $name;
         if (!isset($attributes['id']))
             $attributes['id'] = $name;
 
-        parent::__construct($attributes);
-    }
-
-    /**
-     * Fetches the name of the form
-     * @return string
-     */
-    public function getName() {
-        return $this->name;
+        parent::__construct($name, $attributes);
     }
 
     /**
@@ -118,9 +103,9 @@ class Form extends Fieldset {
         $value = (isset($data[$element->name]) && !is_object($data[$element->name])) ?
                 $data[$element->name] :
                 ((isset($element->options->value)) ? $element->options->value : null);
-        
+
         if ($element->name === 'csrf') {
-            $csrf = new Csrf();
+            $csrf = new Csrf($this->getName());
             $value = $csrf->create()->fetch();
         }
 
@@ -305,8 +290,10 @@ class Form extends Fieldset {
                         '>' . $value . '</' . $element->type . '>' . $errorMsgs[$element->name];
                 break;
             default:
+                if ($element->type === 'file')
+                    $value = '';
                 $prepared = '<input type="' . $element->type . '" ' .
-                        'name="' . $element->name . '" ' .
+                        'name="' . $element->name . (isset($element->attributes->multiple) ? '[]' : '') . '" ' .
                         'value="' . $value . '" ' .
                         $this->parseAttributes($element->attributes->toArray()) .
                         ' />' . $errorMsgs[$element->name];

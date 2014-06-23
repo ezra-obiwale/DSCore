@@ -12,6 +12,8 @@ class Util {
     const UPLOAD_ERROR_PERMISSION = 'Insufficient permission to save';
     const UPLOAD_ERROR_FAILED = 'Upload failed';
     const UPLOAD_SUCCESSFUL = 'File uploaded successfully';
+    
+    public static $timezones;
 
     public static $uploadSuccess = self::UPLOAD_SUCCESSFUL;
 
@@ -96,12 +98,14 @@ class Util {
      * Reads the required source directory
      * @param string $dir
      * @param int $return
-     * @param string|array $extension
+     * @param boolean $recursive
+     * @param string|array\null $extension Extensions without the dot (.)
      * @param boolean $nameOnly Indicates whether to return full path of dirs/files or names only
+     * @param array $options keys include: 
      * @return array
      * @throws \Exception
      */
-    public static function readDir($dir, $return = Util::ALL, $recursive = false, $extension = NULL, $nameOnly = false) {
+    public static function readDir($dir, $return = Util::ALL, $recursive = false, $extension = NULL, $nameOnly = false, array $options = array()) {
         if (!is_dir($dir))
             return array(
                 'error' => 'Directory "' . $dir . '" does not exist',
@@ -126,13 +130,15 @@ class Util {
                         $toReturn['dirs'][] = ($nameOnly) ? $current : $dir . $current;
                     }
                     if ($recursive) {
-                        $toReturn = array_merge_recursive($toReturn, self::readDir($dir . $current, self::ALL, true));
+                        $toReturn = array_merge_recursive($toReturn, self::readDir($dir . $current, self::ALL, true, $extension, $nameOnly, $options));
                     }
                 }
                 else if (is_file($dir . $current) && in_array($return, array(self::FILES_ONLY, self::ALL))) {
-                    $info = pathinfo($current);
-                    if (empty($extension) || (is_array($extension) && in_array($info['extension'], $extension)))
-                        $toReturn['files'][] = ($nameOnly) ? $current : $dir . $current;
+                    if ($extension)
+                        $info = pathinfo($current);
+                    if (empty($extension) || (is_array($extension) && in_array($info['extension'], $extension))) {
+                        $toReturn['files'][$dir][] = ($nameOnly) ? $current : $dir . $current;
+                    }
                 }
             }
 
@@ -172,8 +178,10 @@ class Util {
             }
 
             if (isset($contents['files'])) {
-                foreach ($contents['files'] as $fullPath) {
-                    @copy($fullPath, str_replace(array($source, DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR), array($destination, DIRECTORY_SEPARATOR), $fullPath));
+                foreach ($contents['files'] as $fullPathsArray) {
+                    foreach ($fullPathsArray as $fullPath) {
+                        @copy($fullPath, str_replace(array($source, DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR), array($destination, DIRECTORY_SEPARATOR), $fullPath));
+                    }
                 }
             }
         }
@@ -226,6 +234,87 @@ class Util {
         }
 
         return rmdir($dir);
+    }
+
+    /**
+     * Resizes an image
+     * @param string $source Path to image file
+     * @param int $desiredWidth The width of the new image
+     * @param string $destination Path to save image to. If null, the source will be overwritten
+     * @return boolean
+     */
+    public static function resizeImage($source, $desiredWidth = 200, $destination = null) {
+        if (!$destination)
+            $destination = $source;
+
+        $info = pathinfo($source);
+
+        /* read the source image */
+        switch (strtolower($info['extension'])) {
+            case 'jpeg':
+            case 'jpg':
+                $sourceImage = imagecreatefromjpeg($source);
+                break;
+            case 'gif':
+                $sourceImage = imagecreatefromgif($source);
+                break;
+            case 'png':
+                $sourceImage = imagecreatefrompng($source);
+                break;
+        }
+        $width = imagesx($sourceImage);
+        $height = imagesy($sourceImage);
+
+        /* find the "desired height" of this thumbnail, relative to the desired width  */
+        $desiredHeight = floor($height * ($desiredWidth / $width));
+
+        /* create a new "virtual" image */
+        $virtualImage = imagecreatetruecolor($desiredWidth, $desiredHeight);
+
+        /* copy source image at a resized size */
+        imagecopyresampled($virtualImage, $sourceImage, 0, 0, 0, 0, $desiredWidth, $desiredHeight, $width, $height);
+
+        $return = false;
+        /* create the physical thumbnail image to its destination */
+        switch (strtolower($info['extension'])) {
+            case 'jpeg':
+            case 'jpg':
+                $return = imagejpeg($virtualImage, $destination);
+                break;
+            case 'gif':
+                $return = imagegif($virtualImage, $destination);
+                break;
+            case 'png':
+                $return = imagepng($virtualImage, $destination);
+                break;
+        }
+
+        return $return;
+    }
+
+    /**
+     * Resize all images in a directory
+     * 
+     * @param string $dir Directory path of images
+     * @param int $desiredWidth Desired width of new images
+     * @param boolean $overwrite Overwrite old images?
+     * @param boolean $recursive Indicates if subdirectories should be searched too
+     * @param string $subDir If not overwrite, name of subfolder within the $dir
+     *  to resize into
+     */
+    public static function resizeImageDirectory($dir, $desiredWidth = 200, $overwrite = false, $recursive = true, $subDir = 'resized') {
+        foreach (self::readDir($dir, self::FILES_ONLY, $recursive, null, true) as $path => $filesArray) {
+            foreach ($filesArray as $file) {
+                $destination = null;
+                if (!$overwrite) {
+                    if (!is_dir($path . $subDir)) {
+                        mkdir($path . $subDir);
+                    }
+                    $destination = $path . $subDir . DIRECTORY_SEPARATOR . $file;
+                }
+                self::resizeImage($path . $file, $desiredWidth, $destination);
+            }
+        }
     }
 
     /**
@@ -293,20 +382,12 @@ class Util {
      * @return string
      */
     public static function randomPassword($length = 8) {
-        $chars = str_split(str_shuffle('bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ123456789&^%$#@!\'"_-+='));
+        $chars = str_split(str_shuffle('bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ123456789&^%$#@!_-+='));
         $password = '';
         foreach (array_rand($chars, $length) as $key) {
             $password .= $chars[$key];
         }
         return $password;
-    }
-
-    public static function pathInfo($file) {
-        return pathinfo(self::getFileName($file));
-    }
-
-    public static function getFileName($filePath) {
-        return (stristr($filePath, '/')) ? substr($filePath, strripos($filePath, '/') + 1) : $filePath;
     }
 
     /**
@@ -321,10 +402,62 @@ class Util {
     public static function updateConfig($path, array $data = array(), $recursiveMerge = false, array $configArray = null) {
         if (!$configArray)
             $configArray = include $path;
-        
+
         $config = ($recursiveMerge) ? array_merge_recursive($configArray, $data) : array_merge($configArray, $data);
         $content = str_replace("=> \n", '=>', var_export($config, true));
         return (file_put_contents($path, '<' . '?php' . "\r\n\treturn " . $content . ';') === FALSE) ? false : true;
+    }
+
+    /**
+     * Send an array or object to javascript
+     * @param object|array $value
+     * @return string
+     * @usage a = <?= Util::toJavascriptArray($array|$object) ?>
+     */
+    public static function toJavascriptArray($value) {
+        return json_encode($value);
+    }
+
+    /**
+     * Create a list of time zones
+     * @return array
+     */
+    public static function listTimezones() {
+        if (self::$timezones === null) {
+            self::$timezones = array();
+            $offsets = array();
+            $now = new DateTime();
+
+            foreach (DateTimeZone::listIdentifiers() as $timezone) {
+                $now->setTimezone(new DateTimeZone($timezone));
+                $offsets[] = $offset = $now->getOffset();
+                self::$timezones[$timezone] = '(' . self::formatGmtOffset($offset) . ') ' . self::formatTimezoneName($timezone);
+            }
+
+            array_multisort($offsets, self::$timezones);
+        }
+
+        return self::$timezones;
+    }
+
+    /**
+     * Formats GMT offset to string
+     * @param string $offset
+     * @return string
+     */
+    public static function formatGmtOffset($offset) {
+        $hours = intval($offset / 3600);
+        $minutes = abs(intval($offset % 3600 / 60));
+        return 'GMT' . ($offset ? sprintf('%+03d:%02d', $hours, $minutes) : '');
+    }
+
+    /**
+     * Formats time zone name to a more presentable format
+     * @param string $name
+     * @return string
+     */
+    public static function formatTimezoneName($name) {
+        return str_replace(array('/', '_', 'St'), array(',', ' ', 'St.'), $name);
     }
 
 }

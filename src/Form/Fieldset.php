@@ -15,6 +15,12 @@ use DScribe\Core\IModel,
 class Fieldset extends AValidator {
 
     /**
+     * Name of form
+     * @var string
+     */
+    private $name;
+
+    /**
      * Attribute array
      * @var array
      */
@@ -36,10 +42,19 @@ class Fieldset extends AValidator {
      * @param string $name Name of fieldset
      * @param array $attributes
      */
-    public function __construct(array $attributes = array()) {
-        parent::__construct();
+    public function __construct($name, array $attributes = array()) {
+        parent::__construct($name);
+        $this->name = $name;
         $this->attributes = $this->noFilter = array();
         $this->setAttributes($attributes);
+    }
+
+    /**
+     * Fetches the name of the form
+     * @return string
+     */
+    public function getName() {
+        return $this->name;
     }
 
     /**
@@ -305,6 +320,7 @@ class Fieldset extends AValidator {
     final public function remove($elementName) {
         if (isset($this->elements[$elementName])) {
             unset($this->elements[$elementName]);
+            $elementName = str_replace('[]', '', $elementName);
             unset($this->data[$elementName]);
             unset($this->booleans[$elementName]);
             unset($this->fieldsets[$elementName]);

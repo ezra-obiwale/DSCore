@@ -222,7 +222,9 @@ class View {
      */
     final public function getRenderer() {
         if (!$this->renderer)
-            $this->renderer = new Renderer ();
+            $this->renderer = new Renderer();
+        
+        $this->renderer->setView($this);
         return $this->renderer;
     }
 
@@ -230,7 +232,7 @@ class View {
      * Renders the view
      */
     final public function render($errorMessage = null) {
-        $this->getRenderer()->setView($this)->render($errorMessage);
+        $this->getRenderer()->render($errorMessage);
     }
 
     /**

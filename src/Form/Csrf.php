@@ -17,8 +17,8 @@ class Csrf {
 
     protected $name;
 
-    public function __construct() {
-        $this->name = 'secureForm';
+    public function __construct($name = 'secureForm') {
+        $this->name = md5($name);
     }
 
     public function create() {
@@ -37,6 +37,10 @@ class Csrf {
     public function remove() {
         \Session::remove($this->name);
         return $this;
+    }
+    
+    public function getName() {
+        return $this->name;
     }
 
 }

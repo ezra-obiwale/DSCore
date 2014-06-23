@@ -40,9 +40,10 @@ class AService extends AInjector {
      * Sets the model to class
      * @param IModel $model
      */
-    public function setModel(IModel $model) {
+    public function setModel(IModel $model, $initRepo = true) {
         $this->model = $model;
-        $this->initRepository();
+        if ($initRepo)
+            $this->initRepository();
         return $this;
     }
 

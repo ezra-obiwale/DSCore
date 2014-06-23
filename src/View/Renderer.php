@@ -113,19 +113,21 @@ class Renderer extends AInjector {
     /**
      * Loads a layout
      * @param string $layoutName Without the extension
-     * @param array $variables Array of variables to pass into the layout [name => value]
-     * @param boolean $fromTheme Indicates whether to get theme layouts or search through modules
+     * @param array $variables Array of variables to pass into the layout 
+     * [name => value] with "dsLayout" as an exemption of name
+     * @param boolean $fromTheme Indicates whether to get theme layouts or 
+     * search through modules
      * @return string
      */
     final protected function loadLayout($layoutName, array $variables = array(), $fromTheme = false) {
-        $layout = $this->getLayout($layoutName, $fromTheme);
-        if (!$layout)
+        $dsLayout = $this->getLayout($layoutName, $fromTheme);
+        if (!$dsLayout)
             return '';
 
-        foreach ($variables as $name => $value) {
-            $$name = $value;
+        foreach ($variables as $var => $value) {
+            $$var = $value;
         }
-        include $layout;
+        include $dsLayout;
     }
 
     /**
@@ -208,9 +210,20 @@ class Renderer extends AInjector {
         else {
             if (!$errorLayout = Engine::getConfig('modules', Engine::getModule(), 'defaults', 'errorLayout', false)) {
                 if (!$errorLayout = Engine::getConfig('defaults', 'errorLayout', false)) {
-                    throw new Exception('Error Layout Not Found', true);
+                    throw new Exception('Error layout not found', true);
                 }
             }
+
+            if (is_array($errorLayout)) {
+                if (!array_key_exists('guest', $errorLayout))
+                    throw new Exception('Error layout not found for "guest"', true);
+
+                if (array_key_exists($this->userIdentity()->getUser()->getRole(), $errorLayout))
+                    $errorLayout = $errorLayout[$this->userIdentity()->getUser()->getRole()];
+                else
+                    $errorLayout = $errorLayout['guest'];
+            }
+
             ob_start();
             $this->loadLayout($errorLayout, array_merge(array('content' => $content), $this->view->getVariables()));
             $content = ob_get_clean();
