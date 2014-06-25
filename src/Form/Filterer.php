@@ -212,10 +212,10 @@ class Filterer {
             $this->error[$name][] = $this->checkMessage('Value can only contain numbers', $options);
             return false;
         }
-        
+
         if (!isset($options['message']))
             $options['message'] = 'Value can only contain numbers';
-        
+
         return $this->Decimal($name, $options);
     }
 

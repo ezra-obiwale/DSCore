@@ -1,9 +1,13 @@
 <?php
 
 /**
- * Description of Email
+ * Class to send email
  *
- * @author topman
+ * @author Ezra Obiwale <contact@ezraobiwale.com>
+ * 
+ * @todo Check why mixed messages (html & text) get sent but with no body
+ * @todo Try some attachments
+ * @see mail()
  */
 class Email {
 
@@ -71,9 +75,7 @@ class Email {
         $this->html = $content;
         $this->htmlCharset = (isset($options['charset'])) ? $options['charset'] : 'utf-8';
         if (@$options['autoSetText']) {
-            $text = str_replace(array('<div', '<p'), array("<br><div", "<br><br><p"), $content);
-            $text = str_replace(array('<br />', '<br>', '<br></br>'), "\n\r", $text);
-            $this->setText(strip_tags($text), $this->htmlCharset);
+            $this->setText(strip_tags($this->html), $this->htmlCharset);
         }
         return $this;
     }
@@ -113,14 +115,27 @@ class Email {
         if (!empty($this->html)) {
             $message = $this->html;
 
-            $this->headers("Content-type: text/html; charset=" . $this->htmlCharset);
+            $endWithSeparator = false;
+            if ($this->text || $this->attachments) {
+                $this->headers("Content-type: multipart/" . (($this->attachments) ? 'mixed' : 'alternative') . "; charset=" . $this->htmlCharset);
+                $endWithSeparator = true;
+            }
+            else {
+                $this->headers("Content-type: text/html; charset=" . $this->htmlCharset);
+                $this->headers('Content-Transfer-Encoding:8bit');
+            }
             $this->headers("MIME-Version: 1.0");
 
             if (!empty($this->text)) {
                 $this->separateHeaders();
-                $this->headers("Content-type: text/plain; charset=" . $this->textCharset);
+                $this->headers("Content-type: text/plain; charset=" . $this->htmlCharset);
                 $this->headers('Content-Transfer-Encoding:8bit');
                 $this->headers($this->text);
+
+                $this->separateHeaders();
+                $this->headers("Content-type: text/html; charset=" . $this->htmlCharset);
+                $this->headers('Content-Transfer-Encoding:8bit');
+                $this->headers($message);
             }
         }
         elseif (!empty($this->text)) {
@@ -133,6 +148,10 @@ class Email {
         if (!empty($this->attachments)) {
             $this->setAttachmentHeader();
         }
+
+        if ($endWithSeparator)
+            $this->separateHeaders();
+
         return mail($to, $subject, $message, $this->headers);
     }
 
@@ -156,8 +175,10 @@ class Email {
         return $this->replyTo;
     }
 
-    public function sendFrom($from) {
+    public function sendFrom($from, $receiveReplies = false) {
         $this->from = $from;
+        if ($receiveReplies)
+            $this->replyTo($from);
         return $this;
     }
 
@@ -171,11 +192,21 @@ class Email {
         return $this;
     }
 
+    /**
+     * Adds a best carbon copy
+     * @param string $bcc Email address to send to
+     * @return \Email
+     */
     public function addBcc($bcc) {
         $this->bcc = (!empty($this->bcc)) ? $this->bcc . ',' . $bcc : $bcc;
         return $this;
     }
 
+    /**
+     * Fetches the email address to receive replies from message
+     * @param string $replyTo
+     * @return \Email
+     */
     public function replyTo($replyTo) {
         $this->replyTo = $replyTo;
         return $this;
@@ -204,8 +235,6 @@ class Email {
 
         if ($replyTo)
             $this->headers("Reply-To: " . $replyTo);
-        elseif ($from)
-            $this->headers("Reply-To: " . $from);
 
         return $this;
     }
@@ -244,7 +273,7 @@ class Email {
             $this->sepOn = true;
         }
 
-        return $this->headers($this->sep);
+        return $this->headers("\r\n" . '--' . $this->sep);
     }
 
 }
