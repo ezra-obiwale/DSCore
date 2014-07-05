@@ -55,7 +55,7 @@ class TwBootstrap {
                 foreach ($tabs as $key => $tab) {
                     ?>
                     <li class="<?= ($tab == @$options["active"]) ? "active" : "" ?> <?= @$options["tabClass"] ?>">
-                        <a href="#tab<?= $key + 1 ?>" data-toggle="tab"><?= $tab ?></a>
+                        <a href="#tab-<?= preg_replace('/[^a-zA-z0-9]/', '-', $tab) ?>" data-toggle="tab"><?= $tab ?></a>
                     </li>
                     <?php
                 }
@@ -66,7 +66,7 @@ class TwBootstrap {
                 $count = 1;
                 foreach ($contents as $tab => $content) {
                     ?>
-                    <div class="tab-pane <?= ($tab == @$options["active"]) ? "active" : "" ?>" id="tab<?= $count ?>">
+                <div class="tab-pane <?= ($tab == @$options["active"]) ? "active" : "" ?>" id="tab-<?= preg_replace('/[^a-zA-z0-9]/', '-', $tab) ?>">
                         <p><?= $content ?></p>
                     </div>
                     <?php
@@ -440,7 +440,6 @@ class TwBootstrap {
                     $.each($(container).children('.carousel-inner'), function(i, inner) {
                         var img = $(inner).children('.item.active').children('img');
                         $(img).on('complete', function() {
-                        alert(($(inner).parent().height() + ' : ' + $(inner).height()));
                             $(img).css({'margin-left': (($(inner).width() - $(img).width()) / 2)});
                             $(inner).css({'margin-top': (($(inner).parent().height() - $(inner).height()) / 2)});
                         });
@@ -594,6 +593,29 @@ class TwBootstrap {
             <div class="bar" style="width:<?= $percentage ?>%"><?= $message ?></div>
         </div>
         <?php
+        return ob_get_clean();
+    }
+
+    private static $addPopoverJs = true;
+
+    public static function popover($content, $label, $placement = 'top', $title = null, $class = null) {
+        ob_start();
+        ?>
+        <a href="#" class="<?= $class ?>" rel="popover" data-placement="<?= $placement ?>"
+           data-content='<?= $content ?>' <?=
+           $title ? ' data-original-title="' .
+                   $title . '"' : ''
+           ?>><?= $label ?></a>
+           <?php if (self::$addPopoverJs): ?>
+            <script>
+                $(document).ready(function() {
+                    $('a[rel="popover"]').popover({
+                        html:true
+                    });
+                });
+            </script>
+            <?php
+        endif;
         return ob_get_clean();
     }
 

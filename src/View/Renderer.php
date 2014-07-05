@@ -120,7 +120,7 @@ class Renderer extends AInjector {
      * @return string
      */
     final protected function loadLayout($layoutName, array $variables = array(), $fromTheme = false) {
-        $dsLayout = $this->getLayout($layoutName, $fromTheme);
+        $dsLayout = $this->getLayoutPath($layoutName, $fromTheme);
         if (!$dsLayout)
             return '';
 
@@ -136,7 +136,7 @@ class Renderer extends AInjector {
      * @return boolean
      * @throws Exception2
      */
-    private function getLayout($layout = null, $fromTheme = false) {
+    private function getLayoutPath($layout = null, $fromTheme = false) {
         $layout = ($layout === null) ? $this->view->getController()->getLayout() : $layout;
         if (!$layout)
             return false;
@@ -190,7 +190,7 @@ class Renderer extends AInjector {
             $content = ob_get_clean();
             if (!$this->view->isPartial()) {
                 // include controller layout
-                $controllerLayout = self::getLayout();
+                $controllerLayout = self::getLayoutPath();
                 if ($controllerLayout) {
                     ob_start();
                     include_once $controllerLayout;
@@ -316,37 +316,40 @@ class Renderer extends AInjector {
     /**
      * Loads a style sheet file
      * @param string $css Filename without the extension with base as ./assets
-     * @param string $fromTheme Indicates whether to load the icon from the theme or current module
+     * @param boolean $fromTheme Indicates whether to load the stylesheet from the theme or current module
+     * @param boolean $once Indicates whether to load the stylesheet only once
      * @return string
      */
-    final protected function loadCss($css, $fromTheme = false) {
-        if ($this->canLoadAsset($css, 'css')) {
-            return '<link rel="stylesheet" type="text/css" href="' . $this->getFile($css . '.css', $fromTheme) . '" />' . "\n";
-        }
+    final protected function loadCss($css, $fromTheme = false, $once = false) {
+        if ($once && !$this->canLoadAsset($css, 'css'))
+            return null;
+        return '<link rel="stylesheet" type="text/css" href="' . $this->getFile($css . '.css', $fromTheme) . '" />' . "\n";
     }
 
     /**
      * Loads a javascript file
      * @param string $src Filename without the extension with base as ./assets
-     * @param string $fromTheme Indicates whether to load the icon from the theme or current module
-     * @return string
+     * @param boolean $fromTheme Indicates whether to load the javascript from the theme or current module
+     * @param boolean $once Indicates whether to load the stylesheet only once
+     * @return string|null
      */
-    final protected function loadJs($src, $fromTheme = false) {
-        if ($this->canLoadAsset($src, 'js')) {
-            return '<script type="text/javascript" src="' . $this->getFile($src . '.js', $fromTheme) . '"></script>' . "\n";
-        }
+    final protected function loadJs($src, $fromTheme = false, $once = false) {
+        if ($once && !$this->canLoadAsset($src, 'js'))
+            return null;
+        return '<script type="text/javascript" src="' . $this->getFile($src . '.js', $fromTheme) . '"></script>' . "\n";
     }
 
     /**
      * Loads the icon for the page
-     * @param type $src Filename with extension and base as ./assets in theme or module
-     * @param string $fromTheme Indicates whether to load the icon from the theme or current module
+     * @param string $src Filename with extension and base as ./assets in theme or module
+     * @param boolean $fromTheme Indicates whether to load the icon from the theme or current module
+     * @param boolean $once Indicates whether to load the stylesheet only once
      * @return string
      */
-    final protected function loadIcon($src, $fromTheme = false) {
-        if ($this->canLoadAsset($src, 'icon')) {
-            return '<link rel="shortcut icon" href="' . $this->getFile($src, $fromTheme) . '"/>' . "\n";
-        }
+    final protected function loadIcon($src, $fromTheme = false, $once = true) {
+        if ($once && !$this->canLoadAsset($src, 'icon'))
+            return null;
+        return '<link rel="shortcut icon" href="' . $this->getFile($src, $fromTheme) . '"/>' . "\n";
     }
 
     /**
@@ -369,11 +372,11 @@ class Renderer extends AInjector {
      * @return boolean
      */
     final protected function canLoadAsset($file, $type) {
-        $fileName = explode(DIRECTORY_SEPARATOR, $file);
-        if (in_array($fileName, $this->loadedAssets[$type]))
+        $filename = basename($file);
+        if (in_array($filename, $this->loadedAssets[$type]))
             return false;
 
-        $this->loadedAssets[$type][] = $fileName;
+        $this->loadedAssets[$type][] = $filename;
         return true;
     }
 
