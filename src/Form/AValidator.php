@@ -116,7 +116,7 @@ abstract class AValidator {
                 continue;
 
             if (!is_object($this->data[$name]))
-                $filterer->StripTags($name, $filters['StripTags'] ? $filters['StripTags'] : '');
+                $filterer->StripTags($name, $filters['AllowTags'] ? $filters['AllowTags'] : '');
             foreach ($filters as $filter => $options) {
                 if (method_exists($filterer, $filter)) {
                     if (!call_user_func_array(array($filterer, $filter), array($name, $options))) {
