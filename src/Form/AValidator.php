@@ -57,7 +57,7 @@ abstract class AValidator {
      * @return boolean
      */
     private function validate() {
-        $filterer = new Filterer($this->data);
+        $filterer = new Filterer(array());
         $valid = true;
         foreach ($this->elements as $element) {
             if (!$element->validate($filterer))
