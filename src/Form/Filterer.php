@@ -12,25 +12,47 @@ namespace DScribe\Form;
 class Filterer {
 
     /**
-     * Array of data to filter
+     * Array of data from form
      * @var array
      */
     protected $data;
 
     /**
+     * Data of the currently filtering element
+     * @var mixed
+     */
+    protected $elementData;
+
+    /**
      * Array of errors
      * @var array
      */
-    protected $error;
+    protected $errors;
 
     /**
      * Class constructor
-     * @param array $data Data to filter
-     * @param array $error Array to store errors
+     * @param array $data Data from form
      */
-    public function __construct(array &$data, array &$error) {
-        $this->data = & $data;
-        $this->error = & $error;
+    public function __construct(array $data) {
+        $this->data = $data;
+    }
+
+    public function getElementData() {
+        return $this->elementData;
+    }
+
+    public function setElementData($elementData) {
+        $this->elementData = $elementData;
+        return $this;
+    }
+
+    public function reset() {
+        $this->errors = null;
+        return $this;
+    }
+
+    public function getErrors() {
+        return $this->errors;
     }
 
     /**
@@ -54,23 +76,22 @@ class Filterer {
      * Array indicates required and has options
      * @return boolean
      */
-    public function required($name, $options) {
-        if (array_key_exists($name, $this->data) && ((is_array($options)) || (!is_array($options) && $options))) {
-            if ((is_array($this->data[$name]) && (empty($this->data[$name]) || (empty($this->data[$name][0]) && count($this->data[$name]) === 1))) || (!is_array($this->data[$name]) && @trim($this->data[$name]) === '')) {
+    public function required($options) {
+        if ((is_array($options) || (!is_array($options) && $options))) {
+            if ((is_array($this->elementData) && (empty($this->elementData) || (empty($this->elementData[0]) && count($this->elementData) === 1))) ||
+                    (!is_array($this->elementData) && trim($this->elementData) === '')) {
                 if (is_bool($options))
-                    $this->error[$name][] = 'Field is required';
+                    $this->errors[] = 'Field is required';
                 else if (is_array($options) && isset($options['message'])) {
-                    $this->error[$name][] = $options['message'];
+                    $this->errors[] = $options['message'];
                 }
                 else
-                    $this->error[$name][] = (!is_array($options) && !is_object($options)) ? $options : 'Field is required';
-
+                    $this->errors[] = (!is_array($options) && !is_object($options)) ? $options : 'Field is required';
                 return false;
             }
-
             return true;
         }
-        return false;
+        return true;
     }
 
     /**
@@ -80,10 +101,10 @@ class Filterer {
      * @return boolean
      * @throws \Exception
      */
-    public function Match($name, array $options) {
+    public function match(array $options) {
         if (isset($options['element'])) {
             if (isset($this->data[$options['element']])) {
-                if ($this->data[$name] == $this->data[$options['element']]) {
+                if ($this->elementData == $this->data[$options['element']]) {
                     return true;
                 }
             }
@@ -92,12 +113,12 @@ class Filterer {
             }
         }
         else if (isset($options['value'])) {
-            if ($this->data[$name] == $options['value']) {
+            if ($this->elementData == $options['value']) {
                 return true;
             }
         }
 
-        $this->error[$name][] = $this->checkMessage('Values mismatch', $options);
+        $this->errors[] = $this->checkMessage('Values mismatch', $options);
         return false;
     }
 
@@ -108,10 +129,10 @@ class Filterer {
      * @return boolean
      * @throws \Exception
      */
-    public function NotMatch($name, array $options) {
+    public function notMatch(array $options) {
         if (isset($options['element'])) {
             if (isset($this->data[$options['element']])) {
-                if ($this->data[$name] != $this->data[$options['element']]) {
+                if ($this->elementData != $this->data[$options['element']]) {
                     return true;
                 }
             }
@@ -119,12 +140,12 @@ class Filterer {
                 return true;
         }
         else if (isset($options['value'])) {
-            if ($this->data[$name] != $options['value']) {
+            if ($this->elementData != $options['value']) {
                 return true;
             }
         }
 
-        $this->error[$name][] = $this->checkMessage('Values must not match', $options);
+        $this->errors[] = $this->checkMessage('Values must not match', $options);
         return false;
     }
 
@@ -134,13 +155,13 @@ class Filterer {
      * @param  array $options Keys may include [message]
      * @return boolean
      */
-    public function Email($name, array $options) {
-        if (empty($this->data[$name]) || filter_var($this->data[$name], FILTER_VALIDATE_EMAIL)) {
-            $this->data[$name] = filter_var($this->data[$name], FILTER_SANITIZE_EMAIL);
+    public function email(array $options) {
+        if (empty($this->elementData) || filter_var($this->elementData, FILTER_VALIDATE_EMAIL)) {
+            $this->elementData = filter_var($this->elementData, FILTER_SANITIZE_EMAIL);
             return true;
         }
 
-        $this->error[$name][] = $this->checkMessage('Value is not a valid email adddress', $options);
+        $this->errors[] = $this->checkMessage('Invalid email adddress', $options);
         return false;
     }
 
@@ -150,13 +171,13 @@ class Filterer {
      * @param  array $options Keys may include [message]
      * @return boolean
      */
-    public function Url($name, array $options) {
-        if (empty($this->data[$name]) || filter_var($this->data[$name], FILTER_VALIDATE_URL)) {
-            $this->data[$name] = filter_var($this->data[$name], FILTER_SANITIZE_URL);
+    public function url(array $options) {
+        if (empty($this->elementData) || filter_var($this->elementData, FILTER_VALIDATE_URL)) {
+            $this->elementData = filter_var($this->elementData, FILTER_SANITIZE_URL);
             return true;
         }
 
-        $this->error[$name][] = $this->checkMessage('Value is not a valid url', $options);
+        $this->errors[] = $this->checkMessage('Value is not a valid url', $options);
         return false;
     }
 
@@ -166,12 +187,13 @@ class Filterer {
      * @param  array $options Keys may include [message]
      * @return boolean
      */
-    public function Alpha($name, array $options) {
-        $regex = (isset($options['acceptSpace']) && $options['acceptSpace']) ? '/[^a-zA-Z\s]/' : '/[^a-zA-Z]/';
-        if (!preg_match($regex, $this->data[$name]))
+    public function alpha(array $options) {
+        if (!$options['regex'])
+            $options['regex'] = ($options['acceptSpace']) ? '/[^a-zA-Z\s]/' : '/[^a-zA-Z]/';
+        if (!preg_match($options['regex'], $this->elementData))
             return true;
 
-        $this->error[$name][] = $this->checkMessage('Value can only contain alphabets', $options);
+        $this->errors[] = $this->checkMessage('Value can only contain alphabets', $options);
         return false;
     }
 
@@ -181,12 +203,13 @@ class Filterer {
      * @param  array $options Keys may include [message]
      * @return boolean
      */
-    public function AlphaNum($name, array $options) {
-        $regex = (isset($options['acceptSpace']) && $options['acceptSpace']) ? '/[^a-zA-Z0-9\s]/' : '/[^a-zA-Z0-9]/';
-        if (!preg_match($regex, $this->data[$name]))
+    public function alphaNum(array $options) {
+        if (!$options['regex'])
+            $options['regex'] = ($options['acceptSpace']) ? '/[^a-zA-Z0-9\s]/' : '/[^a-zA-Z0-9]/';
+        if (!preg_match($options['regex'], $this->elementData))
             return true;
 
-        $this->error[$name][] = $this->checkMessage('Value can only contain alphabets and numbers', $options);
+        $this->errors[] = $this->checkMessage('Value can only contain alphabets and numbers', $options);
         return false;
     }
 
@@ -196,27 +219,27 @@ class Filterer {
      * @param  array $options Keys may include [message]
      * @return boolean
      */
-    public function Decimal($name, array $options) {
-        if (ctype_digit($this->data[$name]))
+    public function decimal(array $options) {
+        if (ctype_digit($this->elementData))
             return true;
 
-        $this->error[$name][] = $this->checkMessage('Value can only contain numbers and a dot', $options);
+        $this->errors[] = $this->checkMessage('Value can only contain numbers and a dot', $options);
         return false;
     }
 
     /**
      * @see Filterer::Digit()
      */
-    public function Number($name, array $options) {
-        if (stristr($this->data[$name], '.')) {
-            $this->error[$name][] = $this->checkMessage('Value can only contain numbers', $options);
+    public function number(array $options) {
+        if (stristr($this->elementData, '.')) {
+            $this->errors[] = $this->checkMessage('Value can only contain numbers', $options);
             return false;
         }
 
         if (!isset($options['message']))
             $options['message'] = 'Value can only contain numbers';
 
-        return $this->Decimal($name, $options);
+        return $this->decimal($options);
     }
 
     /**
@@ -225,23 +248,23 @@ class Filterer {
      * @param  array $options Keys may include [message]
      * @return boolean
      */
-    public function GreaterThan($name, array $options) {
+    public function greaterThan(array $options) {
         if (isset($options['element'])) {
             if (isset($this->data[$options['element']])) {
                 $than = 'field "' . $options['element'] . '"';
-                if ($this->data[$name] > $this->data[$options['element']] || (empty($this->data[$name]) && $this->data[$name] !== 0)) {
+                if ($this->elementData > $this->data[$options['element']] || (empty($this->elementData) && $this->elementData !== 0)) {
                     return true;
                 }
             }
         }
         else if (isset($options['value'])) {
             $than = $options['value'];
-            if ($this->data[$name] > $options['value']) {
+            if ($this->elementData > $options['value']) {
                 return true;
             }
         }
 
-        $this->error[$name][] = $this->checkMessage('Value must be greater than ' . $than, $options);
+        $this->errors[] = $this->checkMessage('Value must be greater than ' . $than, $options);
         return false;
     }
 
@@ -251,23 +274,23 @@ class Filterer {
      * @param  array $options Keys may include [message]
      * @return boolean
      */
-    public function LessThan($name, array $options) {
+    public function lessThan(array $options) {
         if (isset($options['element'])) {
             if (isset($this->data[$options['element']])) {
                 $than = 'field "' . $options['element'] . '"';
-                if ($this->data[$name] < $this->data[$options['element']]) {
+                if ($this->elementData < $this->data[$options['element']]) {
                     return true;
                 }
             }
         }
         else if (isset($options['value'])) {
             $than = $options['value'];
-            if ($this->data[$name] < $options['value']) {
+            if ($this->elementData < $options['value']) {
                 return true;
             }
         }
 
-        $this->error[$name][] = $this->checkMessage('Value must be less than ' . $than, $options);
+        $this->errors[] = $this->checkMessage('Value must be less than ' . $than, $options);
         return false;
     }
 
@@ -277,15 +300,11 @@ class Filterer {
      * @param  array $options Keys may include [message]
      * @return boolean
      */
-    public function MinLength($name, array $options) {
-        if (!isset($options['value'])) {
-            throw new \Exception('Filter "MinLength" must have a value to compare against');
-        }
-
-        if (strlen($this->data[$name]) >= $options['value'])
+    public function minLength(array $options) {
+        if ($options['value'] && strlen($this->elementData) >= $options['value'])
             return true;
 
-        $this->error[$name][] = $this->checkMessage('Length must not be less than ' . $options['value'], $options);
+        $this->errors[] = $this->checkMessage('Length must not be less than ' . $options['value'], $options);
         return false;
     }
 
@@ -295,15 +314,11 @@ class Filterer {
      * @param  array $options Keys may include [message]
      * @return boolean
      */
-    public function MaxLength($name, array $options) {
-        if (!isset($options['value'])) {
-            throw new \Exception('Filter "MaxLength" must have a value to compare against');
-        }
-
-        if (strlen($this->data[$name]) <= $options['value'])
+    public function maxLength(array $options) {
+        if ($options['value'] && strlen($this->elementData) <= $options['value'])
             return true;
 
-        $this->error[$name][] = $this->checkMessage('Length must not be more than ' . $options['value'], $options);
+        $this->errors[] = $this->checkMessage('Length must not be more than ' . $options['value'], $options);
         return false;
     }
 
@@ -313,23 +328,23 @@ class Filterer {
      * @param  array $options Keys may include [message]
      * @return boolean
      */
-    public function GreaterOrEqualTo($name, array $options) {
+    public function greaterOrEqualTo(array $options) {
         if (isset($options['element'])) {
             if (isset($this->data[$options['element']])) {
                 $than = 'field "' . $options['element'] . '"';
-                if ($this->data[$name] >= $this->data[$options['element']] || (empty($this->data[$name]) && $this->data[$name] !== 0)) {
+                if ($this->elementData >= $this->data[$options['element']] || (empty($this->elementData) && $this->elementData !== 0)) {
                     return true;
                 }
             }
         }
         else if (isset($options['value'])) {
             $than = $options['value'];
-            if ($this->data[$name] >= $options['value']) {
+            if ($this->elementData >= $options['value']) {
                 return true;
             }
         }
 
-        $this->error[$name][] = $this->checkMessage('Value must be greater than ' . $than, $options);
+        $this->errors[] = $this->checkMessage('Value must be greater than or equal to ' . $than, $options);
         return false;
     }
 
@@ -339,23 +354,23 @@ class Filterer {
      * @param  array $options Keys may include [message]
      * @return boolean
      */
-    public function LessOrEqualTo($name, array $options) {
+    public function lessOrEqualTo(array $options) {
         if (isset($options['element'])) {
             if (isset($this->data[$options['element']])) {
                 $than = 'field "' . $options['element'] . '"';
-                if ($this->data[$name] <= $this->data[$options['element']]) {
+                if ($this->elementData <= $this->data[$options['element']]) {
                     return true;
                 }
             }
         }
         else if (isset($options['value'])) {
             $than = $options['value'];
-            if ($this->data[$name] <= $options['value']) {
+            if ($this->elementData <= $options['value']) {
                 return true;
             }
         }
 
-        $this->error[$name][] = $this->checkMessage('Value must be less than ' . $than, $options);
+        $this->errors[] = $this->checkMessage('Value must be less than or equal to ' . $than, $options);
         return false;
     }
 
@@ -366,8 +381,8 @@ class Filterer {
      * @param string $allow Tags that will should not be stripped
      * @return boolean
      */
-    public function StripTags($name, $allow = '') {
-        $this->data[$name] = strip_tags($this->data[$name], $allow);
+    public function stripTags($data, $allow = '') {
+        strip_tags($data, $allow);
         return $this;
     }
 

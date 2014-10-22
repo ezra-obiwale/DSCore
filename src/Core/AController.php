@@ -82,10 +82,11 @@ abstract class AController extends AInjector {
     /**
      * Resets the user identity to guest
      * @param AUser $user
+     * @param int $duration Duration for which the identity should be valid
      * @return AController
      */
-    final protected function resetUserIdentity(AUser $user = null) {
-        Engine::resetUserIdentity($user);
+    final protected function resetUserIdentity(AUser $user = null, $duration = null) {
+        engine('resetUserIdentity', $user, $duration);
         return $this;
     }
 
@@ -144,9 +145,6 @@ abstract class AController extends AInjector {
      * @param string $hash
      */
     final protected function redirect($module, $controller = null, $action = null, array $params = array(), $hash = null) {
-        $module = ($module) ? $module : Engine::getModule();
-        $controller = ($controller) ? $controller : Engine::getController();
-        $action = ($action) ? $action : Engine::getAction();
         header('Location: ' . $this->view->url($module, $controller, $action, $params, $hash));
         exit;
     }
@@ -164,7 +162,7 @@ abstract class AController extends AInjector {
      * @return Flash
      */
     final protected function flash() {
-        return Engine::getFlash();
+        return engineGet('flash');
     }
 
     /**
@@ -196,11 +194,11 @@ abstract class AController extends AInjector {
 
     /**
      * Fetches a config from the config file
-     * @see Engine::getConfig()
+     * @see engineGet('config', )
      * @return mixed
      */
     final protected function getConfig() {
-        return call_user_func_array(array(new Engine, 'getConfig'), func_get_args());
+        return call_user_func_array(array(ENGINE, 'getConfig'), func_get_args());
     }
 
     /**
@@ -208,7 +206,7 @@ abstract class AController extends AInjector {
      * @return UserIdentity
      */
     final protected function userIdentity() {
-        return Engine::getUserIdentity();
+        return engineGet('userIdentity');
     }
 
 }

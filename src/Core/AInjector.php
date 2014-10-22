@@ -46,23 +46,19 @@ abstract class AInjector extends ACore {
         switch (strtolower($type)) {
             case 'all':
             case 'a':
-                return Engine::getInject('all');
-                break;
+                return engineGet('inject', 'all');
             case 'controllers':
             case 'controller':
             case 'c':
-                return array_merge(Engine::getInject('all'), Engine::getInject('controllers'));
-                break;
+                return array_merge(engineGet('inject', 'all'), engineGet('inject', 'controllers'));
             case 'services':
             case 'service':
             case 's':
-                return array_merge(Engine::getInject('all'), Engine::getInject('services'));
-                break;
+                return array_merge(engineGet('inject', 'all'), engineGet('inject', 'services'));
             case 'views':
             case 'view':
             case 'v':
-                return array_merge(Engine::getInject('all'), Engine::getInject('views'));
-                break;
+                return array_merge(engineGet('inject', 'all'), engineGet('inject', 'views'));
         }
     }
 

@@ -31,8 +31,9 @@ final class UserIdentity {
     /**
      * Class contructor
      * @param \DScribe\Core\AUser $user
+     * @param int $duration Duration for which the identity should be valid
      */
-    final public function __construct(AUser $user = null) {
+    final public function __construct(AUser $user = null, $duration = null) {
         if ($user === null) {
             $user = new GuestUser();
         }
@@ -41,12 +42,12 @@ final class UserIdentity {
         $this->remoteServer = $_SERVER['REMOTE_ADDR'];
         $this->remotePort = $_SERVER['REMOTE_PORT'];
 
-        $this->saveUser($user);
+        $this->saveUser($user, $duration);
     }
 
-    private function saveUser(AUser $user) {
+    private function saveUser(AUser $user, $duration) {
         //@todo: replace saving in session with file saving
-        \Session::save('USER', $user);
+        \Session::save('USER', $user, $duration);
         return true;
     }
 

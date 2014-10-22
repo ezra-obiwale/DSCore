@@ -11,14 +11,14 @@ use DBScribe\Connection,
 
 class Engine {
 
-    private static $config;
-    private static $userId;
-    private static $flash;
-    private static $isVirtual;
-    private static $db;
-    private static $urls;
-    private static $inject;
-    private static $serverPath;
+    protected static $config;
+    protected static $userId;
+    protected static $flash;
+    protected static $isVirtual;
+    protected static $db;
+    protected static $urls;
+    protected static $inject;
+    protected static $serverPath;
 
     /**
      * Gets (settings from) the config file
@@ -31,7 +31,7 @@ class Engine {
     public static function getConfig() {
         $args = func_get_args();
         if (count($args) === 0) {
-            return self::$config;
+            return static::$config;
         }
         $except = true;
         if (gettype($args[count($args) - 1]) === 'boolean') {
@@ -47,12 +47,12 @@ class Engine {
             if ($key === 0) {
                 $path = '$config[' . $arg . ']';
 
-                if (!isset(self::$config[$arg])) {
+                if (!isset(static::$config[$arg])) {
                     $error = true;
                     break;
                 }
 
-                $value = & self::$config[$arg];
+                $value = & static::$config[$arg];
             }
             else {
                 $path .= '[' . $arg . ']';
@@ -83,9 +83,9 @@ class Engine {
      */
     public static function getInject($type = null) {
         if ($type === null)
-            return self::$inject;
-        elseif (isset(self::$inject[$type]))
-            return self::$inject[$type];
+            return static::$inject;
+        elseif (isset(static::$inject[$type]))
+            return static::$inject[$type];
 
         return array();
     }
@@ -95,7 +95,7 @@ class Engine {
      * @return string development|production|...
      */
     public static function getServer() {
-        if (NULL !== $server = self::getConfig('server', false)) {
+        if (NULL !== $server = static::getConfig('server', false)) {
             return $server;
         }
 
@@ -105,13 +105,13 @@ class Engine {
     /**
      * Creates a database connection using \DBScribe\Connection
      */
-    private static function initDB() {
-        $dbConfig = self::getConfig('db', self::getServer());
-        self::$db = new Connection($dbConfig['dsn'], $dbConfig['user'], $dbConfig['password'], $dbConfig['options']);
-        self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    protected static function initDB() {
+        $dbConfig = static::getConfig('db', static::getServer());
+        static::$db = new Connection($dbConfig['dsn'], $dbConfig['user'], $dbConfig['password'], $dbConfig['options']);
+        static::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         if (!empty($dbConfig['tablePrefix']))
-            self::$db->setTablePrefix($dbConfig['tablePrefix']);
+            static::$db->setTablePrefix($dbConfig['tablePrefix']);
     }
 
     /**
@@ -119,10 +119,10 @@ class Engine {
      * @return Connection|null
      */
     public static function getDB() {
-        if (self::$db === null)
-            self::initDB();
+        if (static::$db === null)
+            static::initDB();
 
-        return self::$db;
+        return static::$db;
     }
 
     /**
@@ -130,27 +130,25 @@ class Engine {
      * @return array
      */
     public static function getUrls() {
-        if (self::$urls !== null)
-            return self::$urls;
+        if (static::$urls !== null)
+            return static::$urls;
 
         $uri = $_SERVER['REQUEST_URI'];
 
-        self::$isVirtual = true;
+        static::$isVirtual = true;
         if (substr($uri, 0, strlen($_SERVER['SCRIPT_NAME'])) === $_SERVER['SCRIPT_NAME']) {
             $uri = str_replace('/index.php', '', $uri);
         }
         else if (stristr($_SERVER['SCRIPT_NAME'], '/index.php', true)) {
-            //remove path to the index.php
+            static::$serverPath = stristr($_SERVER['SCRIPT_NAME'], '/index.php', true);
 
-            self::$serverPath = stristr($_SERVER['SCRIPT_NAME'], '/index.php', true);
-
-            $uri = str_replace(array(self::$serverPath, '/index.php'), '', $uri);
-            self::$isVirtual = false;
+            $uri = str_replace(array(static::$serverPath, '/index.php'), '', $uri);
+            static::$isVirtual = false;
         }
 
         parse_str($_SERVER['QUERY_STRING'], $_GET);
-        self::$urls = self::updateArrayKeys(explode('/', str_replace('?' . $_SERVER['QUERY_STRING'], '', $uri)), true);
-        return self::$urls;
+        static::$urls = static::updateArrayKeys(explode('/', str_replace('?' . $_SERVER['QUERY_STRING'], '', $uri)), true);
+        return static::$urls;
     }
 
     /**
@@ -160,45 +158,7 @@ class Engine {
     public static function getServerPath() {
 //        return '/';
         // check that of loading files (e.g. js && css). Seems to work fine.
-        return (self::isVirtual() || self::$serverPath == '/public') ? '/' : self::$serverPath . '/';
-    }
-
-    /**
-     * Removes the cached page of a url path
-     * @param string $urlPath
-     * @return type
-     */
-    public static function removeCache($urlPath = null) {
-        $cache = new Cache();
-        return $cache->remove($urlPath ? $urlPath : join('/', self::getUrls()));
-    }
-
-    /**
-     * Hides the cached page of a url path
-     * @param string $urlPath
-     * @return boolean
-     */
-    public static function hideCache($urlPath = null) {
-        $path = ($urlPath) ? ROOT . 'public/' . $urlPath : ROOT . 'public/' . join('/', self::getUrls());
-        if (is_dir($path)) {
-            \Session::save('hiddenCache', $path . '_');
-            rename($path, $path . '_');
-        }
-        return false;
-    }
-
-    /**
-     * Restores the hidden cached page of a url path
-     * @param string $urlPath
-     * @return boolean
-     */
-    public static function restoreHiddenCache($urlPath = null) {
-        $path = ($urlPath) ? $urlPath : \Session::fetch('hiddenCache');
-        Session::remove('hiddenCache');
-        if (is_dir($path)) {
-            return rename($path, substr($path, 0, strlen($path) - 1));
-        }
-        return true;
+        return (static::isVirtual() || static::$serverPath == '/public') ? '/' : static::$serverPath . '/';
     }
 
     /**
@@ -206,7 +166,7 @@ class Engine {
      * @return boolean
      */
     public static function isVirtual() {
-        return self::$isVirtual;
+        return static::$isVirtual;
     }
 
     /**
@@ -214,13 +174,13 @@ class Engine {
      * @param string $module
      * @return string
      */
-    private static function checkAlias($module) {
+    protected static function checkAlias($module) {
         // $module alias not called
-        if (array_key_exists($module, Engine::getConfig('modules')))
+        if (array_key_exists($module, static::getConfig('modules')))
             return $module;
 
         // check module alias
-        foreach (Engine::getConfig('modules') as $cModule => $moduleOptions) {
+        foreach (static::getConfig('modules') as $cModule => $moduleOptions) {
             if (!array_key_exists('alias', $moduleOptions))
                 continue;
 
@@ -238,7 +198,7 @@ class Engine {
      * @return string
      */
     public static function getModuleAlias($module) {
-        if (NULL !== $alias = Engine::getConfig('modules', $module, 'alias', false)) {
+        if (NULL !== $alias = static::getConfig('modules', $module, 'alias', false)) {
             return $alias;
         }
 
@@ -250,15 +210,15 @@ class Engine {
      * @return string
      */
     public static function getModule() {
-        $urls = self::getUrls();
+        $urls = static::getUrls();
         if (!empty($urls) && count($urls) >= 1) {
             $return = $urls[0];
         }
         else {
-            $return = self::getDefaultModule();
+            $return = static::getDefaultModule();
         }
 
-        return self::checkAlias(ucfirst(Util::hyphenToCamel($return)));
+        return static::checkAlias(ucfirst(Util::hyphenToCamel($return)));
     }
 
     /**
@@ -267,13 +227,13 @@ class Engine {
      * @return string
      */
     public static function getDefaultModule($getAlias = false) {
-        if (!$module = self::getConfig('defaults', 'module', false)) {
-            $modules = self::getConfig('modules');
+        if (!$module = static::getConfig('defaults', 'module', false)) {
+            $modules = static::getConfig('modules');
             $moduleNames = array_keys($modules);
             $module = $moduleNames[0];
         }
 
-        return $getAlias ? self::getModuleAlias($module) : $module;
+        return $getAlias ? static::getModuleAlias($module) : $module;
     }
 
     /**
@@ -282,13 +242,13 @@ class Engine {
      * @return string
      */
     public static function getController($exception = true) {
-        $urls = self::getUrls();
+        $urls = static::getUrls();
 
         if (!empty($urls) && count($urls) >= 2) {
             $return = ucfirst($urls[1]);
         }
         else {
-            if (!$return = self::getDefaultController(self::getModule())) {
+            if (!$return = static::getDefaultController(static::getModule())) {
                 if ($exception)
                     ControllerException::notFound();
                 return '-';
@@ -306,9 +266,9 @@ class Engine {
      * @return string
      */
     public static function getDefaultController($module = null, $exception = false) {
-        $module = ($module === null) ? self::getDefaultModule() : $module;
+        $module = ($module === null) ? static::getDefaultModule() : $module;
 
-        return self::getConfig('modules', $module, 'defaults', 'controller', $exception);
+        return static::getConfig('modules', $module, 'defaults', 'controller', $exception);
     }
 
     /**
@@ -317,12 +277,12 @@ class Engine {
      * @return string
      */
     public static function getAction($exception = true) {
-        $urls = self::getUrls();
+        $urls = static::getUrls();
         if (!empty($urls) && count($urls) >= 3) {
             $return = strtolower($urls[2]);
         }
         else {
-            if (!$return = self::getDefaultAction(self::getModule(), false)) {
+            if (!$return = static::getDefaultAction(static::getModule(), false)) {
                 if ($exception)
                     throw new \Exception('Required action not found');
                 return '-';
@@ -339,13 +299,13 @@ class Engine {
      * @return string
      */
     public static function getDefaultAction($module = null, $exception = false) {
-        $module = ($module === null) ? self::getDefaultModule() : $module;
+        $module = ($module === null) ? static::getDefaultModule() : $module;
 
-        return self::getConfig('modules', $module, 'defaults', 'action', $exception);
+        return static::getConfig('modules', $module, 'defaults', 'action', $exception);
     }
 
     public static function getDefaultLayout() {
-        return self::getConfig('defaults', 'defaultLayout');
+        return static::getConfig('defaults', 'defaultLayout');
     }
 
     /**
@@ -353,16 +313,16 @@ class Engine {
      * @return array
      */
     public static function getParams() {
-        $urls = self::getUrls();
+        $urls = static::getUrls();
 
         unset($urls[0]); // module
         unset($urls[1]); // controller
         unset($urls[2]); // action
 
-        return self::updateArrayKeys($urls);
+        return static::updateArrayKeys($urls);
     }
 
-    private static function updateArrayKeys(array $array, $removeEmptyValues = false) {
+    protected static function updateArrayKeys(array $array, $removeEmptyValues = false) {
         $return = array();
         foreach ($array as $value) {
             if ($removeEmptyValues && $value !== '0' && empty($value))
@@ -377,8 +337,8 @@ class Engine {
      * @return AController
      * @throws Exception
      */
-    private static function getControllerClass($live = true) {
-        $class = self::getModule() . '\Controllers\\' . self::getController() .
+    protected static function getControllerClass($live = true) {
+        $class = static::getModule() . '\Controllers\\' . static::getController() .
                 'Controller';
 
         if (!class_exists($class))
@@ -395,8 +355,8 @@ class Engine {
      * @param string $controller
      * @param string $action
      */
-    private static function authenticate($controller, $action, $params) {
-        $auth = new Authenticate(self::$userId, $controller, $action);
+    protected static function authenticate($controller, $action, $params) {
+        $auth = new Authenticate(static::$userId, $controller, $action);
         if (!$auth->execute()) {
             $controller->accessDenied($action, $params);
             exit;
@@ -406,12 +366,13 @@ class Engine {
     /**
      * Resets the user to guest
      * @param AUser $user
+     * @param int $duration Duration for which the identity should be valid
      */
-    public static function resetUserIdentity(AUser $user = NULL) {
-        self::$userId = new UserIdentity($user);
+    public static function resetUserIdentity(AUser $user = NULL, $duration = null) {
+        static::$userId = new UserIdentity($user, $duration);
         if (!$user)
             Session::reset();
-        self::saveSession();
+        static::saveSession();
     }
 
     /**
@@ -419,7 +380,7 @@ class Engine {
      * @return UserIdentity
      */
     public static function getUserIdentity() {
-        return self::$userId;
+        return static::$userId;
     }
 
     /**
@@ -427,57 +388,58 @@ class Engine {
      * @return Flash
      */
     public static function getFlash() {
-        if (self::$flash === null)
-            self::$flash = new Flash();
+        if (static::$flash === null)
+            static::$flash = new Flash();
 
-        return self::$flash;
+        return static::$flash;
     }
 
     /**
      * Saves the current user identity to session
      */
     public static function saveSession() {
-        Session::save('UID', self::$userId);
+        Session::save('UID', static::$userId);
     }
 
     /**
      * Restores the current user identity from session
      */
-    private static function fetchSession() {
-        self::$userId = Session::fetch('UID');
+    protected static function fetchSession() {
+        static::$userId = Session::fetch('UID');
     }
 
     /**
      * Initializes the engine
      * @param array $config
      */
-    private static function init(array $config) {
-        self::fetchSession();
+    protected static function init(array $config) {
+        static::$config = $config;
+        static::checkConfig($config);
 
-        if (self::$userId === null)
-            self::$userId = new UserIdentity();
+        static::fetchSession();
 
-        self::$config = $config;
-        self::checkConfig($config);
-        self::$inject = include CONFIG . 'inject.php';
+        if (static::$userId === null)
+            static::$userId = new UserIdentity();
+
+        static::$inject = include CONFIG . 'inject.php';
     }
 
-    private static function checkConfig(array $config) {
-        if (!self::getConfig('modules', false))
+    protected static function checkConfig(array $config) {
+        if (!static::getConfig('modules', false))
             throw new \Exception('Modules not specified in the config file. Please consult the documentation', true);
-        elseif (!self::checkModules(self::getConfig('modules', false)))
+        elseif (!static::checkModules(static::getConfig('modules', false)))
             throw new \Exception('Invalid "modules" settings in the config file. Please consult the documentation', true);
-        elseif (!self::getConfig('app', false))
+        elseif (!static::getConfig('app', false))
             throw new \Exception('App settings not specified in the config file. Please consult the documentation', true);
-        elseif (!self::getConfig('app', 'name', false))
+        elseif (!static::getConfig('app', 'name', false))
             throw new \Exception('App name not specified in the config file. Please consult the documentation', true);
-        elseif (!self::getConfig('defaults', false))
+        elseif (!static::getConfig('defaults', false))
             throw new \Exception('Defaults settings not specified in the config file. Please consult the documentation', true);
-        elseif (!self::getConfig('defaults', 'theme', false))
+        elseif (!static::getConfig('defaults', 'theme', false))
             throw new \Exception('Default theme not specified in the config file. Please consult the documentation', true);
     }
 
-    private static function checkModules($modules) {
+    protected static function checkModules($modules) {
         if (!is_array($modules)) {
             return false;
         }
@@ -492,17 +454,17 @@ class Engine {
         return true;
     }
 
-    private static function moduleIsActivated() {
-        if (!array_key_exists(ucfirst(Util::hyphenToCamel(self::getModule())), self::getConfig('modules')))
-            throw new \Exception('Module "' . self::getModule() . '" not activated');
+    protected static function moduleIsActivated() {
+        if (!array_key_exists(ucfirst(Util::hyphenToCamel(static::getModule())), static::getConfig('modules')))
+            throw new \Exception('Module "' . static::getModule() . '" not activated');
     }
-    
+
     public static function getModulePath() {
-        return MODULES . self::getModule() . DIRECTORY_SEPARATOR;
+        return MODULES . static::getModule() . DIRECTORY_SEPARATOR;
     }
 
     public static function reloadPage() {
-        header('Location: ' . self::getServerPath() . join('/', self::getUrls()));
+        header('Location: ' . static::getServerPath() . join('/', static::getUrls()));
         exit;
     }
 
@@ -512,28 +474,27 @@ class Engine {
      * @todo Check caching controller actions
      */
     public static function run(array $config) {
-        self::init($config);
-        self::moduleIsActivated();
-        $cache = self::canCache();
+        static::init($config);
+        static::moduleIsActivated();
+        $cache = static::canCache();
 
-        $name = join('/', self::getUrls());
+        $name = join('/', static::getUrls());
         if ($cache && $out = $cache->fetch($name)) {
             echo $out;
         }
         else {
-            self::restoreHiddenCache();
             $view = new View();
 
-            $controller = self::getControllerClass();
+            $controller = static::getControllerClass();
             $controller->setView($view);
-            $action = self::getAction();
+            $action = static::getAction();
 
             if (!in_array($action, $controller->getActions())) {
                 ControllerException::invalidAction($action);
             }
 
-            $params = self::getParams();
-            self::authenticate($controller, $action, $params);
+            $params = static::getParams();
+            static::authenticate($controller, $action, $params);
             $view->setController($controller)
                     ->setAction($action);
 
@@ -544,12 +505,12 @@ class Engine {
             }
             $actionRet = call_user_func_array(array($controller, $action . 'Action'), $params);
 
-            if ($actionRet !== null && gettype($actionRet) !== 'array' &&
+            if ($actionRet !== null && !is_array($actionRet) &&
                     (is_object($actionRet) && get_class($actionRet) !== 'DScribe\View\View')) {
                 ControllerException::invalidActionResult();
             }
 
-            if (gettype($actionRet) === 'array')
+            if (is_array($actionRet))
                 $view->variables($actionRet);
             elseif (is_object($actionRet))
                 $view = $actionRet;
@@ -559,7 +520,7 @@ class Engine {
             if ($cache && !Session::fetch('noCache'))
                 $cache->save($name, $data);
             echo $data;
-            self::terminate();
+            static::terminate();
         }
     }
 
@@ -567,24 +528,24 @@ class Engine {
      * 
      * @return Cache|Null
      */
-    private static function canCache() {
+    protected static function canCache() {
         $request = new Request();
-        if (Session::fetch('noCache') || $request->isPost() || $request->hasFile() || self::getFlash()->hasMessage()) {
+        if (Session::fetch('noCache') || $request->isPost() || $request->hasFile() || static::getFlash()->hasMessage()) {
             return false;
         }
 
-        $noCacheActions = @call_user_func(array(self::getControllerClass(false), 'noCache'));
-        return ((is_bool($noCacheActions) && !$noCacheActions) || (is_array($noCacheActions) && !in_array(\Util::camelToHyphen(self::getAction()), \Util::arrayValuesCamelTo($noCacheActions, '-')))) ?
-                new Cache(self::getUserIdentity()->getUser()) : null;
+        $noCacheActions = call_user_func(array(static::getControllerClass(false), 'noCache'));
+        return ((is_bool($noCacheActions) && !$noCacheActions) || (is_array($noCacheActions) && !in_array(\Util::camelToHyphen(static::getAction()), \Util::arrayValuesCamelTo($noCacheActions, '-')))) ?
+                new Cache(static::getUserIdentity()->getUser()) : null;
     }
 
     /**
      * Cleans up necessary things when engine is done
      */
-    private static function terminate() {
-        self::saveSession();
+    protected static function terminate() {
+        static::saveSession();
         Session::remove('noCache');
         Session::remove('mapperIgnore');
     }
-
+    
 }

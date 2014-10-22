@@ -13,20 +13,25 @@ use Object,
 class Request {
 
     /**
-     * Global post variables
-     * @var \Object
+     * The data sent with the request
+     * @var Object
+     */
+    protected $data;
+
+    /**
+     *
+     * @var Object
      */
     protected $post;
 
     /**
-     * Global get variables
-     * @var \Object
+     * @var Object
      */
     protected $get;
 
     /**
-     * Global files variables
-     * @var \Object
+     *
+     * @var Object
      */
     protected $files;
 
@@ -46,11 +51,23 @@ class Request {
      * Class constructor
      */
     public function __construct() {
+        parse_str(file_get_contents('php://input'), $this->data);
+        $this->data = $this->data ? new Object($this->data, true) :
+                new Object();
         $this->post = new Object($_POST, true);
         $this->get = new Object($_GET, true);
         $this->files = new Object($_FILES);
-
         $this->initServer();
+    }
+
+    /**
+     * Fetches the data sent with the request
+     * @param bool $asArray Indicates whether the data should be in an array. It
+     * will be an object of \Object if false
+     * @return array
+     */
+    public function getData($asArray = false) {
+        return $asArray ? $this->data->toArray() : $this->data;
     }
 
     /**
@@ -61,7 +78,7 @@ class Request {
         $this->server = new Object();
 
         foreach ($_SERVER as $key => $val) {
-            $key = strtolower($key);
+            $key = str_replace('request_', '', strtolower($key));
             if (substr($key, 0, 5) === 'http_') {
                 $this->http->{Util::_toCamel(substr($key, 5))} = $val;
             }
@@ -74,20 +91,12 @@ class Request {
         }
     }
 
-    /**
-     * Checks if the request is a get
-     * @return boolean
-     */
-    public function isGet() {
-        return $this->get->notEmpty();
-    }
-
-    /**
-     * Checks if the request is a post
-     * @return boolean
-     */
-    public function isPost() {
-        return $this->post->notEmpty();
+    public function __call($name, $arguments) {
+        if (!method_exists($this, $name)) {
+            if (substr($name, 0, 2) === 'is') {
+                return ($_SERVER['REQUEST_METHOD'] === strtoupper(substr($name, 2)));
+            }
+        }
     }
 
     /**
@@ -104,31 +113,23 @@ class Request {
      * @return boolean
      */
     public function hasFile() {
-        return $this->files->notEmpty();
+        return (count($_FILES) > 0);
     }
 
-    /**
-     * Fetches the post content
-     * @return \Object
-     */
-    public function getPost() {
-        return $this->post;
+    public function getPost($asArray = false) {
+        return $asArray ? $this->post->toArray() : $this->post;
     }
 
-    /**
-     * Fetches the get content
-     * @return \Object
-     */
-    public function getGet() {
-        return $this->get;
+    public function getGet($asArray = false) {
+        return $asArray ? $this->get->toArray() : $this->get;
     }
 
     /**
      * Fetches the files content
      * @return \Object
      */
-    public function getFiles() {
-        return $this->files;
+    public function getFiles($asArray = false) {
+        return $asArray ? $this->files->toArray() : $this->files;
     }
 
     /**

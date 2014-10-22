@@ -73,6 +73,17 @@ class Table {
     }
 
     /**
+     * Sets footer data
+     * @param array $data Array of labels for each column
+     * @param array $attributes Array of attr => value to apply to each column
+     */
+    public static function setFooters(array $data, array $attributes = array()) {
+        foreach ($data as $footer) {
+            self::addFooter($footer, $attributes);
+        }
+    }
+
+    /**
      * Signals beginning of a new row
      * @param array $attrs Array of attr => value to apply to the row
      */
@@ -116,7 +127,7 @@ class Table {
                             <?php
                         }
                         ?>
-                            
+
                     </tr>
                 </thead>
                 <?php
@@ -129,7 +140,7 @@ class Table {
                     foreach (self::$rows as $rowData) {
                         if (count($rowData) > 1) {
                             ?>
-                    
+
                             <tr <?php echo self::parseAttributes($rowData[0]); ?>>
                                 <?php
                                 foreach ($rowData[1] as $row) {
@@ -138,19 +149,19 @@ class Table {
                                     <?php
                                 }
                                 ?>
-                                    
+
                             </tr>
                             <?php
                         }
                     }
                     ?>
-                            
+
                 </tbody>
                 <?php
             }
             if (!empty(self::$footers)) {
                 ?>
-                
+
                 <tfoot>
                     <tr>
                         <?php
@@ -161,7 +172,7 @@ class Table {
                             <?php
                         }
                         ?>
-                            
+
                     </tr>
                 </tfoot>
             <?php }

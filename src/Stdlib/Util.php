@@ -12,9 +12,8 @@ class Util {
     const UPLOAD_ERROR_PERMISSION = 'Insufficient permission to save';
     const UPLOAD_ERROR_FAILED = 'Upload failed';
     const UPLOAD_SUCCESSFUL = 'File uploaded successfully';
-    
-    public static $timezones;
 
+    public static $timezones;
     public static $uploadSuccess = self::UPLOAD_SUCCESSFUL;
 
     /**
@@ -240,17 +239,20 @@ class Util {
      * Resizes an image
      * @param string $source Path to image file
      * @param int $desiredWidth The width of the new image
-     * @param string $destination Path to save image to. If null, the source will be overwritten
+     * @param string $destination Path to save image to. If null, the source 
+     * will be overwritten
+     * @param string $extension The extension of the source file, provided if 
+     * the source does not bear an explicit extension
      * @return boolean
      */
-    public static function resizeImage($source, $desiredWidth = 200, $destination = null) {
+    public static function resizeImage($source, $desiredWidth = 200, $destination = null, $extension = null) {
         if (!$destination)
             $destination = $source;
 
         $info = pathinfo($source);
-
+        $extension = !$extension ? $info['extension'] : $extension;
         /* read the source image */
-        switch (strtolower($info['extension'])) {
+        switch (strtolower($extension)) {
             case 'jpeg':
             case 'jpg':
                 $sourceImage = imagecreatefromjpeg($source);
@@ -276,7 +278,7 @@ class Util {
 
         $return = false;
         /* create the physical thumbnail image to its destination */
-        switch (strtolower($info['extension'])) {
+        switch (strtolower($extension)) {
             case 'jpeg':
             case 'jpg':
                 $return = imagejpeg($virtualImage, $destination);
@@ -458,6 +460,53 @@ class Util {
      */
     public static function formatTimezoneName($name) {
         return str_replace(array('/', '_', 'St'), array(',', ' ', 'St.'), $name);
+    }
+
+    /**
+     * Search an array to see if it has the expected value [at the given key]
+     * @param array $array
+     * @param mixed $value Could be an array of values
+     * @param bool $recursive
+     * @param mixed $key Could be an array of keys
+     * @param bool $multiple Indicates whether to return all found arrays or just one - the first
+     * @return array|null The array containing the expected value
+     */
+    public static function searchArray(array $array, $value, $recursive = false, $key = array(), $multiple = false) {
+        if (!is_array($value))
+            $value = array($value);
+        if ($key !== null && !is_array($key))
+            $key = array($key);
+        else if ($key === null)
+            $key = array();
+        $found = array();
+        foreach ($array as $ky => $val) {
+            if (is_array($val)) {
+                if (!$recursive)
+                    continue;
+                $ret = static::searchArray($val, $value, $recursive, $key, $multiple);
+                if (count($ret)) {
+                    if ($multiple)
+                        $found = array_merge($found, $ret);
+                    else
+                        return $ret;
+                }
+                continue;
+            }
+            if (count($key) && !in_array($ky, $key))
+                continue;
+
+            $keys = array_flip($key);
+            if ($val === $value[$keys[$ky]]) {
+                if ($multiple) {
+                    $k = ($multiple === true) ? 0 : $array[$multiple];
+                    $found[$k] = $array;
+                }
+                else
+                    return $array;
+            }
+        }
+
+        return $found;
     }
 
 }

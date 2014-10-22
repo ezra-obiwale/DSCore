@@ -10,18 +10,31 @@
  */
 class Json {
 
-    protected $current;
+    protected $content;
 
     /**
      * Class constructor
      * @param string|array|object $stringOrArrayOrObject Value to act upon
      */
     public function __construct($stringOrArrayOrObject = array()) {
-        $this->current = $stringOrArrayOrObject;
+        $this->setContent($stringOrArrayOrObject);
     }
-    
+
     public function addData($data, $key = null) {
-        $this->current[$key] = $data;
+		if (is_array($this->content))
+	        $this->content[$key] = $data;
+		else if (is_object($this->content))
+			$this->content->{$key} = $data;
+        return $this;
+    }
+
+    /**
+     * Set the content of the json
+     * @param string|array|object $stringOrArrayOrObject
+     * @return \Json
+     */
+    public function setContent($stringOrArrayOrObject = array()) {
+        $this->content = $stringOrArrayOrObject;
         return $this;
     }
 
@@ -45,7 +58,7 @@ class Json {
      * @return string a JSON encoded string on success or <b>FALSE</b> on failure.
      */
     public function encode($options = 0) {
-        return json_encode($this->current, $options);
+        return json_encode($this->content, $options);
     }
 
     /**
@@ -72,7 +85,7 @@ class Json {
      * data is deeper than the recursion limit.
      */
     public function decode($assoc = false, $depth = 512, $options = 0) {
-        return json_decode($this->current, $assoc, $depth, $options);
+        return json_decode($this->content, $assoc, $depth, $options);
     }
 
     /**

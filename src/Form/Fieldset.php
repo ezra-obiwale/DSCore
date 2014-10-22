@@ -4,7 +4,8 @@ namespace DScribe\Form;
 
 use DScribe\Core\IModel,
     Exception,
-    Object;
+    Object,
+    Util;
 
 /**
  * Fieldset class
@@ -27,15 +28,9 @@ class Fieldset extends AValidator {
     protected $attributes;
 
     /**
-     * @var \DScribe\Core\IModel
+     * @var IModel
      */
     protected $model;
-
-    /**
-     * Array of labels for elements
-     * @var array
-     */
-    protected $labels;
 
     /**
      * Class constructor
@@ -60,7 +55,7 @@ class Fieldset extends AValidator {
     /**
      * Sets attributes for fieldset
      * @param array $attributes
-     * @return \DScribe\Form\Fieldset
+     * @return Fieldset
      */
     public function setAttributes(array $attributes) {
         $this->attributes = array_merge($this->attributes, $attributes);
@@ -71,7 +66,7 @@ class Fieldset extends AValidator {
      * Sets a fieldset attribute
      * @param string $attr
      * @param mixed $val
-     * @return \DScribe\Form\Fieldset
+     * @return Fieldset
      */
     final public function setAttribute($attr, $val) {
         $this->attributes[$attr] = $val;
@@ -98,18 +93,17 @@ class Fieldset extends AValidator {
         if (!is_array($this->attributes)) {
             $this->attributes = array();
         }
-        return ($parsed) ? $this->parseAttributes($this->attributes) : $this->attributes;
+        return ($parsed) ? $this->parseAttributes() : $this->attributes;
     }
 
     /**
      * Parses attributes for rendering
-     * @param array $attrs
      * @return string
      */
-    final protected function parseAttributes(array $attrs) {
+    final public function parseAttributes() {
         $return = '';
-        foreach ($attrs as $attr => $val) {
-            $return .= \Util::camelToHyphen($attr) . '="' . $val . '" ';
+        foreach ($this->attributes as $attr => $val) {
+            $return .= Util::camelToHyphen($attr) . '="' . $val . '" ';
         }
         return $return;
     }
@@ -117,12 +111,16 @@ class Fieldset extends AValidator {
     /**
      * Maps the form to a model
      * @param IModel $model
-     * @return \DScribe\Form\Form
+     * @return Form
      */
     final public function setModel(IModel $model) {
         $this->model = $model;
         $this->setData($model->toArray(false, true));
         return $this;
+    }
+    
+    final protected function loadModel() {
+        
     }
 
     /**
@@ -161,118 +159,46 @@ class Fieldset extends AValidator {
     }
 
     /**
-     * Loads the model of the fieldset from the db
-     * @param string $fieldsetName
-     * @param \DScribe\Core\IModel $model
-     * @return \Object
-     */
-    final public function loadModel($fieldsetName, IModel &$model) {
-        $return = array();
-        if ($this->model !== null) {
-            if ($result = $model->$fieldsetName()) {
-                if ($result->count()) {
-                    $return = $result->first()->toArray();
-                }
-            }
-        }
-
-        if (!empty($this->fieldsets)) {
-            foreach ($this->fieldsets as $name) {
-                if (!isset($this->elements[$name]))
-                    continue;
-
-                $fieldset = $this->elements[$name]->options->value;
-                $return[$fieldset->name] = $fieldset->loadModel($fieldset->name, $this->model);
-            }
-        }
-        return $return;
-    }
-
-    /**
-     * Fetches the label of an
-     * @param string $elementName
-     * @return string|null
-     */
-    public function getLabel($elementName) {
-        if (isset($this->labels[$elementName])) {
-            return new Object($this->labels[$elementName]);
-        }
-    }
-
-    /**
      * Adds an element to the fieldset
      * @param array $element
-     * @return \DScribe\Form\Fieldset
+     * @return Fieldset
      * @throws Exception
      * @todo Check validity immediately to allow easy exception trace
      * @todo Create individual element class with it's own prepare method for output
      */
     public function add(array $element) {
-        if (!is_array($element))
-            throw new Exception('Form elements must be an array');
-
-        $element = new Object($element, true, 'values');
-
-        if (empty($element->name))
-            throw new Exception('Form elements must have a name');
-        if (empty($element->type))
-            throw new Exception('Form element "' . $element->name . '" does not have a type');
-
-        $element->type = strtolower($element->type);
-
-        if (empty($element->options))
-            $element->options = new Object();
-
-        if (!is_object($element->options) || (is_object($element->options) &&
-                get_class($element) !== 'Object'))
-            throw new Exception('Form element options of "' . $element->name . '" must be an array');
-        if ($element->type === 'fieldset' && !isset($element->options->value))
-            throw new Exception('Form fieldset element "' . $element->name .
-            '" of must have a value of type "DScribe\Form\Fieldset"');
-        elseif ($element->type === 'fieldset' && (!is_object($element->options->value) ||
-                (is_object($element->options->value) && !in_array('DScribe\Form\Fieldset', class_parents($element->options->value))))) {
-            throw new Exception('Form element "' . $element->name .
-            '" must have a value of object "DScribe\Form\Fieldset"');
+        if ((is_object($element) && !is_a($element, 'DScribe\Form\Element')) || !is_array($element))
+            throw new Exception('Form elements must be either an array or an object subclass of \DScribe\Form\Element');
+        else if (is_array($element)) {
+            if (!isset($element['type'])) {
+                throw new \Exception('Form elements must of key type');
+            }
+            $elementClass = 'DScribe\Form\Element\\' . ucfirst($element['type']);
+            $element = class_exists($elementClass) ? new $elementClass($element, true, 'values') : new Element($element, true, 'values');
         }
-
-        if (!empty($element->attributes) && (!is_object($element->attributes) ||
-                (is_object($element->attributes) && get_class($element) !== 'Object')))
-            throw new Exception('Form element attributes of "' . $element->name . '" must be an array');
-
-        if (empty($element->attributes))
-            $element->attributes = new Object();
-
-        if (empty($element->attributes->id)) {
-            $element->attributes->id = $element->name;
-            $element->dId = true;
-        }
-        else
-            $element->dId = false;
-
-        if (!empty($element->attributes->value)) {
-            if (!isset($element->options->value))
-                $element->options->value = $element->attributes->value;
-            unset($element->attributes->value);
+        if ($this->data[$element->name]) {
+            $element->data = $this->data[$element->name];
+            unset($this->data[$element->name]);
         }
 
         if (in_array($element->type, array('checkbox', 'radio'))) {
             $this->booleans[$element->name] = $element->name;
-
-            if (!isset($element->options->value) || (isset($element->options->value) && $element->options->value != 0))
-                $element->options->value = '1';
         }
-
-        if (empty($element->options->value) && empty($element->options->values))
-            $element->options->value = null;
-
-        if ($element->type === 'fieldset') {
+        else if ($element->type === 'fieldset') {
             $this->fieldsets[] = $element->name;
         }
+        else if ($element->type === 'hidden' && $element->name === 'csrf')
+            $element->setCsrfKey($this->getName());
 
+        if (!is_a($this, 'DScribe\Form\Form')) {
+            $element->parent = $this->name;
+        }
         $this->elements[$element->name] = $element;
 
-        if (isset($element->filters)) {
-            $this->addFilters($element->name, $element->filters->toArray(true));
+        if (!$element->filters) {
+            $filters = $this->getFilters();
+            if ($filters[$element->name])
+                $element->filters = $filters[$element->name];
         }
         return $this;
     }
@@ -291,7 +217,7 @@ class Fieldset extends AValidator {
      * @return \Object
      */
     final public function get($name) {
-        return @$this->elements[$name];
+        return $this->elements[$name];
     }
 
     /**
@@ -305,26 +231,25 @@ class Fieldset extends AValidator {
     /**
      * Signifies a filter for an element should be ignored when validating
      * @param string $elementName
-     * @return \DScribe\Form\Fieldset
+     * @return Fieldset
      */
     final public function ignoreFilter($elementName) {
-        $this->noFilter[] = $elementName;
+        $this->elements[$elementName]->noFilter = true;
         return $this;
     }
 
     /**
      * Removes an element
      * @param string $elementName
-     * @return \DScribe\Form\Fieldset
+     * @return Fieldset
      */
     final public function remove($elementName) {
         if (isset($this->elements[$elementName])) {
+            $this->ignoreFilter($elementName);
             unset($this->elements[$elementName]);
             $elementName = str_replace('[]', '', $elementName);
+            unset($this->elements[$elementName]);
             unset($this->data[$elementName]);
-            unset($this->booleans[$elementName]);
-            unset($this->fieldsets[$elementName]);
-            $this->ignoreFilter($elementName);
         }
 
         return $this;
@@ -333,24 +258,27 @@ class Fieldset extends AValidator {
     /**
      * Sets data to validate
      * @param \Object | array $data
-     * @return \DScribe\Form\Fieldset
+     * @return Fieldset
      * @throws Exception
      */
     final public function setData($data) {
         if (is_object($data) && !is_a($data, 'Object'))
             throw new \Exception('Data must be either an array or an object that extends \Object');
+        $data = is_array($data) ? $data : $data->toArray();
 
-        $this->data = (is_array($data)) ? $data : $data->toArray();
-        if (is_null($this->booleans))
-            $this->booleans = array();
-
-        foreach ($this->booleans as $name) {
-            if (!isset($this->data[$name])) {
-                $this->data[$name] = '0';
+        foreach ($data as $attr => $value) {
+            if ($this->elements[$attr]) {
+                if (is_a($this->elements[$attr], 'DScribe\Form\Element\Fieldset')) {
+                    $this->elements[$attr]->options->value->setData($value);
+                }
+                else {
+                    $this->elements[$attr]->data = $value;
+                }
             }
+            else
+                $this->data[$attr] = $value;
         }
         $this->valid = null;
-
         return $this;
     }
 
@@ -359,10 +287,25 @@ class Fieldset extends AValidator {
      * @return Object
      */
     final public function getData($toArray = false) {
+        if (is_null($this->valid))
+            throw new \Exception('Form must be validated before you can get data');
+
         if ($toArray)
             return ($this->data) ? $this->data : array();
         else
             return ($this->data) ? new \Object($this->data) : new \Object();
+    }
+
+    /**
+     * Renders the elements of the fieldset out
+     * @return string
+     */
+    public function render() {
+        $rendered = '';
+        foreach ($this->elements as $element) {
+            $rendered .= $element->render();
+        }
+        return $rendered;
     }
 
 }

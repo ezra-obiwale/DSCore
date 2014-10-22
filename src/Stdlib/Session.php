@@ -7,16 +7,54 @@ class Session {
      * @var string
      */
     private static $prepend = '__DS_';
+    private static $lifetime;
+
+    private static function init() {
+        ini_set('session.gc_maxlifetime', self::getLifetime());
+        session_set_cookie_params(self::getLifetime());
+        if (!isset($_SESSION)) {
+            if (!self::$lifetime) {
+                $sessionExpirationHours = engineGet('Config', 'sessionExpirationHours');
+                if (!$sessionExpirationHours)
+                    $sessionExpirationHours = 2;
+                self::$lifetime = 60 * 60 * $sessionExpirationHours;
+            }
+            @session_start();
+        }
+    }
+
+    /**
+     * Set the life time for the session
+     * @param int $lifetime
+     */
+    public function setLifetime($lifetime) {
+        self::$lifetime = $lifetime;
+    }
+
+    /**
+     * Fetch the life time for the session
+     * @return int
+     */
+    public function getLifetime() {
+        if (!self::$lifetime) {
+            $sessionExpirationHours = engineGet('Config', 'sessionExpirationHours', false);
+            if (!$sessionExpirationHours)
+                $sessionExpirationHours = 2;
+            self::$lifetime = 60 * 60 * $sessionExpirationHours;
+        }
+
+        return self::$lifetime;
+    }
 
     /**
      * Saves to session
      * @param string $key
      * @param mixed $value
+     * @param int $duration Duration for which the identity should be valid
      */
-    public static function save($key, $value) {
-        if (!isset($_SESSION))
-            @session_start();
-
+    public static function save($key, $value, $duration = null) {
+        self::setLifetime($duration);
+        static::init();
         $_SESSION[self::$prepend . $key] = $value;
     }
 
@@ -26,9 +64,7 @@ class Session {
      * @return mixed
      */
     public static function fetch($key) {
-        if (!isset($_SESSION))
-            @session_start();
-
+        static::init();
         if (isset($_SESSION[self::$prepend . $key]))
             return $_SESSION[self::$prepend . $key];
     }
@@ -38,17 +74,16 @@ class Session {
      * @param string $key
      */
     public static function remove($key) {
-        if (!isset($_SESSION))
-            @session_start();
-
+        static::init();
         if (isset($_SESSION[self::$prepend . $key]))
             unset($_SESSION[self::$prepend . $key]);
     }
 
+    /**
+     * Reset (destroy) the session
+     */
     public static function reset() {
-        if (!isset($_SESSION))
-            @session_start();
-
+        static::init();
         session_destroy();
     }
 

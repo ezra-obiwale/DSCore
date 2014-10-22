@@ -140,7 +140,7 @@ class AService extends AInjector {
      * @return boolean
      */
     protected function flush() {
-        return Engine::getDB()->flush();
+        return engineGet('db')->flush();
     }
 
     /**
@@ -148,7 +148,7 @@ class AService extends AInjector {
      * @return boolean
      */
     protected function cancel() {
-        return Engine::getDB()->cancel();
+        return engineGet('db')->cancel();
     }
 
 }

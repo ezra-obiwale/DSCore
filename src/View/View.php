@@ -2,7 +2,8 @@
 
 namespace DScribe\View;
 
-use DScribe\Core\Engine,
+use DScribe\Core\AController,
+    DScribe\Core\Flash,
     Util;
 
 class View {
@@ -14,8 +15,14 @@ class View {
     protected $variables;
 
     /**
+     * The current module
+     * @var string
+     */
+    protected $module;
+
+    /**
      * The current controller
-     * @var \DScribe\Core\AController
+     * @var AController
      */
     protected $controller;
 
@@ -24,6 +31,12 @@ class View {
      * @var string
      */
     protected $action;
+
+    /**
+     * Parameters passed into the action
+     * @var array
+     */
+    protected $params;
 
     /**
      * Indicates whether to run a partial view or not
@@ -39,7 +52,7 @@ class View {
 
     /**
      * Instance of the flash messenger
-     * @var \DScribe\Core\Flash
+     * @var Flash
      */
     protected $flash;
 
@@ -56,12 +69,15 @@ class View {
         if ($initialize) {
             $this->variables = $this->viewFile = array();
         }
+
+        $this->module = ucfirst(engineGet('module'));
+        $this->params = engineGet('params');
     }
 
     /**
      * Sets the variables to pass into the view file
      * @param array $variables
-     * @return \DScribe\View\View
+     * @return View
      */
     final public function variables(array $variables) {
         $this->variables = array_merge($this->variables, $variables);
@@ -79,27 +95,46 @@ class View {
     }
 
     /**
-     * Sets the current controller
-     * @param \DScribe\Core\AController $controller
-     * @return \DScribe\View\View
+     * Fetches the current module
+     * @return string
      */
-    final public function setController(\DScribe\Core\AController $controller) {
+    final public function getModule() {
+        return $this->module;
+    }
+
+    /**
+     * Override the current module
+     * @param string $module
+     * @return View
+     */
+    final public function setModule($module) {
+        $this->module = $module;
+        return $this;
+    }
+
+    /**
+     * Sets the current controller
+     * @param AController $controller
+     * @return View
+     */
+    final public function setController(AController $controller) {
         $this->controller = $controller;
         return $this;
     }
 
     /**
      * Fetches the current controller
-     * @return \DScribe\Core\AController
+     * @param boolean $live Indicates whether to return a model or string
+     * @return AController
      */
-    final public function getController() {
-        return $this->controller;
+    final public function getController($live = true) {
+        return ($live) ? $this->controller : $this->controller->getClass();
     }
 
     /**
      * Sets the current action
      * @param string $action
-     * @return \DScribe\View\View
+     * @return View
      */
     final public function setAction($action) {
         $this->action = $action;
@@ -115,8 +150,26 @@ class View {
     }
 
     /**
+     * Fetches the parameters sent into the current action
+     * @return array
+     */
+    public function getParams() {
+        return $this->params;
+    }
+
+    /**
+     * Override the parameters sent to the current action
+     * @param array $params
+     * @return View
+     */
+    public function setParams(array $params) {
+        $this->params = $params;
+        return $this;
+    }
+
+    /**
      * Indicates that the view file should not load any layout
-     * @return \DScribe\View\View
+     * @return View
      */
     final public function partial() {
         $this->partial = true;
@@ -134,7 +187,7 @@ class View {
     /**
      * Determines which action's view to use instead of current's
      * @param string $_ You may pass 1 to 3 parameters as [module],[controller],action
-     * @return \DScribe\View\View
+     * @return View
      */
     final public function file($_) {
         $args = func_get_args();
@@ -172,11 +225,11 @@ class View {
     final public function getViewFile($addOthers = true) {
         if ($addOthers) {
             if (!isset($this->viewFile[0]))
-                $this->viewFile[0] = ucfirst(Util::hyphenToCamel(Engine::getModule()));
+                $this->viewFile[0] = ucfirst(Util::hyphenToCamel(engineGet('module')));
             if (!isset($this->viewFile[1]))
-                $this->viewFile[1] = Util::camelToHyphen(Engine::getController());
+                $this->viewFile[1] = Util::camelToHyphen(engineGet('controller'));
             if (!isset($this->viewFile[2]))
-                $this->viewFile[2] = Util::camelToHyphen(Engine::getAction());
+                $this->viewFile[2] = Util::camelToHyphen(engineGet('action'));
 
             ksort($this->viewFile);
         }
@@ -194,9 +247,9 @@ class View {
      */
     final public function url($module, $controller = null, $action = null, array $params = array(), $hash = null) {
         $module = ucfirst(Util::hyphenToCamel($module));
-        $moduleOptions = Engine::getConfig('modules', $module, false);
+        $moduleOptions = engineGet('config', 'modules', $module, false);
         $module = (isset($moduleOptions['alias'])) ? $moduleOptions['alias'] : $module;
-       
+
         $return = Util::camelToHyphen($module);
         if ($controller)
             $return .= '/' . Util::camelToHyphen($controller);
@@ -206,7 +259,8 @@ class View {
             $return .= str_replace('//', '/' . urlencode(' ') . '/', '/' . join('/', $this->encodeParams($params)));
         if ($hash)
             $return .= '#' . $hash;
-        return Engine::getServerPath() . $return;
+
+        return engineGet('serverPath') . $return;
     }
 
     private function encodeParams(array $params) {
@@ -221,11 +275,10 @@ class View {
      * @return Renderer
      */
     final public function getRenderer() {
-        if (!$this->renderer)
+        if (!$this->renderer) {
             $this->renderer = new Renderer();
-        
-        $this->renderer->setView($this);
-        return $this->renderer;
+        }
+        return $this->renderer->setView($this);
     }
 
     /**
@@ -250,7 +303,9 @@ class View {
         $controllerClass = new $controllerClass;
         $controllerClass->setView($view);
         $action = lcfirst(\Util::hyphenToCamel($action));
-        $view->setController($controllerClass)->setAction(lcfirst(\Util::hyphenToCamel($action)));
+        $view->setController($controllerClass)
+                ->setAction(lcfirst(\Util::hyphenToCamel($action)))
+                ->setModule(ucfirst(\Util::hyphenToCamel($module)));
         $actionRet = call_user_func_array(array($controllerClass, $action . 'Action'), $params);
         if (is_object($actionRet) && is_a($actionRet, 'DScribe\View\View')) {
             $view = $actionRet;
@@ -281,10 +336,10 @@ class View {
 
     /**
      * Fetches the current instance of the flash messenger
-     * @return \DScribe\Core\Flash
+     * @return Flash
      */
     final public function flash() {
-        return Engine::getFlash();
+        return engineGet('flash');
     }
 
 }

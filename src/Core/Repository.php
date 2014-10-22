@@ -32,8 +32,8 @@ class Repository implements IRepository {
      * @param Mapper $table
      */
     public function __construct(Mapper $table) {
-        $table->setConnection(Engine::getDB());
-        $this->table = Engine::getDB()->table($table->getTableName(), $table);
+        $table->setConnection(engineGet('db'));
+        $this->table = engineGet('db')->table($table->getTableName(), $table);
         $table->init($this->table);
         $this->table->delayExecute();
         $this->alwaysJoin = array();
@@ -254,13 +254,16 @@ class Repository implements IRepository {
     public function delete($model) {
         if (!$this->table)
             return $this;
-
-        if (!is_array($model)) {
-            $model = array($model);
+        if ($model) {
+            if (!is_array($model)) {
+                $model = array($model);
+            } 
+           $this->checkModels($model);
+            call_user_func_array(array($this->table, 'delete'), array($model));
         }
-
-        $this->checkModels($model);
-        call_user_func_array(array($this->table, 'delete'), array($model));
+        else {
+            call_user_func_array(array($this->table, 'delete'), array());
+        }
         return $this;
     }
 
@@ -336,7 +339,7 @@ class Repository implements IRepository {
         if (!$this->table)
             return false;
 
-        return Engine::getDB()->flush();
+        return engineGet('db')->flush();
     }
 
 }

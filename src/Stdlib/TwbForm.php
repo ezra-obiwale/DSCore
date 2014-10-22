@@ -1,6 +1,7 @@
 <?php
 
-use DScribe\Form\Form;
+use DScribe\Form\Element,
+    DScribe\Form\Form;
 
 /**
  * Description of TwbForm
@@ -21,100 +22,58 @@ class TwbForm {
         }
     }
 
-    public static function horizontal(Form $form, $subElementType = self::HORIZONTAL) {
+    public static function horizontal(Form $form) {
         ob_start();
         ?>
-        <form class = "form-horizontal" <?= $form->getAttributes(true) ?>>
+        <form class="form-horizontal" <?= $form->parseAttributes() ?>>
             <?php
-            $data = $form->getData();
-            foreach ($form->prepare(true)->toArray() as $element):
-                if ($element->type !== 'fieldset'):
-                    if (isset($element->default) && isset($data->{$element->name})) {
-                        $element->default = $data->{$element->name};
-                    }
-                    if (!in_array($element->type, array('submit', 'hidden'))) :
-                        ?>
-                        <div class = "control-group <?= $form->hasError($element->name) ? 'error' : '' ?>">
-                        <?php endif; ?>
-                        <?= self::horizontalElement($element, $form->getLabel($element->name), $subElementType) ?>
-                        <?php if (!in_array($element->type, array('submit', 'hidden'))): ?>
-                        </div>
-                        <?php
-                    endif;
-                else:
+            foreach ($form->getElements() as $element) {
+                if ($element->type === 'fieldset') {
                     ?>
-                    <fieldset <?= $element->attributes ?> id="<?= $element->id ?>" >
-                        <?php if (isset($element->label)): ?>
-                            <legend <?= $element->label->attributes ?>><?= $element->label->label ?></legend>
+                    <fieldset id="<?= $element->attributes->id ?>" <?= $element->parseAttributes() ?>>
+                        <?php if ($element->options->label): ?>
+                            <legend><?= $element->options->label ?></legend>
                         <?php endif; ?>
                         <?php
-                        foreach ($element->elements as $elem):
-                            if ($element->type !== 'submit') :
-                                ?>
-                                <div class = "control-group <?= $form->hasError($element->name) ? 'error' : '' ?>">
-                                <?php endif; ?>
-                                <?= self::horizontalElement($elem, $form->getLabel($elem->name), $subElementType) ?>
-                                <?php if ($element->type !== 'submit'): ?>
-                                </div>
-                                <?php
-                            endif;
+                        foreach ($element->options->value->getElements() as $element):
+                            static::horizontalElement($element);
                         endforeach;
                         ?>
                     </fieldset>
-                <?php
-                endif;
-            endforeach;
+                    <?php
+                } else {
+                    static::horizontalElement($element);
+                }
+            }
             ?>
-            <?php
-            return ob_get_clean();
-        }
+        </form>
+        <?php
+        return ob_get_clean();
+    }
 
-        private static function horizontalElement(\Object $element, $label, $subElementType = self::HORIZONTAL) {
-            ob_start();
-            if ($label && $element->type !== 'hidden'):
-                if (!in_array($element->type, array('checkbox', 'radio')) || (in_array($element->type, array('checkbox', 'radio')) && is_object($element->tag))):
-                    ?>
-                    <label class = "control-label" for = "<?= $element->id ?>">
-                        <?= $label->label ?>
+    private static function horizontalElement(Element $element) {
+        ?>
+        <?php if ($element->type === 'submit'): ?>
+            <div class="form-actions">
+            <?php elseif ($element->type !== 'hidden'): ?>
+                <div class="control-group">
+                <?php endif; ?>
+                <?php if ($element->options->label): ?>
+                    <label class="control-label" for="<?= $element->attributes->id ?>">
+                        <?= $element->options->label ?>
                     </label>
                 <?php endif; ?>
-                <?php
-            endif;
-
-            if ($element->type !== 'hidden'):
-                ?>
-                <div class = "<?= ($element->type !== 'submit') ? 'controls' : 'form-actions' ?>">
-                    <?php
-                endif;
-                if (in_array($element->type, array('checkbox', 'radio')) && !is_object($element->tag)):
-                    ?>
-                    <label class = "<?= $element->type ?>">
+                <?php if (!in_array($element->type, array('submit', 'hidden'))): ?>
+                    <div class="controls">
                     <?php endif; ?>
-                    <?php
-                    if (!is_object($element->tag)) {
-                        echo str_replace('form-error', 'help-inline', $element->tag);
-                    }
-                    else {
-                        foreach ($element->tag->toArray() as $label => $value) {
-                            ?>
-                            <label class="<?= $element->type ?> <?= ($subElementType === self::INLINE) ? 'inline' : '' ?>">
-                                <input <?= ((isset($element->default) && $value === $element->default) || $value === $label) ? 'checked="checked"' : '' ?> type="<?= $element->type ?>" name="<?= ($element->type === 'checkbox') ? $element->name . '[]' : $element->name ?>" value="<?= $value ?>" /><?= $label ?>
-                            </label>
-                            <?php
-                        }
-                    }
-                    ?>
-                    <?php if ($label && in_array($element->type, array('checkbox', 'radio')) && !is_object($element->tag)): ?>
-                        <?= $label->label ?>
-                    </label>
-                    <?php
-                endif;
-                if ($element->type !== 'hidden'):
-                    ?>
+                    <?= $element->create() . $element->prepareInfo() ?>
+                    <?php if (!in_array($element->type, array('submit', 'hidden'))): ?>
+                    </div>
+                <?php endif; ?>
+                <?php if ($element->type !== 'hidden'): ?>
                 </div>
-                <?php
-            endif;
-            return ob_get_clean();
+            <?php endif; ?>
+            <?php
         }
 
         public static function inline(Form $form) {
@@ -122,67 +81,38 @@ class TwbForm {
             ?>
             <form class="form-inline">
                 <?php
-                foreach ($form->prepare(true)->toArray() as $element):
-                    if ($element->type !== 'fieldset'):
+                foreach ($form->getElements() as $element) {
+                    if ($element->type === 'fieldset') {
                         ?>
-                        <?= self::inlineElement($element, $form) ?>
-                        <?php
-                    else:
-                        ?>
-                        <fieldset <?= $element->attributes ?> id="<?= $element->id ?>" >
-                            <?php if ($labelObject = $form->getLabel($element->name)): ?>
-                                <legend <?= $labelObject->attributes ?>><?= $labelObject->label ?></legend>
+                        <fieldset id="<?= $element->attributes->id ?>" <?= $element->parseAttributes() ?>>
+                            <?php if ($element->options->label): ?>
+                                <legend><?= $element->options->label ?></legend>
                             <?php endif; ?>
                             <?php
-                            foreach ($element->elements as $elem):
-                                echo self::inlineElement($elem, $form);
+                            foreach ($element->options->value->getElements() as $element):
+                                static::inlineElement($element);
                             endforeach;
                             ?>
                         </fieldset>
-                    <?php
-                    endif;
-                endforeach;
+                        <?php
+                    } else {
+                        static::inlineElement($element);
+                    }
+                }
                 ?>
             </form>
             <?php
             return ob_get_clean();
         }
 
-        public static function inlineElement(\Object $element, Form $form) {
-            $label = $form->getLabel($element->name);
+        public static function inlineElement(Element $element) {
             ob_start();
-            if ($element->type !== 'fieldset'):
-                if ($label):
-                    echo '<label ' . $label->attributes . '>';
-                    if (!in_array($element->type, array('radio', 'checkbox')) || (in_array($element->type, array('radio', 'checkbox')) && is_object($element->tag))):
-                        echo $label->label;
-                    endif;
-                endif;
-                if (!is_object($element->tag)):
-                    echo $element->tag;
-                else:
-                    foreach ($element->tag as $label => $value):
-                        echo '<label class="' . $element->type . '"><input type="' . $element->type . '" name="' .
-                        (($element->type === 'checkbox') ? $element->name . '[]' : $element->name) .
-                        '" value="' . $value . '" />' . $label . '</label>';
-                    endforeach;
-                endif;
-                if ($label):
-                    if (in_array($element->type, array('radio', 'checkbox')) && !is_object($element->tag)):
-                        echo $label->label;
-                    endif;
-                    echo '</label>';
-                endif;
-            else:
-                echo '<fieldset ' . $element->attributes . '>';
-                if (isset($element->label)):
-                    echo '<legend>' . $element->label . '</legend>';
-                endif;
-                foreach ($element->elements as $elem) {
-                    self::inlineElement($elem, $form);
-                }
-                echo '</fieldset>';
-            endif;
+            if ($element->options->label) {
+                ?>
+                <label for="<?= $element->attributes->id ?>" class="<?= $element->type ?>"><?= $element->options->label ?></label>
+                <?php
+            }
+            echo $element->create();
             return ob_get_clean();
         }
 

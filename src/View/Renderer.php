@@ -3,12 +3,8 @@
 namespace DScribe\View;
 
 use DScribe\Core\AInjector,
-    DScribe\Core\Engine,
-    DScribe\Core\Exception,
     DScribe\Core\Flash,
-    DScribe\View\Renderer,
-    DScribe\View\View,
-    Exception as Exception2,
+    Exception,
     Object,
     Util;
 
@@ -40,8 +36,8 @@ class Renderer extends AInjector {
 
     /**
      * Sets the view to render
-     * @param \DScribe\View\View $view
-     * @return \DScribe\View\Renderer
+     * @param View $view
+     * @return Renderer
      */
     final public function setView(View $view) {
         $this->view = $view;
@@ -50,35 +46,65 @@ class Renderer extends AInjector {
     }
 
     /**
-     * Fetches the current module
-     * @return string
+     * Fetches the view object
+     * @return View
      */
-    protected function module() {
-        return Util::camelToHyphen(Engine::getModule(false));
+    final public function getView() {
+        return $this->view;
+    }
+
+    /**
+     * Fetches the current module
+     * @param mixed $check Compare the module with this and return boolean if 
+     * they are the same
+     * @return mixed
+     */
+    protected function module($check = null) {
+        $module = Util::camelToHyphen($this->view->getModule());
+        return $check ? ($check == $module) : $module;
     }
 
     /**
      * Fetches the current controller
-     * @return string
+     * @param mixed $check Compare the controller with this and return boolean if 
+     * they are the same
+     * @return mixed
      */
-    protected function controller() {
-        return Util::camelToHyphen(Engine::getController(false));
+    protected function controller($check = null) {
+        $controller = Util::camelToHyphen($this->view->getController()->getClassName());
+        return $check ? ($check == $controller) : $controller;
     }
 
     /**
      * Fetches the current action
-     * @return string
+     * @param mixed $check Compare the action with this and return boolean if 
+     * they are the same
+     * @return mixed
      */
-    protected function action() {
-        return Util::camelToHyphen(Engine::getAction(false));
+    protected function action($check = null) {
+        $action = Util::camelToHyphen($this->view->getAction());
+        return $check ? ($check == $action) : $action;
     }
 
     /**
      * Fetches the parameters set to the current action
-     * @return array
+     * @param mixed $check Compare the parameters with this and return boolean.
+     * If array, return TRUE if all values are in parameters. If not array, 
+     * return TRUE if exists in parameters
+     * @return mixed
      */
-    protected function params() {
-        return Engine::getParams();
+    protected function params($check = null) {
+        $params = $this->view->getParams();
+        if ($check) {
+            if (is_array($check)) {
+                $inter = array_intersect($check, $params);
+                return (count($inter) === count($check));
+            }
+            else {
+                return in_array($check, $params);
+            }
+        }
+        return $params;
     }
 
     protected function currentPath() {
@@ -91,7 +117,7 @@ class Renderer extends AInjector {
      * @return mixed
      */
     public function __get($name) {
-        return (strtolower($name) === 'view') ? $this->view : Engine::getConfig('app', $name, false);
+        return (strtolower($name) === 'view') ? $this->view : engineGet('config', 'app', $name, false);
     }
 
     /**
@@ -99,7 +125,7 @@ class Renderer extends AInjector {
      * @return Object
      */
     final protected function config() {
-        return new Object(Engine::getConfig());
+        return new Object(engineGet('config'));
     }
 
     /**
@@ -107,7 +133,7 @@ class Renderer extends AInjector {
      * @return \DScribe\Core\AUserIdentity
      */
     final protected function userIdentity() {
-        return Engine::getUserIdentity();
+        return engineGet('userIdentity');
     }
 
     /**
@@ -119,7 +145,7 @@ class Renderer extends AInjector {
      * search through modules
      * @return string
      */
-    final protected function loadLayout($layoutName, array $variables = array(), $fromTheme = false) {
+    final public function loadLayout($layoutName, array $variables = array(), $fromTheme = false) {
         $dsLayout = $this->getLayoutPath($layoutName, $fromTheme);
         if (!$dsLayout)
             return '';
@@ -134,25 +160,26 @@ class Renderer extends AInjector {
      * Fetches the layout path
      * @param string|null $layout
      * @return boolean
-     * @throws Exception2
+     * @throws Exception
      */
     private function getLayoutPath($layout = null, $fromTheme = false) {
         $layout = ($layout === null) ? $this->view->getController()->getLayout() : $layout;
         if (!$layout)
             return false;
 
-        if (!$fromTheme && is_readable(MODULES . Engine::getModule() . DIRECTORY_SEPARATOR . 'View' .
+        if (!$fromTheme && is_readable(MODULES . $this->view->getModule() . DIRECTORY_SEPARATOR . 'View' .
                         DIRECTORY_SEPARATOR . 'layouts' . DIRECTORY_SEPARATOR . $layout .
                         '.phtml'))
-            return MODULES . Engine::getModule() . DIRECTORY_SEPARATOR . 'View' .
+            return MODULES . $this->view->getModule() . DIRECTORY_SEPARATOR . 'View' .
                     DIRECTORY_SEPARATOR . 'layouts' . DIRECTORY_SEPARATOR . $layout .
                     '.phtml';
-        elseif (is_readable(THEMES . Engine::getConfig('defaults', 'theme') .
+        elseif (is_readable(THEMES . engineGet('config', 'defaults', 'theme') .
                         DIRECTORY_SEPARATOR . 'layouts' . DIRECTORY_SEPARATOR . $layout . '.phtml'))
-            return THEMES . Engine::getConfig('defaults', 'theme') . DIRECTORY_SEPARATOR .
+            return THEMES . engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR .
                     'layouts' . DIRECTORY_SEPARATOR . $layout . '.phtml';
-        else
-            throw new Exception2('Layout "' . $layout . '" not found both at the module and theme levels');
+        else {
+            throw new Exception('Layout "' . $layout . '" not found both at the module and theme levels');
+        }
     }
 
     /**
@@ -160,13 +187,13 @@ class Renderer extends AInjector {
      * @return Flash
      */
     final public function flash() {
-        return Engine::getFlash();
+        return engineGet('flash');
     }
 
     /**
      * Renders the action content to the browser
      * @param string $content The error message if any
-     * @throws Exception2
+     * @throws Exception
      */
     final public function render($content = null) {
         if ($content === null) {
@@ -178,7 +205,7 @@ class Renderer extends AInjector {
             if (!is_readable(MODULES . $viewFile[0] . DIRECTORY_SEPARATOR . 'View' .
                             DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR .
                             $viewFile[1] . DIRECTORY_SEPARATOR . $viewFile[2] . '.phtml'))
-                throw new Exception2('View layout "' . join(DIRECTORY_SEPARATOR, $viewFile) . '" not found');
+                throw new Exception('View layout "' . join(DIRECTORY_SEPARATOR, $viewFile) . '" not found');
 
             // include action view
             ob_start();
@@ -197,9 +224,9 @@ class Renderer extends AInjector {
 
                     $content = ob_get_clean();
                 }
-                else if (Engine::getConfig('defaults', 'defaultLayout', false)) {
+                else if (engineGet('config', 'defaults', 'defaultLayout', false)) {
                     ob_start();
-                    $this->loadLayout(Engine::getConfig('defaults', 'defaultLayout'), array('content' => $content));
+                    $this->loadLayout(engineGet('config', 'defaults', 'defaultLayout'), array('content' => $content));
                     $content = ob_get_clean();
                 }
                 else {
@@ -208,8 +235,8 @@ class Renderer extends AInjector {
             }
         }
         else {
-            if (!$errorLayout = Engine::getConfig('modules', Engine::getModule(), 'defaults', 'errorLayout', false)) {
-                if (!$errorLayout = Engine::getConfig('defaults', 'errorLayout', false)) {
+            if (!$errorLayout = engineGet('config', 'modules', $this->view->getModule(), 'defaults', 'errorLayout', false)) {
+                if (!$errorLayout = engineGet('config', 'defaults', 'errorLayout', false)) {
                     throw new Exception('Error layout not found', true);
                 }
             }
@@ -236,13 +263,13 @@ class Renderer extends AInjector {
      * @todo don't overwrite existing assets unless they are changed (both original && copied)
      */
     private function updateAssets($file) {
-        $modulesAssets = MODULES . Engine::getModule() . DIRECTORY_SEPARATOR . 'View' .
+        $modulesAssets = MODULES . $this->view->getModule() . DIRECTORY_SEPARATOR . 'View' .
                 DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR;
-        $themeAssets = THEMES . Engine::getConfig('defaults', 'theme') .
+        $themeAssets = THEMES . engineGet('config', 'defaults', 'theme') .
                 DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR;
 
         if (is_dir($modulesAssets) && is_readable($modulesAssets . $file)) {
-            $publicFile = $this->publicAssetsPath . Engine::getModule() . DIRECTORY_SEPARATOR . $file;
+            $publicFile = $this->publicAssetsPath . $this->view->getModule() . DIRECTORY_SEPARATOR . $file;
 
             if (!is_dir($modulesAssets . $file) && (!is_readable($publicFile) || $this->checkOutOfDate($publicFile, $modulesAssets . $file))) {
                 if (!is_dir(dirname($publicFile))) {
@@ -255,7 +282,7 @@ class Renderer extends AInjector {
             }
         }
         else if (is_dir($themeAssets) && is_readable($themeAssets . $file)) {
-            $publicFile = $this->publicAssetsPath . Engine::getConfig('defaults', 'theme') . DIRECTORY_SEPARATOR . $file;
+            $publicFile = $this->publicAssetsPath . engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR . $file;
             if (!is_dir($themeAssets . $file) && (!is_readable($publicFile) || $this->checkOutOfDate($publicFile, $themeAssets . $file))) {
                 if (!is_dir(dirname($publicFile))) {
                     mkdir(dirname($publicFile), 0777, true);
@@ -278,7 +305,7 @@ class Renderer extends AInjector {
      * @return string
      */
     private function parseFile($file) {
-        return Engine::getServerPath() . str_replace(ROOT . 'public/', '', $this->publicAssetsPath) . $file;
+        return engineGet('serverPath') . str_replace(ROOT . 'public/', '', $this->publicAssetsPath) . $file;
     }
 
     /**
@@ -292,11 +319,11 @@ class Renderer extends AInjector {
     private function getFile($file, $fromTheme) {
         $this->updateAssets($file);
 
-        if (!$fromTheme && is_readable($this->publicAssetsPath . Engine::getModule() . DIRECTORY_SEPARATOR . $file)) {
-            return $this->parseFile(Engine::getModule() . DIRECTORY_SEPARATOR . $file);
+        if (!$fromTheme && is_readable($this->publicAssetsPath . $this->view->getModule() . DIRECTORY_SEPARATOR . $file)) {
+            return $this->parseFile($this->view->getModule() . DIRECTORY_SEPARATOR . $file);
         }
-        elseif (is_readable($this->publicAssetsPath . Engine::getConfig('defaults', 'theme') . DIRECTORY_SEPARATOR . $file)) {
-            return $this->parseFile(Engine::getConfig('defaults', 'theme') . DIRECTORY_SEPARATOR . $file);
+        elseif (is_readable($this->publicAssetsPath . engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR . $file)) {
+            return $this->parseFile(engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR . $file);
         }
         else {
             return 'not-found/' . $file;
@@ -408,7 +435,7 @@ class Renderer extends AInjector {
      * @return string The link for the home page
      */
     final public function home() {
-        return $this->view->url(Engine::getDefaultModule());
+        return $this->view->url(engineGet('defaultModule'));
     }
 
     /**
@@ -423,6 +450,14 @@ class Renderer extends AInjector {
     }
 
     final public function getClassName() {
+        
+    }
+    
+    /**
+     * @todo
+     * @param array $paths
+     */
+    final public function breadcrumb(array $paths) {
         
     }
 

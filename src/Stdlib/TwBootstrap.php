@@ -42,13 +42,16 @@ class TwBootstrap {
      *   array( <br />
      *       "active" => "tab2", <br />
      *       "tabClass" => "the class", <br />
+     *       "position" => "top|right|bottom|left", <br />
      *   ); <br />
      * @return type
      */
     public static function createTabs(array $contents, array $options = array()) {
+        $position = $options['position'] ? 'tabs-' . $options['position'] : null;
+
         ob_start();
         ?>
-        <div class="tabbable"> <!-- Only required for left/right tabs -->
+        <div class="tabbable <?= $position ?>"> <!-- Only required for left/right tabs -->
             <ul class="nav nav-tabs">
                 <?php
                 $tabs = array_keys($contents);
@@ -66,7 +69,7 @@ class TwBootstrap {
                 $count = 1;
                 foreach ($contents as $tab => $content) {
                     ?>
-                <div class="tab-pane <?= ($tab == @$options["active"]) ? "active" : "" ?>" id="tab-<?= preg_replace('/[^a-zA-z0-9]/', '-', $tab) ?>">
+                    <div class="tab-pane <?= ($tab == @$options["active"]) ? "active" : "" ?>" id="tab-<?= preg_replace('/[^a-zA-z0-9]/', '-', $tab) ?>">
                         <p><?= $content ?></p>
                     </div>
                     <?php
@@ -185,6 +188,34 @@ class TwBootstrap {
 
     private static $addJs = true;
 
+    /**
+     * Creates a modal
+     *
+     * @param array $options Array of options to create the modal with.
+     * <p>
+     * 	All keys are optional and include:<br /><br />
+     * 		<b>href</b> (string)			-	The href of the link<br />
+     * 		<b>linkLabel</b> (string)		-	The label to show in the link<br />
+     * 		<b>linkAttrs</b> (array)		-	Attributes to pass to the link<br />
+     * <br />
+     * 		<b>modalClass</b> (string)		-	Class(es) to append the class attribute of the modal container<br />
+     * 		<b>modalId</b> (string)			-	Id for the modal container.<br />
+     * <br />
+     * 		<b>header</b> (string|boolean)	-	The header to show in the modal or FALSE if not too show<br />
+     * 		<b>headerAttrs</b> (array)		-	Attributes to pass to the header container<br />
+     * <br />
+     * 		<b>content</b> (string)			-	The content of the modal
+     * 		<b>contentClass</b> (string)	-	Class(es) to append to the content class attribute
+     * <br />
+     * 		<b>footer</b> (string|boolean)	-	The footer to show in the modal or FALSE if not too show<br />
+     * 		<b>footerAttrs</b> (array)		-	Attributes to pass to the footer container<br />
+     * 		<b>closeButtonLabel</b> (string)-	Label of the close button<br />
+     * 		<b>noActionButton</b> (boolean)	-	Indicates whether to remove the action button or not<br />
+     * </p>
+     * @param boolean $withLink Indicates if the link should be returned with the modal content.
+     * If not, the link can be accessed through method modalLink() with the id as the parameter.
+     * @return string
+     */
     public static function customModal(array $options = array(), $withLink = true) {
         self::$modals++;
         $id = isset($options['modalId']) ? $options['modalId'] : 'myModal' . self::$modals;
@@ -598,6 +629,16 @@ class TwBootstrap {
 
     private static $addPopoverJs = true;
 
+    /**
+     * Create a popover and it's link
+     * 
+     * @param string $content Content of the popover
+     * @param string $label The label for the link that'll call the popover
+     * @param string $placement top|bottom|left|right
+     * @param string $title
+     * @param string $class
+     * @return string
+     */
     public static function popover($content, $label, $placement = 'top', $title = null, $class = null) {
         ob_start();
         ?>
@@ -610,7 +651,7 @@ class TwBootstrap {
             <script>
                 $(document).ready(function() {
                     $('a[rel="popover"]').popover({
-                        html:true
+                        html: true
                     });
                 });
             </script>
