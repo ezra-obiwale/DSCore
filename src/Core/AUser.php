@@ -44,7 +44,8 @@ abstract class AUser extends AModel {
      */
     final public function check(array $options) {
         foreach ($options as $property => $value) {
-            if ($this->$property !== $value)
+            if ((is_array($value) && !in_array($this->$property, $value)) ||
+                    (!is_array($value) && $this->$property !== $value))
                 return false;
         }
 

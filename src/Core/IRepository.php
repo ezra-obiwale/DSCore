@@ -13,5 +13,3 @@ interface IRepository {
 
 	public function find($id);
 }
-
-?>

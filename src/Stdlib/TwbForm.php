@@ -31,13 +31,24 @@ class TwbForm {
                 if ($element->type === 'fieldset') {
                     ?>
                     <fieldset id="<?= $element->attributes->id ?>" <?= $element->parseAttributes() ?>>
-                        <?php if ($element->options->label): ?>
-                            <legend><?= $element->options->label ?></legend>
-                        <?php endif; ?>
                         <?php
-                        foreach ($element->options->value->getElements() as $element):
-                            static::horizontalElement($element);
+                        ob_start();
+                        foreach ($element->options->value->getElements() as $elem):
+                            $elem->name = isset($element->options->multiple) ?
+                                    $element->name . '[' . $elem->name . '][]' :
+                                    $element->name . '[' . $elem->name . ']';
+                            $elem->parent = $element->name;
+                            static::horizontalElement($elem);
                         endforeach;
+                        $fieldset = ob_get_clean();
+                        if ($element->options->label):
+                            ?>
+                            <legend><?= $element->options->label ?><?= $element->getMultipleButton($fieldset) ?></legend>
+                            <?php
+                        endif;
+                        if (!$element->options->label)
+                            echo $element->getMultipleButton($fieldset);
+                        echo $fieldset;
                         ?>
                     </fieldset>
                     <?php
@@ -79,7 +90,12 @@ class TwbForm {
         public static function inline(Form $form) {
             ob_start();
             ?>
-            <form class="form-inline">
+            <style>
+                .form-inline button {
+                    margin:5px;
+                }
+            </style>
+            <form class="form-inline" <?= $form->parseAttributes() ?>>
                 <?php
                 foreach ($form->getElements() as $element) {
                     if ($element->type === 'fieldset') {
@@ -89,8 +105,9 @@ class TwbForm {
                                 <legend><?= $element->options->label ?></legend>
                             <?php endif; ?>
                             <?php
-                            foreach ($element->options->value->getElements() as $element):
-                                static::inlineElement($element);
+                            foreach ($element->options->value->getElements() as $elem):
+                                $elem->parent = $element->name;
+                                static::inlineElement($elem);
                             endforeach;
                             ?>
                         </fieldset>
@@ -106,14 +123,12 @@ class TwbForm {
         }
 
         public static function inlineElement(Element $element) {
-            ob_start();
             if ($element->options->label) {
                 ?>
                 <label for="<?= $element->attributes->id ?>" class="<?= $element->type ?>"><?= $element->options->label ?></label>
                 <?php
             }
-            echo $element->create();
-            return ob_get_clean();
+            echo $element->create() . $element->prepareInfo();
         }
 
     }

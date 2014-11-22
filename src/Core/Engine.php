@@ -412,7 +412,7 @@ class Engine {
      * Initializes the engine
      * @param array $config
      */
-    protected static function init(array $config) {
+    public static function init(array $config) {
         static::$config = $config;
         static::checkConfig($config);
 

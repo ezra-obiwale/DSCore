@@ -20,6 +20,8 @@ class Cache {
 
     public function __construct(AUser $user = null) {
         $this->path = ($user) ? CACHE . $user->getId() . DIRECTORY_SEPARATOR : CACHE;
+        if (!is_dir($this->path))
+            mkdir($this->path, 0777, true);
     }
 
     private function getNamePath($name) {
@@ -68,10 +70,16 @@ class Cache {
         if (is_readable(CACHE . '0' . DIRECTORY_SEPARATOR . $name)) {
             unlink(CACHE . '0' . DIRECTORY_SEPARATOR . $name);
         }
-        
+
         foreach (\Util::readDir(CACHE, \Util::DIRS_ONLY) as $path) {
-            if (is_readable($path . DIRECTORY_SEPARATOR . $name)) {
-                unlink($path . DIRECTORY_SEPARATOR . $name);
+            if (is_readable($path . $name)) {
+                if (unlink($path . $name)) {
+                    $return = \Util::readDir(dirname($path . $name));
+                    if (empty($return['files']) && empty($return['dirs'])) {
+                        rmdir(dirname($path . $name));
+                    }
+                    return true;
+                }
             }
         }
     }

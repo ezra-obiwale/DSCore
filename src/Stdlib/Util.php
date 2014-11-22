@@ -401,11 +401,15 @@ class Util {
      * the config file will be overwritten with the array
      * @return boolean
      */
-    public static function updateConfig($path, array $data = array(), $recursiveMerge = false, array $configArray = null) {
-        if (!$configArray)
-            $configArray = include $path;
-
-        $config = ($recursiveMerge) ? array_merge_recursive($configArray, $data) : array_merge($configArray, $data);
+    public static function updateConfig($path, array $data = array(), $recursiveMerge = false, $configArray = null) {
+        if (is_null($configArray)) {
+            if (is_readable($path))
+                $configArray = include $path;
+            else {
+                $configArray = array();
+            }
+        }
+        $config = ($recursiveMerge) ? array_replace_recursive($configArray, $data) : array_replace($configArray, $data);
         $content = str_replace("=> \n", '=>', var_export($config, true));
         return (file_put_contents($path, '<' . '?php' . "\r\n\treturn " . $content . ';') === FALSE) ? false : true;
     }
