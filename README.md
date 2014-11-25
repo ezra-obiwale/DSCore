@@ -1,4 +1,4 @@
-DScribeCore
+DSCore
 ===========
 
 Required library of classes for the DScribe Framework without which the framework will not function
@@ -6,10 +6,10 @@ Required library of classes for the DScribe Framework without which the framewor
 INSTALLATION
 ======
 
-There two ways to install DScribeCore.
+There two ways to install DSCore.
 
 1. COMPOSER (Recommended)
-   Download and setup DScribeSkeleton[https://github.com/ezra-obiwale/DScribeSkeleton]. All requirements are automatically installed.
+   Download and setup DSSkeleton[https://github.com/ezra-obiwale/DSSkeleton]. All requirements are automatically installed.
    
 2. MANUAL
    - Create "d-scribe/core" directory in your vendor directory
