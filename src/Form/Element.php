@@ -90,7 +90,7 @@ class Element extends Object {
         if (($this->data == '0' || !empty($this->data)) && !is_object($this->data)) {
             return ($this->parent && is_array($this->data)) ? $this->data[0] : $this->data;
         }
-        else if ($this->options->default == '0' || !empty($this->default)) {
+        else if ($this->options->default == '0' || !empty($this->options->default)) {
             return $this->options->default;
         }
         else if (($this->options->value == '0' || !empty($this->options->value)) && !is_object($this->options->value)) {
@@ -132,8 +132,8 @@ class Element extends Object {
         if ($this->parent) {
             if (!static::$count[$this->parent])
                 static::$count[$this->parent] = 0;
-            static::$count[$this->parent]++;
-            
+            static::$count[$this->parent] ++;
+
             $this->attributes->id += static::$count[$this->parent];
         }
         ob_start();
@@ -183,7 +183,7 @@ class Element extends Object {
         <ul class="errors">
             <?php foreach ($errors as $error): ?>
                 <li><?= $error ?></li>
-            <?php endforeach; ?>
+        <?php endforeach; ?>
         </ul>
         <?php
         $this->errors = ob_get_clean();

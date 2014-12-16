@@ -198,5 +198,11 @@ class Fieldset extends Element {
     public function validate() {
         return $this->options->value->isValid();
     }
+    
+    public function reset() {
+        parent::reset();
+        $this->options->value->reset();
+        return $this;
+    }
 
 }

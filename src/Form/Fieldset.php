@@ -31,7 +31,7 @@ class Fieldset extends AValidator {
      * @var IModel
      */
     protected $model;
-    
+
     /**
      *
      * @var boolean
@@ -95,9 +95,7 @@ class Fieldset extends AValidator {
      * @return mixed
      */
     final public function getAttribute($attr) {
-        if (is_array($this->attributes) && array_key_exists($attr, $this->attributes)) {
-            return $this->attributes[$attr];
-        }
+        return $this->attributes[$attr];
     }
 
     /**
@@ -116,9 +114,11 @@ class Fieldset extends AValidator {
      * Parses attributes for rendering
      * @return string
      */
-    final public function parseAttributes() {
+    final public function parseAttributes($ignore = array()) {
         $return = '';
         foreach ($this->attributes as $attr => $val) {
+            if (in_array($attr, $ignore))
+                    continue;
             $return .= Util::camelToHyphen($attr) . '="' . $val . '" ';
         }
         return $return;
@@ -305,12 +305,12 @@ class Fieldset extends AValidator {
         else
             return ($this->data) ? new \Object($this->data) : new \Object();
     }
-    
+
     final public function isMultiple() {
         $this->multiple = true;
         return $this;
     }
-    
+
     /**
      * Renders the elements of the fieldset out
      * @return string
@@ -322,7 +322,7 @@ class Fieldset extends AValidator {
                 $element->name = $this->multiple ?
                         $element->name . '[]' :
                         $this->getName() . '[' . $element->name . ']';
-                
+
                 $element->parent = $this->getName();
             }
             $rendered .= $element->render();

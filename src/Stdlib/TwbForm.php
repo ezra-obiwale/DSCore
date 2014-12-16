@@ -25,7 +25,7 @@ class TwbForm {
     public static function horizontal(Form $form) {
         ob_start();
         ?>
-        <form class="form-horizontal" <?= $form->parseAttributes() ?>>
+        <form class="form-horizontal <?= $form->getAttribute('class') ?>" <?= $form->parseAttributes(array('class')) ?>>
             <?php
             foreach ($form->getElements() as $element) {
                 if ($element->type === 'fieldset') {
