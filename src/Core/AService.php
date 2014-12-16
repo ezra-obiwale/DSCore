@@ -4,7 +4,7 @@ namespace DScribe\Core;
 
 use DScribe\Core\AService,
     DScribe\Core\IModel,
-    DScribe\Core\Repository,
+    DBScribe\Repository,
     Exception;
 
 class AService extends AInjector {
@@ -77,16 +77,13 @@ class AService extends AInjector {
         if ($this->repository !== null && $this->model->getTableName() === $this->repository->getTableName())
             return true;
 
-        $repository = ($this->repositoryClass !== null) ? $this->repositoryClass : 'DScribe\Core\Repository';
-        if (!in_array('DScribe\Core\IRepository', class_implements($repository)))
-            throw new Exception('Repository class must implement "DScribe\Core\IRepository"');
-
-        $this->repository = new $repository($this->model);
+        $repository = ($this->repositoryClass !== null) ? $this->repositoryClass : 'DBScribe\Repository';
+        $this->repository = new $repository($this->model, engineGet('DB'), true);
     }
 
     /**
      * Fetches the repository of the current model
-     * @return mixed
+     * @return Repository
      */
     public function getRepository() {
         return $this->repository;
@@ -139,7 +136,7 @@ class AService extends AInjector {
      * Commits all database transactions
      * @return boolean
      */
-    protected function flush() {
+    public function flush() {
         return engineGet('db')->flush();
     }
 

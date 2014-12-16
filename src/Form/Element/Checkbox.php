@@ -61,7 +61,7 @@ class Checkbox extends Element {
                         'name="' . $this->getName() . '" ' .
                         'value="' . $value . '" ' . $checked .
                         $this->parseAttributes($this->attributes->toArray()) .
-                        ' />' .
+                        ' />&nbsp;&nbsp;' .
                         $label . '</label>';
             }
         }

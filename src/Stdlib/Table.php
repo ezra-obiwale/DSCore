@@ -25,6 +25,14 @@ class Table {
 
         self::setAttributes($attributes);
     }
+    
+    /**
+     * Checks if the table has rows
+     * @return bool
+     */
+    public static function hasRows() {
+        return (count(self::$row_data) > 0);
+    }
 
     /**
      * Sets attributes for the table

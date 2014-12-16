@@ -108,6 +108,9 @@ class Select extends Element {
             }
         }
         $return .= '</select>';
+        $return .= '<span class="loading-message ' . $this->attributes->id . '" style="display:none">' .
+                ($this->options->loadingMessage ? $this->options->loadingMessage :
+                        '<i><b>loading...</b></i>') . '</span>';
         return $return;
     }
 
@@ -183,7 +186,7 @@ class Select extends Element {
             document.addEventListener('DOMContentLoaded', function () {
                 var source = document.querySelector('select.withDependant');
                 source.addEventListener('change', function () {
-                    var target = document.querySelector('select[name="' + source.getAttribute('data-dependant') + '"]');
+                    var target = document.querySelector(source.getAttribute('data-dependant'));
                     while (target.lastChild) {
                         target.removeChild(target.lastChild);
                     }
@@ -195,6 +198,10 @@ class Select extends Element {
                         target.appendChild(def);
                     }
                     else {
+                        var targetDisplay = target.style.display;
+                        target.style.display = 'none';
+                        var loadingMessage = document.querySelector('.loading-message.' + target.getAttribute('id'));
+                        loadingMessage.style.display = 'inline';
                         var httpRequest = new XMLHttpRequest(), result = null;
                         httpRequest.onreadystatechange = function () {
                             if (!result && httpRequest.responseText) {
@@ -215,6 +222,8 @@ class Select extends Element {
 
                                     target.appendChild(option);
                                 });
+                                loadingMessage.style.display = 'none';
+                                target.style.display = targetDisplay;
                             }
                         };
                         if (source.getAttribute('data-get')) {

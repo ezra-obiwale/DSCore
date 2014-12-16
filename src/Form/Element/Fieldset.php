@@ -120,7 +120,7 @@ class Fieldset extends Element {
                         m.innerHTML = '<div style="position:relative"><button tabIndex="-1" class="close" type="button" data-fieldset="' +
                                 fieldset.id + '" onclick="__deleteExtra(this)" style="display:block;margin:5px;color:red">x</button>' + content + ' </div>';
 
-                        var field = m.querySelector('input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]),select');
+                        var field = m.querySelector('input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]),select,textarea');
                         field.value = '';
                         while (m.firstChild) {
                             fieldset.appendChild(m.firstChild);
