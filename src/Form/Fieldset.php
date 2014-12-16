@@ -33,6 +33,12 @@ class Fieldset extends AValidator {
     protected $model;
 
     /**
+     *
+     * @var boolean
+     */
+    private $multiple;
+
+    /**
      * Class constructor
      * @param string $name Name of fieldset
      * @param array $attributes
@@ -50,6 +56,16 @@ class Fieldset extends AValidator {
      */
     public function getName() {
         return $this->name;
+    }
+
+    /**
+     * Set the name of the Fieldset
+     * @param string $name
+     * @return \DScribe\Form\Fieldset
+     */
+    public function setName($name) {
+        $this->name = $name;
+        return $this;
     }
 
     /**
@@ -79,9 +95,7 @@ class Fieldset extends AValidator {
      * @return mixed
      */
     final public function getAttribute($attr) {
-        if (is_array($this->attributes) && array_key_exists($attr, $this->attributes)) {
-            return $this->attributes[$attr];
-        }
+        return $this->attributes[$attr];
     }
 
     /**
@@ -100,9 +114,11 @@ class Fieldset extends AValidator {
      * Parses attributes for rendering
      * @return string
      */
-    final public function parseAttributes() {
+    final public function parseAttributes($ignore = array()) {
         $return = '';
         foreach ($this->attributes as $attr => $val) {
+            if (in_array($attr, $ignore))
+                    continue;
             $return .= Util::camelToHyphen($attr) . '="' . $val . '" ';
         }
         return $return;
@@ -118,7 +134,7 @@ class Fieldset extends AValidator {
         $this->setData($model->toArray(false, true));
         return $this;
     }
-    
+
     final protected function loadModel() {
         
     }
@@ -160,15 +176,14 @@ class Fieldset extends AValidator {
 
     /**
      * Adds an element to the fieldset
-     * @param array $element
+     * @param array | \DScribe\Form\Element $element
      * @return Fieldset
      * @throws Exception
-     * @todo Check validity immediately to allow easy exception trace
-     * @todo Create individual element class with it's own prepare method for output
      */
-    public function add(array $element) {
-        if ((is_object($element) && !is_a($element, 'DScribe\Form\Element')) || !is_array($element))
-            throw new Exception('Form elements must be either an array or an object subclass of \DScribe\Form\Element');
+    public function add($element) {
+        if ((is_object($element) && !is_a($element, 'DScribe\Form\Element')) ||
+                (!is_object($element) && !is_array($element)))
+            throw new Exception('Form elements must be either an array or an object subclass of DScribe\Form\Element');
         else if (is_array($element)) {
             if (!isset($element['type'])) {
                 throw new \Exception('Form elements must of key type');
@@ -190,9 +205,6 @@ class Fieldset extends AValidator {
         else if ($element->type === 'hidden' && $element->name === 'csrf')
             $element->setCsrfKey($this->getName());
 
-        if (!is_a($this, 'DScribe\Form\Form')) {
-            $element->parent = $this->name;
-        }
         $this->elements[$element->name] = $element;
 
         if (!$element->filters) {
@@ -200,6 +212,7 @@ class Fieldset extends AValidator {
             if ($filters[$element->name])
                 $element->filters = $filters[$element->name];
         }
+
         return $this;
     }
 
@@ -214,7 +227,7 @@ class Fieldset extends AValidator {
     /**
      * Fetches an element
      * @param string $name
-     * @return \Object
+     * @return Element
      */
     final public function get($name) {
         return $this->elements[$name];
@@ -241,10 +254,13 @@ class Fieldset extends AValidator {
     /**
      * Removes an element
      * @param string $elementName
+     * @param bool $return Indicates whether to return the element being removed
      * @return Fieldset
      */
-    final public function remove($elementName) {
+    final public function remove($elementName, $return = false) {
         if (isset($this->elements[$elementName])) {
+            if ($return)
+                $return = $this->elements[$elementName];
             $this->ignoreFilter($elementName);
             unset($this->elements[$elementName]);
             $elementName = str_replace('[]', '', $elementName);
@@ -252,28 +268,22 @@ class Fieldset extends AValidator {
             unset($this->data[$elementName]);
         }
 
-        return $this;
+        return $return ? $return : $this;
     }
 
     /**
      * Sets data to validate
      * @param \Object | array $data
-     * @return Fieldset
+     * @return Fieldset|Element
      * @throws Exception
      */
     final public function setData($data) {
         if (is_object($data) && !is_a($data, 'Object'))
             throw new \Exception('Data must be either an array or an object that extends \Object');
         $data = is_array($data) ? $data : $data->toArray();
-
         foreach ($data as $attr => $value) {
             if ($this->elements[$attr]) {
-                if (is_a($this->elements[$attr], 'DScribe\Form\Element\Fieldset')) {
-                    $this->elements[$attr]->options->value->setData($value);
-                }
-                else {
-                    $this->elements[$attr]->data = $value;
-                }
+                $this->elements[$attr]->setData($value);
             }
             else
                 $this->data[$attr] = $value;
@@ -296,6 +306,11 @@ class Fieldset extends AValidator {
             return ($this->data) ? new \Object($this->data) : new \Object();
     }
 
+    final public function isMultiple() {
+        $this->multiple = true;
+        return $this;
+    }
+
     /**
      * Renders the elements of the fieldset out
      * @return string
@@ -303,9 +318,27 @@ class Fieldset extends AValidator {
     public function render() {
         $rendered = '';
         foreach ($this->elements as $element) {
+            if (!method_exists($this, 'openTag')) {
+                $element->name = $this->multiple ?
+                        $element->name . '[]' :
+                        $this->getName() . '[' . $element->name . ']';
+
+                $element->parent = $this->getName();
+            }
             $rendered .= $element->render();
         }
         return $rendered;
+    }
+
+    /**
+     * Removes the data in the form
+     * @return Form
+     */
+    public function reset() {
+        foreach ($this->elements as $element) {
+            $element->reset();
+        }
+        return $this;
     }
 
 }

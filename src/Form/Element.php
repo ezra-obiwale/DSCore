@@ -14,6 +14,7 @@ use Object,
  */
 class Element extends Object {
 
+    private static $count;
     public $data;
 
     public function __construct(array $data = array(), $preserveArray = false, $preserveKeyOnly = null) {
@@ -28,14 +29,7 @@ class Element extends Object {
 
         if (get_class($this->options) !== 'Object')
             throw new Exception('Form element options of "' . $this->name . '" must be an array');
-        if ($this->type === 'fieldset' && !isset($this->options->value))
-            throw new Exception('Form fieldset element "' . $this->name .
-            '" of must have a value of type "DScribe\Form\Fieldset"');
-        elseif ($this->type === 'fieldset' && (!is_object($this->options->value) ||
-                (is_object($this->options->value) && !in_array('DScribe\Form\Fieldset', class_parents($this->options->value))))) {
-            throw new Exception('Form element "' . $this->name .
-            '" must have a value of object "DScribe\Form\Fieldset"');
-        }
+
         if (empty($this->attributes->id)) {
             $this->attributes->id = $this->name;
             $this->dId = true;
@@ -60,6 +54,8 @@ class Element extends Object {
      */
     final public function parseAttributes() {
         $return = '';
+        if (!$this->attributes)
+            $this->attributes = new Object();
         foreach ($this->attributes->toArray() as $attr => $val) {
             $return .= \Util::camelToHyphen($attr) . '="' . $val . '" ';
         }
@@ -81,20 +77,28 @@ class Element extends Object {
         return $return;
     }
 
+    public function setData($data) {
+        $this->data = $data;
+        return $this;
+    }
+
     /**
      * Fetches the current value of the element
      * @return mixed
      */
     protected function getValue() {
-        return (($this->data || $this->data === 0) && !is_object($this->data)) ?
-                $this->data :
-                ((isset($this->options->value)) ? $this->options->value : null);
+        if (($this->data == '0' || !empty($this->data)) && !is_object($this->data)) {
+            return ($this->parent && is_array($this->data)) ? $this->data[0] : $this->data;
+        }
+        else if ($this->options->default == '0' || !empty($this->options->default)) {
+            return $this->options->default;
+        }
+        else if (($this->options->value == '0' || !empty($this->options->value)) && !is_object($this->options->value)) {
+            return $this->options->value;
+        }
     }
 
     protected function getName() {
-        if ($this->parent) {
-            return $this->parent . '[' . $this->name . ']';
-        }
         return $this->name . (isset($this->attributes->multiple) ? '[]' : '');
     }
 
@@ -112,8 +116,6 @@ class Element extends Object {
     /**
      * Prepare the element for rendering, creating the tag and adding provided
      * information
-     * @param bool $custom Indicates whether a custom class will be rendering
-     * the elements [TRUE] or the default form class [FALSE]
      * @return string
      */
     public function prepare() {
@@ -122,7 +124,18 @@ class Element extends Object {
         return $this->create() . $this->prepareInfo();
     }
 
+    /**
+     * Render the element for output
+     * @return string
+     */
     public function render() {
+        if ($this->parent) {
+            if (!static::$count[$this->parent])
+                static::$count[$this->parent] = 0;
+            static::$count[$this->parent] ++;
+
+            $this->attributes->id += static::$count[$this->parent];
+        }
         ob_start();
         ?>
         <div class="element-group <?= $this->type ?> <?= $this->errors ? 'form-error' : null ?>">
@@ -150,7 +163,7 @@ class Element extends Object {
         foreach ($this->filters as $filter => $options) {
             if (is_object($options))
                 $options = $options->toArray();
-            
+
             if (method_exists($filterer, $filter)) {
                 if (!call_user_func_array(array($filterer, $filter), array($options))) {
                     $valid = false;
@@ -170,7 +183,7 @@ class Element extends Object {
         <ul class="errors">
             <?php foreach ($errors as $error): ?>
                 <li><?= $error ?></li>
-            <?php endforeach; ?>
+        <?php endforeach; ?>
         </ul>
         <?php
         $this->errors = ob_get_clean();
@@ -178,6 +191,19 @@ class Element extends Object {
 
     public function __toString() {
         return get_called_class();
+    }
+
+    /**
+     * Checks whether element is of the given type
+     * @param string $type
+     * @return bool
+     */
+    public function is($type) {
+        return (strtolower($type) === $this->type);
+    }
+
+    public function reset() {
+        unset($this->data);
     }
 
 }

@@ -103,12 +103,11 @@ class Object {
 
         return $this;
     }
-    
+
     public function reset() {
         foreach (get_object_vars($this) as $prop => $value) {
             unset($this->$prop);
         }
         $this->integerKeys = null;
     }
-
 }

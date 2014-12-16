@@ -5,7 +5,8 @@
 
 namespace DScribe\Form\Element;
 
-use DScribe\Form\Element;
+use DScribe\Form\Element,
+    Object;
 
 /**
  * Description of Element
@@ -15,9 +16,11 @@ use DScribe\Form\Element;
 class Textarea extends Element {
 
     public function create() {
-        return '<textarea name="' . $this->name . '" ' .
+        if (!$this->attributes)
+            $this->attributes = new Object();
+        return '<textarea name="' . $this->getName() . '" ' .
                 $this->parseAttributes($this->attributes->toArray()) .
-                '>' . $this->getValue($this->data) . '</textarea>';
+                '>' . $this->getValue() . '</textarea>';
     }
-    
+
 }

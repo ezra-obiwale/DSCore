@@ -336,46 +336,69 @@ class Util {
     }
 
     /**
+     * Make each value in the array an array
+     * @param array $array
+     * @return array
+     */
+    public static function makeValuesArray(array &$array) {
+        foreach ($array as &$value) {
+            if (!is_array($value))
+                $value = array($value);
+        }
+        return $array;
+    }
+
+    /**
      * Uploads file(s) to the server
-     * @param array $options Keys include [(string) path, (int) maxSize, (array) extensions]
+     * @param \Object $data Files to upload
+     * @param array $options Keys include [(string) path, (int) maxSize, 
+     * (array) extensions - in lower case, (array) ignore, (string) prefix]
      * @return boolean|string
      */
-    public static function uploadFiles(array $options = array()) {
-        foreach ($_FILES as $ppt => $info) {
-            if ($info['error'] !== UPLOAD_ERR_OK)
-                return self::UPLOAD_ERROR_NO_FILE;
+    public static function uploadFiles(\Object $data, array $options = array()) {
+        $return = array('success' => array(), 'errors' => array());
+        foreach ($data->toArray(TRUE) as $ppt => $info) {
+            if (is_array($options['ignore']) && in_array($ppt, $options['ignore']))
+                continue;
+            self::makeValuesArray($info);
 
-            if (isset($options['maxSize']) && $info['size'] > $options['maxSize'])
-                return self::UPLOAD_ERROR_SIZE;
-
-            $tmpName = $info['tmp_name'];
-            $info = pathinfo($info['name']);
-            if (isset($options['extensions']) && !in_array($info['extension'], $options['extensions'])) {
-                return self::UPLOAD_ERROR_EXTENSION;
-            }
-            $dir = isset($options['path']) ? $options['path'] : DATA . 'uploads';
-            if (!is_dir($dir)) {
-                if (!mkdir($dir, 0777, true)) {
-                    return self::UPLOAD_ERROR_PATH;
+            foreach ($info['name'] as $key => $name) {
+                if ($info['error'][$key] !== UPLOAD_ERR_OK) {
+                    $return['errors'][$ppt][$name] = self::UPLOAD_ERROR_NO_FILE;
+                    continue;
                 }
 
-                $dir .= DIRECTORY_SEPARATOR . $info['extension'];
-                if (!mkdir($dir, 0777, true)) {
-                    return self::UPLOAD_ERROR_PERMISSION;
+                if (isset($options['maxSize'][$key]) && $info['size'] > $options['maxSize'][$key]) {
+                    $return['errors'][$ppt][$name] = self::UPLOAD_ERROR_SIZE;
+                    continue;
                 }
-            }
 
-            $savePath = $dir . DIRECTORY_SEPARATOR . time() . '_' . preg_replace('/[^A-Z0-9._-]/i', '_', basename($info['filename'])) . '.' . $info['extension'];
-            if (move_uploaded_file($tmpName, $savePath)) {
-                self::$uploadSuccess = $savePath;
-                return $savePath;
-            }
-            else {
-                return self::UPLOAD_ERROR_FAILED;
+                $tmpName = $info['tmp_name'][$key];
+                $pInfo = pathinfo($name);
+                if (isset($options['extensions']) && !in_array(strtolower($pInfo['extension']), $options['extensions'])) {
+                    $return['errors'][$ppt][$name] =  self::UPLOAD_ERROR_EXTENSION;
+                    continue;
+                }
+                $dir = isset($options['path']) ? $options['path'] : DATA . 'uploads';
+                if (substr($dir, strlen($dir) - 1) !== DIRECTORY_SEPARATOR)
+                    $dir .= DIRECTORY_SEPARATOR;
+                if (!is_dir($dir)) {
+                    if (!mkdir($dir, 0777, true)) {
+                        $return['errors'][$ppt][$name] =  self::UPLOAD_ERROR_PATH;
+                        continue;
+                    }
+                }
+                $savePath = $dir . $options['prefix'] . preg_replace('/[^A-Z0-9._-]/i', '_', basename($pInfo['filename'])) . '.' . $pInfo['extension'];
+                if (move_uploaded_file($tmpName, $savePath)) {
+                    $return['success'][$ppt][$name] = $savePath;
+                    self::$uploadSuccess = $savePath;
+                }
+                else {
+                    $return['errors'][$ppt][$name] =  self::UPLOAD_ERROR_FAILED;
+                }
             }
         }
-
-        return self::UPLOAD_ERROR_NO_FILE;
+        return $return;
     }
 
     /**
@@ -383,8 +406,10 @@ class Util {
      * @param int $length Length of the password to generate. Default is 8
      * @return string
      */
-    public static function randomPassword($length = 8) {
-        $chars = str_split(str_shuffle('bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ123456789&^%$#@!_-+='));
+    public static function randomPassword($length = 8, $string = null) {
+        if (!$string)
+            $string = 'bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ123456789&^%$#@!_-+=';
+        $chars = str_split(str_shuffle($string));
         $password = '';
         foreach (array_rand($chars, $length) as $key) {
             $password .= $chars[$key];
@@ -401,11 +426,15 @@ class Util {
      * the config file will be overwritten with the array
      * @return boolean
      */
-    public static function updateConfig($path, array $data = array(), $recursiveMerge = false, array $configArray = null) {
-        if (!$configArray)
-            $configArray = include $path;
-
-        $config = ($recursiveMerge) ? array_merge_recursive($configArray, $data) : array_merge($configArray, $data);
+    public static function updateConfig($path, array $data = array(), $recursiveMerge = false, $configArray = null) {
+        if (is_null($configArray)) {
+            if (is_readable($path))
+                $configArray = include $path;
+            else {
+                $configArray = array();
+            }
+        }
+        $config = ($recursiveMerge) ? array_replace_recursive($configArray, $data) : array_replace($configArray, $data);
         $content = str_replace("=> \n", '=>', var_export($config, true));
         return (file_put_contents($path, '<' . '?php' . "\r\n\treturn " . $content . ';') === FALSE) ? false : true;
     }

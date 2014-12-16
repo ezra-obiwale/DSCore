@@ -4,7 +4,8 @@
 
 namespace DScribe\Form\Element;
 
-use DScribe\Form\Element;
+use DScribe\Form\Element,
+    Object;
 
 /**
  * Description of Element
@@ -29,6 +30,8 @@ class Checkbox extends Element {
     }
 
     public function create() {
+        if (!$this->attributes)
+            $this->attributes = new Object();
         $return = '';
         if (isset($this->options->values) && !empty($this->options->values)) {
             if (!is_array($this->options->values))
@@ -58,7 +61,7 @@ class Checkbox extends Element {
                         'name="' . $this->getName() . '" ' .
                         'value="' . $value . '" ' . $checked .
                         $this->parseAttributes($this->attributes->toArray()) .
-                        ' />' .
+                        ' />&nbsp;&nbsp;' .
                         $label . '</label>';
             }
         }

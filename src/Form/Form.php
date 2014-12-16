@@ -45,13 +45,4 @@ class Form extends Fieldset {
         return ob_get_clean();
     }
 
-    /**
-     * Removes the data in the form
-     * @return Form
-     */
-    public function reset() {
-        $this->data = array();
-        return $this;
-    }
-
 }
