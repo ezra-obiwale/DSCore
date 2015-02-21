@@ -33,8 +33,13 @@ class Filterer {
      * Class constructor
      * @param array $data Data from form
      */
-    public function __construct(array $data) {
+    public function __construct() {
+
+    }
+
+    public function setData($data) {
         $this->data = $data;
+        return $this;
     }
 
     public function getElementData() {
@@ -90,8 +95,7 @@ class Filterer {
                     $this->addError('Field is required');
                 else if (is_array($options) && isset($options['message'])) {
                     $this->addError($options['message']);
-                }
-                else
+                } else
                     $this->addError((!is_array($options) && !is_object($options)) ? $options : 'Field is required');
                 return false;
             }
@@ -113,12 +117,10 @@ class Filterer {
                 if ($this->elementData == $this->data[$options['element']]) {
                     return true;
                 }
-            }
-            else {
+            } else {
                 return true;
             }
-        }
-        else if (isset($options['value'])) {
+        } else if (isset($options['value'])) {
             if ($this->elementData == $options['value']) {
                 return true;
             }
@@ -141,8 +143,7 @@ class Filterer {
                 if ($this->elementData != $this->data[$options['element']]) {
                     return true;
                 }
-            }
-            else
+            } else
                 return true;
         }
         else if (isset($options['value'])) {
@@ -151,7 +152,7 @@ class Filterer {
             }
         }
 
-        $this->addError($this->checkMessage('Values must not match', $options)) ;
+        $this->addError($this->checkMessage('Values must not match', $options));
         return false;
     }
 
@@ -167,7 +168,7 @@ class Filterer {
             return true;
         }
 
-        $this->addError($this->checkMessage('Invalid email adddress', $options)) ;
+        $this->addError($this->checkMessage('Invalid email adddress', $options));
         return false;
     }
 
@@ -183,7 +184,7 @@ class Filterer {
             return true;
         }
 
-        $this->addError($this->checkMessage('Value is not a valid url', $options)) ;
+        $this->addError($this->checkMessage('Value is not a valid url', $options));
         return false;
     }
 
@@ -199,7 +200,7 @@ class Filterer {
         if (!preg_match($options['regex'], $this->elementData))
             return true;
 
-        $this->addError($this->checkMessage('Value can only contain alphabets', $options)) ;
+        $this->addError($this->checkMessage('Value can only contain alphabets', $options));
         return false;
     }
 
@@ -215,7 +216,7 @@ class Filterer {
         if (!preg_match($options['regex'], $this->elementData))
             return true;
 
-        $this->addError($this->checkMessage('Value can only contain alphabets and numbers', $options)) ;
+        $this->addError($this->checkMessage('Value can only contain alphabets and numbers', $options));
         return false;
     }
 
@@ -229,7 +230,7 @@ class Filterer {
         if (ctype_digit($this->elementData))
             return true;
 
-        $this->addError($this->checkMessage('Value can only contain numbers and a dot', $options)) ;
+        $this->addError($this->checkMessage('Value can only contain numbers and a dot', $options));
         return false;
     }
 
@@ -238,7 +239,7 @@ class Filterer {
      */
     public function number(array $options) {
         if (stristr($this->elementData, '.')) {
-            $this->addError($this->checkMessage('Value can only contain numbers', $options)) ;
+            $this->addError($this->checkMessage('Value can only contain numbers', $options));
             return false;
         }
 
@@ -257,20 +258,19 @@ class Filterer {
     public function greaterThan(array $options) {
         if (isset($options['element'])) {
             if (isset($this->data[$options['element']])) {
-                $than = 'field "' . $options['element'] . '"';
+                $than = ' "' . $this->cleanElement($options['element']) . '"';
                 if ($this->elementData > $this->data[$options['element']] || (empty($this->elementData) && $this->elementData !== 0)) {
                     return true;
                 }
             }
-        }
-        else if (isset($options['value'])) {
+        } else if (isset($options['value'])) {
             $than = $options['value'];
             if ($this->elementData > $options['value']) {
                 return true;
             }
         }
 
-        $this->addError($this->checkMessage('Value must be greater than ' . $than, $options)) ;
+        $this->addError($this->checkMessage('Value must be greater than ' . $than, $options));
         return false;
     }
 
@@ -283,20 +283,19 @@ class Filterer {
     public function lessThan(array $options) {
         if (isset($options['element'])) {
             if (isset($this->data[$options['element']])) {
-                $than = 'field "' . $options['element'] . '"';
+                $than = ' "' . $this->cleanElement($options['element']) . '"';
                 if ($this->elementData < $this->data[$options['element']]) {
                     return true;
                 }
             }
-        }
-        else if (isset($options['value'])) {
+        } else if (isset($options['value'])) {
             $than = $options['value'];
             if ($this->elementData < $options['value']) {
                 return true;
             }
         }
 
-        $this->addError($this->checkMessage('Value must be less than ' . $than, $options)) ;
+        $this->addError($this->checkMessage('Value must be less than ' . $than, $options));
         return false;
     }
 
@@ -310,7 +309,7 @@ class Filterer {
         if ($options['value'] && strlen($this->elementData) >= $options['value'])
             return true;
 
-        $this->addError($this->checkMessage('Length must not be less than ' . $options['value'], $options)) ;
+        $this->addError($this->checkMessage('Length must not be less than ' . $options['value'], $options));
         return false;
     }
 
@@ -324,7 +323,7 @@ class Filterer {
         if ($options['value'] && strlen($this->elementData) <= $options['value'])
             return true;
 
-        $this->addError($this->checkMessage('Length must not be more than ' . $options['value'], $options)) ;
+        $this->addError($this->checkMessage('Length must not be more than ' . $options['value'], $options));
         return false;
     }
 
@@ -337,20 +336,19 @@ class Filterer {
     public function greaterOrEqualTo(array $options) {
         if (isset($options['element'])) {
             if (isset($this->data[$options['element']])) {
-                $than = 'field "' . $options['element'] . '"';
+                $than = ' "' . $this->cleanElement($options['element']) . '"';
                 if ($this->elementData >= $this->data[$options['element']] || (empty($this->elementData) && $this->elementData !== 0)) {
                     return true;
                 }
             }
-        }
-        else if (isset($options['value'])) {
+        } else if (isset($options['value'])) {
             $than = $options['value'];
             if ($this->elementData >= $options['value']) {
                 return true;
             }
         }
 
-        $this->addError($this->checkMessage('Value must be greater than or equal to ' . $than, $options)) ;
+        $this->addError($this->checkMessage('Value must be greater than or equal to ' . $than, $options));
         return false;
     }
 
@@ -363,20 +361,19 @@ class Filterer {
     public function lessOrEqualTo(array $options) {
         if (isset($options['element'])) {
             if (isset($this->data[$options['element']])) {
-                $than = 'field "' . $options['element'] . '"';
+                $than = ' "' . $this->cleanElement($options['element']) . '"';
                 if ($this->elementData <= $this->data[$options['element']]) {
                     return true;
                 }
             }
-        }
-        else if (isset($options['value'])) {
+        } else if (isset($options['value'])) {
             $than = $options['value'];
             if ($this->elementData <= $options['value']) {
                 return true;
             }
         }
 
-        $this->addError($this->checkMessage('Value must be less than or equal to ' . $than, $options)) ;
+        $this->addError($this->checkMessage('Value must be less than or equal to ' . $than, $options));
         return false;
     }
 
@@ -390,6 +387,10 @@ class Filterer {
     public function stripTags($data, $allow = '') {
         strip_tags($data, $allow);
         return $this;
+    }
+
+    private function cleanElement($element) {
+        return ucwords(str_replace('_', ' ', \Util::camelTo_($element)));
     }
 
 }

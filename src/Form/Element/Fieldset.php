@@ -27,14 +27,15 @@ class Fieldset extends Element {
 
     public function setData($data) {
         parent::setData($data);
-        $this->options->value->setData($data);
+        if ((is_object($data) && is_a($data, 'Object')) || (!is_object($data) && is_array($data)))
+            $this->options->value->setData($data);
     }
 
     /**
      * Renders the super prepare useless
      */
     public function prepare() {
-        
+
     }
 
     public function render() {
@@ -81,7 +82,7 @@ class Fieldset extends Element {
                 var __fieldsets = {};
                 function __toggleButton(fieldset) {
                     btn = fieldset.querySelector('button.__multi');
-                    if (__fieldsets[fieldset.id].count >= __fieldsets[fieldset.id].max) {
+                    if (__fieldsets[fieldset.id].max > 0 && __fieldsets[fieldset.id].count >= __fieldsets[fieldset.id].max) {
                         btn.style.display = 'none';
                     } else {
                         btn.style.display = 'inline';
@@ -135,12 +136,44 @@ class Fieldset extends Element {
                     __fieldsets[fieldset.id].count--;
                     __toggleButton(fieldset);
                 }
+                document.addEventListener('DOMContentLoaded', function () {
+                    var fieldsets = document.querySelectorAll('fieldset');
+                    for (i = 0; i < fieldsets.length; i++) {
+                        if (__fieldsets[fieldsets[i].id].extras) {
+                            var extras = __fieldsets[fieldsets[i].id].extras;
+                            var values = {};
+                            for (var key in extras) {
+                                if (!extras.hasOwnProperty(key)) {
+                                    continue;
+                                }
+                                if (typeof extras[key] === 'object') {
+                                    extras[key].forEach(function (v, j) {
+                                        if (j) {
+                                            if (!values[j])
+                                                values[j] = new Array;
+
+                                            values[j].push({name: key, value: v});
+                                        }
+                                    });
+                                }
+                            }
+                            __createFChildren(fieldsets[i], values);
+                        }
+                    }
+                    var btns = document.querySelectorAll('button.__multi');
+                    for (i = 0; i < btns.length; i++) {
+                        btns[i].addEventListener('click', function (e) {
+                            var fieldset = document.querySelector('fieldset#' + this.getAttribute('data-target'));
+                            __createFChildren(fieldset);
+                        });
+                    }
+                });
             </script>
             <?php
         }
         ?>
-        <button type="button" id="__btn<?= ucfirst($this->name) ?>" 
-                data-target="<?= $this->name ?>" 
+        <button type="button" id="__btn<?= ucfirst($this->name) ?>"
+                data-target="<?= $this->name ?>"
                 class="__multi <?= $this->options->multiple->button->attributes->class ?>"
                 <?=
                 $this->parseAttributes($this->options->multiple
@@ -158,38 +191,6 @@ class Fieldset extends Element {
                 count: 1,
                 extras: JSON.parse('<?= json_encode($this->data) ?>')
             };
-            document.addEventListener('DOMContentLoaded', function () {
-                var fieldsets = document.querySelectorAll('fieldset');
-                for (i = 0; i < fieldsets.length; i++) {
-                    if (__fieldsets[fieldsets[i].id].extras) {
-                        var extras = __fieldsets[fieldsets[i].id].extras;
-                        var values = {};
-                        for (var key in extras) {
-                            if (!extras.hasOwnProperty(key)) {
-                                continue;
-                            }
-                            if (typeof extras[key] === 'object') {
-                                extras[key].forEach(function (v, j) {
-                                    if (j) {
-                                        if (!values[j])
-                                            values[j] = new Array;
-
-                                        values[j].push({name: key, value: v});
-                                    }
-                                });
-                            }
-                        }
-                        __createFChildren(fieldsets[i], values);
-                    }
-                }
-                var btns = document.querySelectorAll('button.__multi');
-                for (i = 0; i < btns.length; i++) {
-                    btns[i].addEventListener('click', function () {
-                        var fieldset = document.querySelector('fieldset#' + this.getAttribute('data-target'));
-                        __createFChildren(fieldset);
-                    });
-                }
-            });
         </script>
         <?php
         static::$loadMultipleScript = false;
@@ -198,7 +199,7 @@ class Fieldset extends Element {
     public function validate() {
         return $this->options->value->isValid();
     }
-    
+
     public function reset() {
         parent::reset();
         $this->options->value->reset();

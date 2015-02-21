@@ -15,6 +15,7 @@ use Object,
 class Element extends Object {
 
     private static $count;
+    public static $css = false;
     public $data;
 
     public function __construct(array $data = array(), $preserveArray = false, $preserveKeyOnly = null) {
@@ -33,8 +34,7 @@ class Element extends Object {
         if (empty($this->attributes->id)) {
             $this->attributes->id = $this->name;
             $this->dId = true;
-        }
-        else
+        } else
             $this->dId = false;
 
         if ($this->attributes->value) {
@@ -45,6 +45,49 @@ class Element extends Object {
 
         if (empty($this->options->value) && empty($this->options->values))
             $this->options->value = null;
+
+        if ($this->options->toggleShow)
+            $this->toggleShow();
+    }
+
+    protected function toggleShow() {
+        if (!$this->options->toggleShow->element)
+            throw new \Exception('Element must be specified for option toggleShow'
+            . ' in element "' . $this->name . '"');
+        else if (!isset($this->options->toggleShow->on) || !isset($this->options->toggleShow->on->action) ||
+                !isset($this->options->toggleShow->on->value) || !isset($this->options->toggleShow->on->show))
+            throw new \Exception('Option toggleShow must have key "on" with an array value '
+            . 'having keys "action" (click, blur, change, etc), "value" (element value), "disable" (bool)');
+
+        if (!Element::$css):
+            ?>
+            <style>
+                .ds-hidden {
+                    display:none;
+                }
+            </style>
+            <?php
+            Element::$css = true;
+        endif;
+        ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                $this = document.querySelector('[name="<?= $this->name ?>"]');
+                $this.addEventListener('<?= $this->options->toggleShow->on->action ?>', function () {
+//                    alert(('<?= in_array($this->type, array('checkbox', 'radio')) ?>' +
+//                                    $this.('checked')));
+//                    if (('<?= !in_array($this->type, array('checkbox', 'radio')) ?>' &&
+//                            $this.value == '<?= $this->options->toggleShow->on->value ?>') ||
+//                            ('<?= in_array($this->type, array('checkbox', 'radio')) ?>' &&
+//                                    $this.getAttribute('checked')))
+//                        document.querySelector('[name="<?= $this->options->toggleShow->element ?>"]').setAttribute('readonly', 'readonly');
+//                    else
+//                        document.querySelector('[name="<?= $this->options->toggleShow->element ?>"]').removeAttribute('readonly');
+
+                });
+            });
+        </script>
+        <?php
     }
 
     /**
@@ -88,14 +131,17 @@ class Element extends Object {
      */
     protected function getValue() {
         if (($this->data == '0' || !empty($this->data)) && !is_object($this->data)) {
-            return ($this->parent && is_array($this->data)) ? $this->data[0] : $this->data;
+            $value = ($this->parent && is_array($this->data)) ? $this->data[0] : $this->data;
+        } else if ($this->options->default == '0' || !empty($this->options->default)) {
+            $value = $this->options->default;
+        } else if (($this->options->value == '0' || !empty($this->options->value)) && !is_object($this->options->value)) {
+            $value = $this->options->value;
         }
-        else if ($this->options->default == '0' || !empty($this->options->default)) {
-            return $this->options->default;
+
+        if ($this->options->processValue) {
+            $value = call_user_func($this->options->processValue, $value);
         }
-        else if (($this->options->value == '0' || !empty($this->options->value)) && !is_object($this->options->value)) {
-            return $this->options->value;
-        }
+        return $value;
     }
 
     protected function getName() {
@@ -148,11 +194,11 @@ class Element extends Object {
         return ob_get_clean();
     }
 
-    public function validate(Filterer $filterer) {
+    public function validate(Filterer $filterer, $data) {
         if ($this->noFilter)
             return true;
-
         $filterer->reset();
+        $filterer->setData($data);
         $filterer->setElementData($this->data);
 
         if (!is_object($this->data))
