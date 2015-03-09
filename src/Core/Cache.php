@@ -67,20 +67,22 @@ class Cache {
     }
 
     public function remove($name) {
-        if (is_readable(CACHE . '0' . DIRECTORY_SEPARATOR . $name)) {
-            unlink(CACHE . '0' . DIRECTORY_SEPARATOR . $name);
-        }
-
-        foreach (\Util::readDir(CACHE, \Util::DIRS_ONLY) as $path) {
-            if (is_readable($path . $name)) {
-                if (unlink($path . $name)) {
-                    $return = \Util::readDir(dirname($path . $name));
-                    if (empty($return['files']) && empty($return['dirs'])) {
-                        rmdir(dirname($path . $name));
-                    }
+        foreach (scandir(CACHE) as $path) {
+            if (in_array($path, array('.', '..')))
+                continue;
+            if (is_readable(CACHE . $path . $name)) {
+                if (unlink(CACHE . $path . $name)) {
+                    $this->removeParentDir(CACHE . $path . $name);
                     return true;
                 }
             }
+        }
+    }
+
+    private function removeParentDir($dir) {
+        if (count(scandir(dirname($dir))) === 2) {
+            rmdir(dirname($dir));
+            $this->removeParentDir(dirname($dir));
         }
     }
 

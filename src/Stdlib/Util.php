@@ -119,8 +119,7 @@ class Util {
 
         $toReturn = array('dirs' => array(), 'files' => array());
         try {
-            $handle = opendir($dir);
-            while ($current = readdir($handle)) {
+            foreach (scandir($dir) as $current) {
                 if (in_array($current, array('.', '..')))
                     continue;
 
@@ -194,7 +193,6 @@ class Util {
      */
     public static function delDir($dir) {
         $all = self::readDir($dir, self::ALL, true, NULL);
-
         if (isset($all['files'])) {
             foreach ($all['files'] as $file) {
                 if (is_array($file)) {

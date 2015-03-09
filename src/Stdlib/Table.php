@@ -22,6 +22,7 @@ class Table {
         self::$rows = array();
         self::$row_data = array();
         self::$headers = array();
+        self::$footers = array();
 
         self::setAttributes($attributes);
     }
