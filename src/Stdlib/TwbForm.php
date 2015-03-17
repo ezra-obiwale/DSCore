@@ -67,7 +67,7 @@ class TwbForm {
         <?php if ($element->type === 'submit'): ?>
             <div class="form-actions">
             <?php elseif ($element->type !== 'hidden'): ?>
-                <div class="control-group">
+                <div class="control-group <?= $element->attributes->id ?> <?= $element->options->hide ? 'hidden' : '' ?>">
                 <?php endif; ?>
                 <?php if ($element->options->label): ?>
                     <label class="control-label" for="<?= $element->attributes->id ?>">

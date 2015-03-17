@@ -57,10 +57,10 @@ abstract class AValidator {
      * @return boolean
      */
     private function validate() {
-        $filterer = new Filterer(array());
+        $filterer = new Filterer();
         $valid = true;
         foreach ($this->elements as $element) {
-            if (!$element->validate($filterer))
+            if (!$element->validate($filterer, $this->data))
                 $valid = false;
             $this->data[$element->name] = ($element->type === 'fieldset') ?
                     $element->options->value->getData(true) : $element->data;

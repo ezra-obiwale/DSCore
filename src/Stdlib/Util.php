@@ -119,8 +119,7 @@ class Util {
 
         $toReturn = array('dirs' => array(), 'files' => array());
         try {
-            $handle = opendir($dir);
-            while ($current = readdir($handle)) {
+            foreach (scandir($dir) as $current) {
                 if (in_array($current, array('.', '..')))
                     continue;
 
@@ -131,8 +130,7 @@ class Util {
                     if ($recursive) {
                         $toReturn = array_merge_recursive($toReturn, self::readDir($dir . $current, self::ALL, true, $extension, $nameOnly, $options));
                     }
-                }
-                else if (is_file($dir . $current) && in_array($return, array(self::FILES_ONLY, self::ALL))) {
+                } else if (is_file($dir . $current) && in_array($return, array(self::FILES_ONLY, self::ALL))) {
                     if ($extension)
                         $info = pathinfo($current);
                     if (empty($extension) || (is_array($extension) && in_array($info['extension'], $extension))) {
@@ -147,8 +145,7 @@ class Util {
                 return $toReturn['dirs'];
             elseif ($return == self::FILES_ONLY)
                 return $toReturn['files'];
-        }
-        catch (\Exception $ex) {
+        } catch (\Exception $ex) {
             throw new \Exception($ex->getMessage());
         }
     }
@@ -183,8 +180,7 @@ class Util {
                     }
                 }
             }
-        }
-        catch (\Exception $ex) {
+        } catch (\Exception $ex) {
             throw new \Exception($ex->getMessage());
         }
     }
@@ -197,7 +193,6 @@ class Util {
      */
     public static function delDir($dir) {
         $all = self::readDir($dir, self::ALL, true, NULL);
-
         if (isset($all['files'])) {
             foreach ($all['files'] as $file) {
                 if (is_array($file)) {
@@ -206,8 +201,7 @@ class Util {
                             return false;
                         }
                     }
-                }
-                else {
+                } else {
                     if (!unlink($file)) {
                         return false;
                     }
@@ -223,8 +217,7 @@ class Util {
                             return false;
                         }
                     }
-                }
-                else {
+                } else {
                     if (!rmdir($_dir)) {
                         return false;
                     }
@@ -376,7 +369,7 @@ class Util {
                 $tmpName = $info['tmp_name'][$key];
                 $pInfo = pathinfo($name);
                 if (isset($options['extensions']) && !in_array(strtolower($pInfo['extension']), $options['extensions'])) {
-                    $return['errors'][$ppt][$name] =  self::UPLOAD_ERROR_EXTENSION;
+                    $return['errors'][$ppt][$name] = self::UPLOAD_ERROR_EXTENSION;
                     continue;
                 }
                 $dir = isset($options['path']) ? $options['path'] : DATA . 'uploads';
@@ -384,7 +377,7 @@ class Util {
                     $dir .= DIRECTORY_SEPARATOR;
                 if (!is_dir($dir)) {
                     if (!mkdir($dir, 0777, true)) {
-                        $return['errors'][$ppt][$name] =  self::UPLOAD_ERROR_PATH;
+                        $return['errors'][$ppt][$name] = self::UPLOAD_ERROR_PATH;
                         continue;
                     }
                 }
@@ -392,9 +385,8 @@ class Util {
                 if (move_uploaded_file($tmpName, $savePath)) {
                     $return['success'][$ppt][$name] = $savePath;
                     self::$uploadSuccess = $savePath;
-                }
-                else {
-                    $return['errors'][$ppt][$name] =  self::UPLOAD_ERROR_FAILED;
+                } else {
+                    $return['errors'][$ppt][$name] = self::UPLOAD_ERROR_FAILED;
                 }
             }
         }
@@ -529,13 +521,33 @@ class Util {
                 if ($multiple) {
                     $k = ($multiple === true) ? 0 : $array[$multiple];
                     $found[$k] = $array;
-                }
-                else
+                } else
                     return $array;
             }
         }
 
         return $found;
+    }
+
+    /**
+     *
+     * @param string $date1
+     * @param string $date2
+     * @param int $return 1 - years, 2 - months, 3 - days
+     * @return int
+     */
+    public static function dateDiff($date1, $date2, $return = 2) {
+        // 2014-03-15
+        $date1 = explode('-', date('Y-m-d', strtotime($date1)));
+        // 2015-02-15
+        $date2 = explode('-', date('Y-m-d', strtotime($date2)));
+
+        $yearDiff = ($date2[0] - $date1[0]) * 12;
+        $monthDiff = $date2[1] - $date1[1];
+        
+        $yearDiff += $monthDiff;
+
+        return $yearDiff;
     }
 
 }

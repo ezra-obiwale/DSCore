@@ -76,16 +76,14 @@ class Select extends Element {
                         $return .= ' label="' . $label . '"';
                     }
                     $return .= '>';
-                }
-                elseif (is_array($value)) {
+                } elseif (is_array($value)) {
                     $optGroup = true;
                     $return .= '<optGroup';
                     if (!is_int($label)) {
                         $return .= ' label="' . $label . '"';
                     }
                     $return .= '>';
-                }
-                else {
+                } else {
                     $value = array($label => $value);
                 }
                 if (is_array($label) || is_object($label)) {
@@ -126,8 +124,7 @@ class Select extends Element {
         if (isset($this->options->object->sort)) {
             if (is_string($this->options->object->sort)) {
                 $order = $table->orderBy($this->options->object->sort);
-            }
-            elseif (is_object($this->options->object->sort)) {
+            } elseif (is_object($this->options->object->sort)) {
                 if (!isset($this->options->object->sort->column))
                     throw new Exception('Select element with object can only be sorted by columns. No column specified for element "' . $this->name . '"');
                 if (isset($this->options->object->sort->direction))
@@ -146,13 +143,34 @@ class Select extends Element {
 
             $label = $value = null;
             if (isset($this->options->object->labels)) {
-                if (method_exists($row, $this->options->object->labels))
-                    $label = $row->{$this->options->object->labels}();
-                elseif (property_exists($row, $this->options->object->labels))
-                    $label = $row->{$this->options->object->labels};
-                else
-                    throw new \Exception('Class "' . $this->options->object->class . '" does not contain ' .
-                    'property/method "' . $this->options->object->labels . '"');
+                if (is_string($this->options->object->labels)) {
+                    if (method_exists($row, $this->options->object->labels))
+                        $label = $row->{$this->options->object->labels}();
+                    elseif (property_exists($row, $this->options->object->labels))
+                        $label = $row->{$this->options->object->labels};
+                    else if (!is_object($this->options->object->labels)) {
+                        throw new \Exception('Class "' . $this->options->object->class . '" does not contain ' .
+                        'property/method "' . $this->options->object->labels . '"');
+                    }
+                } else {
+                    if (empty($this->options->object->labels->pattern) ||
+                            empty($this->options->object->labels->values)) {
+                        throw new \Exception('Object labels array must have keys pattern and values');
+                    }
+
+                    $label = $this->options->object->labels->pattern;
+                    foreach ($this->options->object->labels->values as $k => $v) {
+                        if (method_exists($row, $v))
+                            $v = $row->{$v}();
+                        elseif (property_exists($row, $v))
+                            $v = $row->{$v};
+                        else if (!is_object($v)) {
+                            throw new \Exception('Class "' . $this->options->object->class . '" does not contain ' .
+                            'property/method "' . $v . '"');
+                        }
+                        $label = str_replace($k, $v, $label);
+                    }
+                }
             }
 
             if (isset($this->options->object->values)) {
@@ -172,8 +190,8 @@ class Select extends Element {
             if (!isset($value)) {
                 $value = $label;
             }
-
             $values[$label] = $value;
+
         }
 
         $this->options->values->add($values);

@@ -118,7 +118,7 @@ class Fieldset extends AValidator {
         $return = '';
         foreach ($this->attributes as $attr => $val) {
             if (in_array($attr, $ignore))
-                    continue;
+                continue;
             $return .= Util::camelToHyphen($attr) . '="' . $val . '" ';
         }
         return $return;
@@ -198,11 +198,9 @@ class Fieldset extends AValidator {
 
         if (in_array($element->type, array('checkbox', 'radio'))) {
             $this->booleans[$element->name] = $element->name;
-        }
-        else if ($element->type === 'fieldset') {
+        } else if ($element->type === 'fieldset') {
             $this->fieldsets[] = $element->name;
-        }
-        else if ($element->type === 'hidden' && $element->name === 'csrf')
+        } else if ($element->type === 'hidden' && $element->name === 'csrf')
             $element->setCsrfKey($this->getName());
 
         $this->elements[$element->name] = $element;
@@ -278,14 +276,13 @@ class Fieldset extends AValidator {
      * @throws Exception
      */
     final public function setData($data) {
-        if (is_object($data) && !is_a($data, 'Object'))
-            throw new \Exception('Data must be either an array or an object that extends \Object');
+        if ((is_object($data) && !is_a($data, 'Object')) || (!is_object($data) && !is_array($data)))
+            throw new \Exception('Data must be either an array or an object that extends Object: ' . gettype($data));
         $data = is_array($data) ? $data : $data->toArray();
         foreach ($data as $attr => $value) {
             if ($this->elements[$attr]) {
                 $this->elements[$attr]->setData($value);
-            }
-            else
+            } else
                 $this->data[$attr] = $value;
         }
         $this->valid = null;

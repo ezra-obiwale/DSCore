@@ -42,7 +42,7 @@ class TwBootstrap {
      *   array( <br />
      *       "active" => "tab2", <br />
      *       "tabClass" => "the class", <br />
-     *       "position" => "top|right|bottom|left", <br />
+     *       "position" => "top|right|below|left", <br />
      *   ); <br />
      * @return type
      */
@@ -52,31 +52,47 @@ class TwBootstrap {
         ob_start();
         ?>
         <div class="tabbable <?= $position ?>"> <!-- Only required for left/right tabs -->
-            <ul class="nav nav-tabs">
-                <?php
-                $tabs = array_keys($contents);
-                foreach ($tabs as $key => $tab) {
-                    ?>
-                    <li class="<?= ($tab == @$options["active"]) ? "active" : "" ?> <?= @$options["tabClass"] ?>">
-                        <a href="#tab-<?= preg_replace('/[^a-zA-z0-9]/', '-', $tab) ?>" data-toggle="tab"><?= $tab ?></a>
-                    </li>
+            <?php if ($options['position'] !== 'below'): ?>
+                <ul class="nav nav-tabs">
                     <?php
-                }
-                ?>
-            </ul>
+                    $tabs = array_keys($contents);
+                    foreach ($tabs as $key => $tab) {
+                        ?>
+                        <li class="<?= ($tab == @$options["active"]) ? "active" : "" ?> <?= @$options["tabClass"] ?>">
+                            <a href="#tab-<?= preg_replace('/[^a-zA-z0-9]/', '-', $tab) ?>" data-toggle="tab"><?= $tab ?></a>
+                        </li>
+                        <?php
+                    }
+                    ?>
+                </ul>
+            <?php endif; ?>
             <div class="tab-content">
                 <?php
                 $count = 1;
                 foreach ($contents as $tab => $content) {
                     ?>
                     <div class="tab-pane <?= ($tab == @$options["active"]) ? "active" : "" ?>" id="tab-<?= preg_replace('/[^a-zA-z0-9]/', '-', $tab) ?>">
-                        <p><?= $content ?></p>
+                        <?= $content ?>
                     </div>
                     <?php
                     $count++;
                 }
                 ?>
             </div>
+            <?php if ($options['position'] === 'below'): ?>
+                <ul class="nav nav-tabs">
+                    <?php
+                    $tabs = array_keys($contents);
+                    foreach ($tabs as $key => $tab) {
+                        ?>
+                        <li class="<?= ($tab == @$options["active"]) ? "active" : "" ?> <?= @$options["tabClass"] ?>">
+                            <a href="#tab-<?= preg_replace('/[^a-zA-z0-9]/', '-', $tab) ?>" data-toggle="tab"><?= $tab ?></a>
+                        </li>
+                        <?php
+                    }
+                    ?>
+                </ul>
+            <?php endif; ?>
         </div>
         <?php
         return ob_get_clean();
@@ -147,7 +163,7 @@ class TwBootstrap {
             echo self::$modalLinks[$id];
         ?>
         <!-- Modal -->
-        <section id="<?= $id ?>" class="modal hide fade <?= isset($options['modalClass']) ? $options['modalClass'] : '' ?>" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <section id="<?= $id ?>" class="modal hide fade <?= $options['modalAttrs']['class'] ?> <?= isset($options['modalClass']) ? $options['modalClass'] : '' ?>" <?= isset($options['modalAttrs']) ? self::parseAttributes($options['modalAttrs'], array('class')) : '' ?> tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
             <?php
             if (isset($options['header']) &&
                     !is_bool($options['header']) ||
@@ -195,6 +211,10 @@ class TwBootstrap {
      * <p>
      * 	All keys are optional and include:<br /><br />
      * 		<b>href</b> (string)			-	The href of the link<br />
+     * 		<b>post</b> (boolean)			-	Indicates whether to send a post
+     *  request instead of a get<br />
+     * 		<b>requestData</b> (string)			-	data string to send with the
+     * request e.g. name=ezra&passion=webdev
      * 		<b>linkLabel</b> (string)		-	The label to show in the link<br />
      * 		<b>linkAttrs</b> (array)		-	Attributes to pass to the link<br />
      * <br />
@@ -231,7 +251,7 @@ class TwBootstrap {
         ob_start();
         ?>
         <!-- Button to trigger modal -->
-        <a href="<?= isset($options['href']) ? $options['href'] : '#' ?>" data-target="#<?= $id ?>" role="button" <?= isset($options['linkAttrs']) ? self::parseAttributes($options['linkAttrs']) : '' ?> ><?= isset($options['linkLabel']) ? $options['linkLabel'] : 'Launch Modal' ?></a>
+        <a href="<?= isset($options['href']) ? $options['href'] : '#' ?>" data-post="<?= $options['post'] ? 'true' : 'false' ?>" data-request-data="<?= $options['requestData'] ?>" data-target="#<?= $id ?>" role="button" <?= isset($options['linkAttrs']) ? self::parseAttributes($options['linkAttrs']) : '' ?> ><?= isset($options['linkLabel']) ? $options['linkLabel'] : 'Launch Modal' ?></a>
 
         <?php
         self::$modalLinks[$id] = ob_get_clean();
@@ -284,13 +304,13 @@ class TwBootstrap {
                 }
             </style>
             <script>
-                $(document).ready(function() {
-                    $('a.open-modal').on('click', function(e) {
+                $(document).ready(function () {
+                    $('a.open-modal').live('click', function (e) {
                         e.preventDefault();
                         var modal = $(this).attr('data-target');
-                        $(modal).on('shown', function() {
+                        $(modal).on('shown', function () {
                             $('body').addClass('no-scroll');
-                        }).on('hidden', function() {
+                        }).on('hidden', function () {
                             $('body').removeClass('no-scroll');
                         }).modal();
 
@@ -310,11 +330,18 @@ class TwBootstrap {
                         if (!$(modal).hasClass('loaded') || $(modal).hasClass('reuse')) {
                             var modalBody = $(modal).children('.modal-body');
                             $(modalBody).html('<div class="progress progress-striped active"><div class="bar" style="width:100%">Loading content. Please wait ...</div></div>');
-
-                            $.get($(this).attr('href'), function(data) {
-                                $(modalBody).html(data);
-                                $(this).addClass('loaded');
-                            });
+                            if ($(this).data('post')) {
+                                $.post($(this).attr('href'), $(this).data('requestData'), function (data) {
+                                    $(modalBody).html(data);
+                                    $(this).addClass('loaded');
+                                });
+                            }
+                            else {
+                                $.get($(this).attr('href'), $(this).data('requestData'), function (data) {
+                                    $(modalBody).html(data);
+                                    $(this).addClass('loaded');
+                                });
+                            }
                         }
                     });
                 });
@@ -468,9 +495,9 @@ class TwBootstrap {
                 function positionActiveImg(container) {
                     if (!container)
                         container = '.carousel';
-                    $.each($(container).children('.carousel-inner'), function(i, inner) {
+                    $.each($(container).children('.carousel-inner'), function (i, inner) {
                         var img = $(inner).children('.item.active').children('img');
-                        $(img).on('complete', function() {
+                        $(img).on('complete', function () {
                             $(img).css({'margin-left': (($(inner).width() - $(img).width()) / 2)});
                             $(inner).css({'margin-top': (($(inner).parent().height() - $(inner).height()) / 2)});
                         });
@@ -480,14 +507,14 @@ class TwBootstrap {
                 function resizeImgs(container) {
                     if (!container)
                         container = '.carousel';
-                    $.each($(container), function(i, v) {
+                    $.each($(container), function (i, v) {
                         if ($(v).height())
                             var h = ($(v).height() > $(v).width()) ? $(v).width() : $(v).height();
                         else
                             var h = $(v).width();
 
                         h = (!h) ? 'auto' : h;
-                        $.each($(this).children('.carousel-inner').children().children('img'), function(i, value) {
+                        $.each($(this).children('.carousel-inner').children().children('img'), function (i, value) {
                             $(value).css({height: h, width: 'auto'});
                         });
                     });
@@ -497,7 +524,7 @@ class TwBootstrap {
             </script>
         <?php endif; ?>
         <script>
-            $(document).ready(function() {
+            $(document).ready(function () {
                 $('#<?= $id ?>').carousel();
                 resizeImgs('#<?= $id ?>');
             });
@@ -538,7 +565,7 @@ class TwBootstrap {
                 <div class="accordion-group">
                     <div class="accordion-heading">
                         <a class="accordion-toggle" data-toggle="collapse"
-                           data-parent="#accordion<?= self::$accordions ?>" 
+                           data-parent="#accordion<?= self::$accordions ?>"
                            href="#group-<?= self::$accordions . $key ?>">
                                <?= $group['heading'] ?>
                         </a>
@@ -555,7 +582,7 @@ class TwBootstrap {
             ?>
         </div>
         <script>
-            $(document).ready(function() {
+            $(document).ready(function () {
                 $('#accordion<?= self::$accordions ?>').collapse();
             })
         </script>
@@ -578,7 +605,7 @@ class TwBootstrap {
     public static function groupIntoRows(array $items, $itemsPerRow, array $options = array()) {
         ob_start();
         ?>
-        <div class="row-fluid <?= @$options['rows']['class'] ?>" 
+        <div class="row-fluid <?= @$options['rows']['class'] ?>"
              <?= self::parseAttributes(@$options['rows'], array('class')) ?>>
                  <?php
                  foreach ($items as $key => $item) {
@@ -649,7 +676,7 @@ class TwBootstrap {
            ?>><?= $label ?></a>
            <?php if (self::$addPopoverJs): ?>
             <script>
-                $(document).ready(function() {
+                $(document).ready(function () {
                     $('a[rel="popover"]').popover({
                         html: true
                     });
