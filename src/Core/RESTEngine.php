@@ -2,10 +2,8 @@
 
 namespace DScribe\Core;
 
-use DScribe\View\View,
-    ReflectionMethod,
-    Session,
-    Util;
+use \ReflectionMethod,
+    \Util;
 
 class RESTEngine extends Engine {
 
@@ -13,8 +11,7 @@ class RESTEngine extends Engine {
         $urls = static::getUrls();
         if (!empty($urls) && count($urls) >= 2) {
             $return = $urls[1];
-        }
-        else {
+        } else {
             $return = static::getDefaultModule();
         }
         return static::checkAlias(ucfirst(Util::hyphenToCamel($return)));
@@ -25,8 +22,7 @@ class RESTEngine extends Engine {
 
         if (!empty($urls) && count($urls) >= 3) {
             $return = ucfirst($urls[2]);
-        }
-        else {
+        } else {
             if (!$return = static::getDefaultController(static::getModule())) {
                 if ($exception)
                     ControllerException::notFound();
@@ -48,26 +44,30 @@ class RESTEngine extends Engine {
         $action = static::getConfig('REST', $request->method, false);
         switch ($request->method) {
             case 'POST': // Create
-                $return = $action ? $action : 'new';
+                if (!count(static::getParams()))
+                    $return = $action ? $action : 'new';
+                else
+                    $return = null;
                 break;
             case 'GET': // Read
-                if (static::getParams()) { // get a model
-                    if (is_array($action) && $action['withParam'])
-                        $return = $action['withParam'];
+                if (count(static::getParams())) { // get a model
+                    if (is_array($action) && $action['single'])
+                        $return = $action['single'];
                     else if ($action)
                         $return = $action;
                     else
                         $return = 'view';
                 }
                 else { // get all models
-                    if (is_array($action) && $action['all'])
-                        $return = $action['all'];
+                    if (is_array($action) && $action['list'])
+                        $return = $action['list'];
                     else if ($action)
                         $return = $action;
                     else
                         $return = 'index';
                 }
                 break;
+            case 'PATCH': // partial update
             case 'PUT': // Update
                 $return = $action ? $action : 'edit';
                 break;
@@ -85,14 +85,14 @@ class RESTEngine extends Engine {
      * @todo Check caching controller actions
      */
     public static function run(array $config) {
+        header('Content-Type: application/json');
         static::init($config);
         static::moduleIsActivated();
         $cache = static::canCache();
         $name = join('/', static::getUrls());
         if ($cache && $out = $cache->fetch($name)) {
             echo $out;
-        }
-        else {
+        } else {
             $controller = static::getControllerClass();
             $action = static::getAction();
             if (!in_array($action, $controller->getActions())) {
@@ -113,9 +113,6 @@ class RESTEngine extends Engine {
                 ControllerException::invalidActionResult();
             }
             static::terminate();
-            
-            header('Content-Type: application/json');
-            die(json_encode($actionRet));
         }
     }
 
