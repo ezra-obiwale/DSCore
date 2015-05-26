@@ -79,6 +79,7 @@ class AService extends AInjector {
 
         $repository = ($this->repositoryClass !== null) ? $this->repositoryClass : 'DBScribe\Repository';
         $this->repository = new $repository($this->model, engineGet('DB'), true);
+        return true;
     }
 
     /**

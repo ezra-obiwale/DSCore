@@ -156,8 +156,6 @@ class Engine {
      * @return string
      */
     public static function getServerPath() {
-//        return '/';
-        // check that of loading files (e.g. js && css). Seems to work fine.
         return (static::isVirtual() || static::$serverPath == '/public') ? '/' : static::$serverPath . '/';
     }
 

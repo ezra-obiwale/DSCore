@@ -305,7 +305,7 @@ class Renderer extends AInjector {
      * @return string
      */
     private function parseFile($file) {
-        return engineGet('serverPath') . str_replace(ROOT . 'public/', '', $this->publicAssetsPath) . $file;
+        return engineGet('serverPath') . str_replace(array(ROOT . 'public' . DIRECTORY_SEPARATOR, '\\'), array('', '/'), $this->publicAssetsPath . $file);
     }
 
     /**
@@ -317,6 +317,7 @@ class Renderer extends AInjector {
      * @return string
      */
     private function getFile($file, $fromTheme) {
+		$file = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $file);
         $this->updateAssets($file);
 
         if (!$fromTheme && is_readable($this->publicAssetsPath . $this->view->getModule() . DIRECTORY_SEPARATOR . $file)) {
@@ -326,7 +327,7 @@ class Renderer extends AInjector {
             return $this->parseFile(engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR . $file);
         }
         else {
-            return 'not-found/' . $file;
+            return 'not-found' . DIRECTORY_SEPARATOR . $file;
         }
     }
 

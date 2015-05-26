@@ -191,7 +191,7 @@ class Fieldset extends AValidator {
             $elementClass = 'DScribe\Form\Element\\' . ucfirst($element['type']);
             $element = class_exists($elementClass) ? new $elementClass($element, true, 'values') : new Element($element, true, 'values');
         }
-        if ($this->data[$element->name]) {
+        if (@$this->data[$element->name]) {
             $element->data = $this->data[$element->name];
             unset($this->data[$element->name]);
         }
@@ -207,7 +207,7 @@ class Fieldset extends AValidator {
 
         if (!$element->filters) {
             $filters = $this->getFilters();
-            if ($filters[$element->name])
+            if (@$filters[$element->name])
                 $element->filters = $filters[$element->name];
         }
 
@@ -280,7 +280,7 @@ class Fieldset extends AValidator {
             throw new \Exception('Data must be either an array or an object that extends Object: ' . gettype($data));
         $data = is_array($data) ? $data : $data->toArray();
         foreach ($data as $attr => $value) {
-            if ($this->elements[$attr]) {
+            if (@$this->elements[$attr]) {
                 $this->elements[$attr]->setData($value);
             } else
                 $this->data[$attr] = $value;

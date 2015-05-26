@@ -14,7 +14,7 @@ use Object,
  */
 class Element extends Object {
 
-    private static $count;
+    public static $count;
     public static $css = false;
     public $data;
 
@@ -130,6 +130,7 @@ class Element extends Object {
      * @return mixed
      */
     protected function getValue() {
+        $value = null;
         if (($this->data == '0' || !empty($this->data)) && !is_object($this->data)) {
             $value = ($this->parent && is_array($this->data)) ? $this->data[0] : $this->data;
         } else if ($this->options->default == '0' || !empty($this->options->default)) {

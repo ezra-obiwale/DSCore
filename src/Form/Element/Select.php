@@ -76,14 +76,16 @@ class Select extends Element {
                         $return .= ' label="' . $label . '"';
                     }
                     $return .= '>';
-                } elseif (is_array($value)) {
+                }
+                elseif (is_array($value)) {
                     $optGroup = true;
                     $return .= '<optGroup';
                     if (!is_int($label)) {
                         $return .= ' label="' . $label . '"';
                     }
                     $return .= '>';
-                } else {
+                }
+                else {
                     $value = array($label => $value);
                 }
                 if (is_array($label) || is_object($label)) {
@@ -124,7 +126,8 @@ class Select extends Element {
         if (isset($this->options->object->sort)) {
             if (is_string($this->options->object->sort)) {
                 $order = $table->orderBy($this->options->object->sort);
-            } elseif (is_object($this->options->object->sort)) {
+            }
+            elseif (is_object($this->options->object->sort)) {
                 if (!isset($this->options->object->sort->column))
                     throw new Exception('Select element with object can only be sorted by columns. No column specified for element "' . $this->name . '"');
                 if (isset($this->options->object->sort->direction))
