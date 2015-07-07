@@ -23,6 +23,10 @@ class Session {
         }
     }
 
+    private static function close() {
+        session_write_close();
+    }
+
     /**
      * Set the life time for the session
      * @param int $lifetime
@@ -56,6 +60,7 @@ class Session {
         self::setLifetime($duration);
         static::init();
         $_SESSION[self::$prepend . $key] = $value;
+        self::close();
     }
 
     /**
@@ -67,6 +72,7 @@ class Session {
         static::init();
         if (isset($_SESSION[self::$prepend . $key]))
             return $_SESSION[self::$prepend . $key];
+        self::close();
     }
 
     /**
@@ -77,6 +83,7 @@ class Session {
         static::init();
         if (isset($_SESSION[self::$prepend . $key]))
             unset($_SESSION[self::$prepend . $key]);
+        self::close();
     }
 
     /**
@@ -85,6 +92,7 @@ class Session {
     public static function reset() {
         static::init();
         session_destroy();
+        self::close();
     }
 
 }
