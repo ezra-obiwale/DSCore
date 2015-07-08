@@ -55,7 +55,7 @@ class Renderer extends AInjector {
 
     /**
      * Fetches the current module
-     * @param mixed $check Compare the module with this and return boolean if 
+     * @param mixed $check Compare the module with this and return boolean if
      * they are the same
      * @return mixed
      */
@@ -66,7 +66,7 @@ class Renderer extends AInjector {
 
     /**
      * Fetches the current controller
-     * @param mixed $check Compare the controller with this and return boolean if 
+     * @param mixed $check Compare the controller with this and return boolean if
      * they are the same
      * @return mixed
      */
@@ -77,7 +77,7 @@ class Renderer extends AInjector {
 
     /**
      * Fetches the current action
-     * @param mixed $check Compare the action with this and return boolean if 
+     * @param mixed $check Compare the action with this and return boolean if
      * they are the same
      * @return mixed
      */
@@ -89,7 +89,7 @@ class Renderer extends AInjector {
     /**
      * Fetches the parameters set to the current action
      * @param mixed $check Compare the parameters with this and return boolean.
-     * If array, return TRUE if all values are in parameters. If not array, 
+     * If array, return TRUE if all values are in parameters. If not array,
      * return TRUE if exists in parameters
      * @return mixed
      */
@@ -139,9 +139,9 @@ class Renderer extends AInjector {
     /**
      * Loads a layout
      * @param string $layoutName Without the extension
-     * @param array $variables Array of variables to pass into the layout 
+     * @param array $variables Array of variables to pass into the layout
      * [name => value] with "dsLayout" as an exemption of name
-     * @param boolean $fromTheme Indicates whether to get theme layouts or 
+     * @param boolean $fromTheme Indicates whether to get theme layouts or
      * search through modules
      * @return string
      */
@@ -305,7 +305,7 @@ class Renderer extends AInjector {
      * @return string
      */
     private function parseFile($file) {
-        return engineGet('serverPath') . str_replace(array(ROOT . 'public' . DIRECTORY_SEPARATOR, '\\'), array('', '/'), $this->publicAssetsPath . $file);
+        return engineGet('serverPath') . str_replace(ROOT . 'public' . DIRECTORY_SEPARATOR, '', $this->publicAssetsPath) . $file;
     }
 
     /**
@@ -317,7 +317,6 @@ class Renderer extends AInjector {
      * @return string
      */
     private function getFile($file, $fromTheme) {
-		$file = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $file);
         $this->updateAssets($file);
 
         if (!$fromTheme && is_readable($this->publicAssetsPath . $this->view->getModule() . DIRECTORY_SEPARATOR . $file)) {
@@ -424,7 +423,7 @@ class Renderer extends AInjector {
      * @param string|null $controller
      * @param string|null $action
      * @param array $params
-     * @param string $hash 
+     * @param string $hash
      * @return string
      */
     final public function url($module, $controller = null, $action = null, array $params = array(), $hash = null) {
@@ -451,15 +450,15 @@ class Renderer extends AInjector {
     }
 
     final public function getClassName() {
-        
+
     }
-    
+
     /**
      * @todo
      * @param array $paths
      */
-    final public function breadcrumb(array $paths) {
-        
+    final public function breadcrumb(array $paths, $separator = '/') {
+
     }
 
 }
