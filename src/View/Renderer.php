@@ -71,7 +71,9 @@ class Renderer extends AInjector {
      * @return mixed
      */
     protected function controller($check = null) {
-        $controller = Util::camelToHyphen($this->view->getController()->getClassName());
+        $controller = $this->view->getController();
+        $controller = $controller ? Util::camelToHyphen($controller->getClassName())
+                    : null;
         return $check ? ($check == $controller) : $controller;
     }
 
@@ -108,7 +110,8 @@ class Renderer extends AInjector {
     }
 
     protected function currentPath() {
-        return $this->url($this->module(), $this->controller(), $this->action(), $this->params());
+        return $this->url($this->module(), $this->controller(), $this->action(),
+                        $this->params());
     }
 
     /**
@@ -117,7 +120,8 @@ class Renderer extends AInjector {
      * @return mixed
      */
     public function __get($name) {
-        return (strtolower($name) === 'view') ? $this->view : engineGet('config', 'app', $name, false);
+        return (strtolower($name) === 'view') ? $this->view : engineGet('config',
+                        'app', $name, false);
     }
 
     /**
@@ -145,10 +149,10 @@ class Renderer extends AInjector {
      * search through modules
      * @return string
      */
-    final public function loadLayout($layoutName, array $variables = array(), $fromTheme = false) {
+    final public function loadLayout($layoutName, array $variables = array(),
+            $fromTheme = false) {
         $dsLayout = $this->getLayoutPath($layoutName, $fromTheme);
-        if (!$dsLayout)
-            return '';
+        if (!$dsLayout) return '';
 
         foreach ($variables as $var => $value) {
             $$var = $value;
@@ -163,19 +167,19 @@ class Renderer extends AInjector {
      * @throws Exception
      */
     private function getLayoutPath($layout = null, $fromTheme = false) {
-        $layout = ($layout === null) ? $this->view->getController()->getLayout() : $layout;
-        if (!$layout)
-            return false;
+        $layout = ($layout === null) ? $this->view->getController()->getLayout()
+                    : $layout;
+        if (!$layout) return false;
 
         if (!$fromTheme && is_readable(MODULES . $this->view->getModule() . DIRECTORY_SEPARATOR . 'View' .
                         DIRECTORY_SEPARATOR . 'layouts' . DIRECTORY_SEPARATOR . $layout .
                         '.phtml'))
-            return MODULES . $this->view->getModule() . DIRECTORY_SEPARATOR . 'View' .
+                return MODULES . $this->view->getModule() . DIRECTORY_SEPARATOR . 'View' .
                     DIRECTORY_SEPARATOR . 'layouts' . DIRECTORY_SEPARATOR . $layout .
                     '.phtml';
         elseif (is_readable(THEMES . engineGet('config', 'defaults', 'theme') .
                         DIRECTORY_SEPARATOR . 'layouts' . DIRECTORY_SEPARATOR . $layout . '.phtml'))
-            return THEMES . engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR .
+                return THEMES . engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR .
                     'layouts' . DIRECTORY_SEPARATOR . $layout . '.phtml';
         else {
             throw new Exception('Layout "' . $layout . '" not found both at the module and theme levels');
@@ -205,7 +209,8 @@ class Renderer extends AInjector {
             if (!is_readable(MODULES . $viewFile[0] . DIRECTORY_SEPARATOR . 'View' .
                             DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR .
                             $viewFile[1] . DIRECTORY_SEPARATOR . $viewFile[2] . '.phtml'))
-                throw new Exception('View layout "' . join(DIRECTORY_SEPARATOR, $viewFile) . '" not found');
+                    throw new Exception('View layout "' . join(DIRECTORY_SEPARATOR,
+                        $viewFile) . '" not found');
 
             // include action view
             ob_start();
@@ -226,7 +231,9 @@ class Renderer extends AInjector {
                 }
                 else if (engineGet('config', 'defaults', 'defaultLayout', false)) {
                     ob_start();
-                    $this->loadLayout(engineGet('config', 'defaults', 'defaultLayout'), array('content' => $content));
+                    $this->loadLayout(engineGet('config', 'defaults',
+                                    'defaultLayout'),
+                            array('content' => $content));
                     $content = ob_get_clean();
                 }
                 else {
@@ -235,24 +242,29 @@ class Renderer extends AInjector {
             }
         }
         else {
-            if (!$errorLayout = engineGet('config', 'modules', $this->view->getModule(), 'defaults', 'errorLayout', false)) {
-                if (!$errorLayout = engineGet('config', 'defaults', 'errorLayout', false)) {
+            if (!$errorLayout = engineGet('config', 'modules',
+                    $this->view->getModule(), 'defaults', 'errorLayout', false)) {
+                if (!$errorLayout = engineGet('config', 'defaults',
+                        'errorLayout', false)) {
                     throw new Exception('Error layout not found', true);
                 }
             }
 
             if (is_array($errorLayout)) {
                 if (!array_key_exists('guest', $errorLayout))
-                    throw new Exception('Error layout not found for "guest"', true);
+                        throw new Exception('Error layout not found for "guest"',
+                    true);
 
-                if (array_key_exists($this->userIdentity()->getUser()->getRole(), $errorLayout))
-                    $errorLayout = $errorLayout[$this->userIdentity()->getUser()->getRole()];
-                else
-                    $errorLayout = $errorLayout['guest'];
+                if (array_key_exists($this->userIdentity()->getUser()->getRole(),
+                                $errorLayout))
+                        $errorLayout = $errorLayout[$this->userIdentity()->getUser()->getRole()];
+                else $errorLayout = $errorLayout['guest'];
             }
 
             ob_start();
-            $this->loadLayout($errorLayout, array_merge(array('content' => $content), $this->view->getVariables()));
+            $this->loadLayout($errorLayout,
+                    array_merge(array('content' => $content),
+                            $this->view->getVariables()));
             $content = ob_get_clean();
         }
         echo($content);
@@ -271,7 +283,8 @@ class Renderer extends AInjector {
         if (is_dir($modulesAssets) && is_readable($modulesAssets . $file)) {
             $publicFile = $this->publicAssetsPath . $this->view->getModule() . DIRECTORY_SEPARATOR . $file;
 
-            if (!is_dir($modulesAssets . $file) && (!is_readable($publicFile) || $this->checkOutOfDate($publicFile, $modulesAssets . $file))) {
+            if (!is_dir($modulesAssets . $file) && (!is_readable($publicFile) ||
+                    $this->checkOutOfDate($publicFile, $modulesAssets . $file))) {
                 if (!is_dir(dirname($publicFile))) {
                     mkdir(dirname($publicFile), 0777, true);
                 }
@@ -282,8 +295,10 @@ class Renderer extends AInjector {
             }
         }
         else if (is_dir($themeAssets) && is_readable($themeAssets . $file)) {
-            $publicFile = $this->publicAssetsPath . engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR . $file;
-            if (!is_dir($themeAssets . $file) && (!is_readable($publicFile) || $this->checkOutOfDate($publicFile, $themeAssets . $file))) {
+            $publicFile = $this->publicAssetsPath . engineGet('config',
+                            'defaults', 'theme') . DIRECTORY_SEPARATOR . $file;
+            if (!is_dir($themeAssets . $file) && (!is_readable($publicFile) || $this->checkOutOfDate($publicFile,
+                            $themeAssets . $file))) {
                 if (!is_dir(dirname($publicFile))) {
                     mkdir(dirname($publicFile), 0777, true);
                 }
@@ -305,7 +320,8 @@ class Renderer extends AInjector {
      * @return string
      */
     private function parseFile($file) {
-        return engineGet('serverPath') . str_replace(ROOT . 'public' . DIRECTORY_SEPARATOR, '', $this->publicAssetsPath) . $file;
+        return engineGet('serverPath') . str_replace(ROOT . 'public' . DIRECTORY_SEPARATOR,
+                        '', $this->publicAssetsPath) . $file;
     }
 
     /**
@@ -322,7 +338,8 @@ class Renderer extends AInjector {
         if (!$fromTheme && is_readable($this->publicAssetsPath . $this->view->getModule() . DIRECTORY_SEPARATOR . $file)) {
             return $this->parseFile($this->view->getModule() . DIRECTORY_SEPARATOR . $file);
         }
-        elseif (is_readable($this->publicAssetsPath . engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR . $file)) {
+        elseif (is_readable($this->publicAssetsPath . engineGet('config',
+                                'defaults', 'theme') . DIRECTORY_SEPARATOR . $file)) {
             return $this->parseFile(engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR . $file);
         }
         else {
@@ -348,9 +365,9 @@ class Renderer extends AInjector {
      * @return string
      */
     final protected function loadCss($css, $fromTheme = false, $once = false) {
-        if ($once && !$this->canLoadAsset($css, 'css'))
-            return null;
-        return '<link rel="stylesheet" type="text/css" href="' . $this->getFile($css . '.css', $fromTheme) . '" />' . "\n";
+        if ($once && !$this->canLoadAsset($css, 'css')) return null;
+        return '<link rel="stylesheet" type="text/css" href="' . $this->getFile($css . '.css',
+                        $fromTheme) . '" />' . "\n";
     }
 
     /**
@@ -361,9 +378,9 @@ class Renderer extends AInjector {
      * @return string|null
      */
     final protected function loadJs($src, $fromTheme = false, $once = false) {
-        if ($once && !$this->canLoadAsset($src, 'js'))
-            return null;
-        return '<script type="text/javascript" src="' . $this->getFile($src . '.js', $fromTheme) . '"></script>' . "\n";
+        if ($once && !$this->canLoadAsset($src, 'js')) return null;
+        return '<script type="text/javascript" src="' . $this->getFile($src . '.js',
+                        $fromTheme) . '"></script>' . "\n";
     }
 
     /**
@@ -374,9 +391,9 @@ class Renderer extends AInjector {
      * @return string
      */
     final protected function loadIcon($src, $fromTheme = false, $once = true) {
-        if ($once && !$this->canLoadAsset($src, 'icon'))
-            return null;
-        return '<link rel="shortcut icon" href="' . $this->getFile($src, $fromTheme) . '"/>' . "\n";
+        if ($once && !$this->canLoadAsset($src, 'icon')) return null;
+        return '<link rel="shortcut icon" href="' . $this->getFile($src,
+                        $fromTheme) . '"/>' . "\n";
     }
 
     /**
@@ -400,8 +417,7 @@ class Renderer extends AInjector {
      */
     final protected function canLoadAsset($file, $type) {
         $filename = basename($file);
-        if (in_array($filename, $this->loadedAssets[$type]))
-            return false;
+        if (in_array($filename, $this->loadedAssets[$type])) return false;
 
         $this->loadedAssets[$type][] = $filename;
         return true;
@@ -426,7 +442,8 @@ class Renderer extends AInjector {
      * @param string $hash
      * @return string
      */
-    final public function url($module, $controller = null, $action = null, array $params = array(), $hash = null) {
+    final public function url($module, $controller = null, $action = null,
+            array $params = array(), $hash = null) {
         return $this->view->url($module, $controller, $action, $params, $hash);
     }
 
@@ -457,7 +474,7 @@ class Renderer extends AInjector {
      * @todo
      * @param array $paths
      */
-    final public function breadcrumb(array $paths, $separator = '/') {
+    final public function breadcrumb(array $paths) {
 
     }
 
