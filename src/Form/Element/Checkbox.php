@@ -14,11 +14,12 @@ use DScribe\Form\Element,
  */
 class Checkbox extends Element {
 
-    public function __construct(array $data = array(), $preserveArray = false, $preserveKeyOnly = null) {
+    public function __construct(array $data = array(), $preserveArray = false,
+            $preserveKeyOnly = null) {
         parent::__construct($data, $preserveArray, $preserveKeyOnly);
 
-        if (!isset($this->options->value) || (isset($this->options->value) && $this->options->value != 0))
-            $this->options->value = '1';
+        if (!isset($this->options->value) || (isset($this->options->value) && $this->options->value !=
+                0)) $this->options->value = '1';
     }
 
     /**
@@ -30,12 +31,11 @@ class Checkbox extends Element {
     }
 
     public function create() {
-        if (!$this->attributes)
-            $this->attributes = new Object();
+        if (!$this->attributes) $this->attributes = new Object();
         $return = '';
         if (isset($this->options->values) && !empty($this->options->values)) {
             if (!is_array($this->options->values))
-                throw new Exception('Values in options for ' . $this->type .
+                    throw new Exception('Values in options for ' . $this->type .
                 ' element "' . $this->name .
                 '" must an array of "element_label" => "element_value"');
 
@@ -48,11 +48,9 @@ class Checkbox extends Element {
                     . 'an array');
                 }
 
-                if ($this->options->valueIsLabel)
-                    $label = $value;
+                if ($this->options->valueIsLabel) $label = $value;
 
-                $checked = (($this->data && $this->data === $value) ||
-                        (isset($this->options->default) &&
+                $checked = (($this->data && $this->data === $value) || (isset($this->options->default) &&
                         $this->options->default == $value)) ?
                         'checked="checked" ' : '';
 
@@ -66,8 +64,9 @@ class Checkbox extends Element {
             }
         }
         else {
-            $checked = ($this->data && $this->data != 0 ||
-                    (!isset($this->data) && (isset($this->options->default) && $this->options->default))) ?
+            $checked = ($this->data && $this->data != 0 || (!isset($this->data) &&
+                    (isset($this->options->default) && $this->options->default)))
+                        ?
                     'checked="checked" ' : '';
 
             $return = '<input type="' . $this->type . '" ' .
@@ -82,13 +81,13 @@ class Checkbox extends Element {
         ob_start();
         ?>
         <div class="element-group <?= $this->type ?> <?= $this->errors ? 'form-error' : null ?>">
-            <?php if ($this->options->label): ?>
-                <label for="<?= $this->attributes->id ?>">
-                    <?= $this->options->label ?>
-                    <?= $this->options->values ? null : $this->prepare() ?>
-                </label>
-            <?php endif; ?>
-            <?= $this->options->values ? $this->prepare() : null ?>
+            <?php
+            echo $this->renderLabel($this->options->values ? true : false);
+            if (!$this->options->values): echo $this->prepare();
+                ?>
+            </label>
+        <?php endif; ?>
+        <?= $this->options->values ? $this->prepare() : null ?>
         </div>
         <?php
         return ob_get_clean();

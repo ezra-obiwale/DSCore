@@ -79,6 +79,7 @@ class Object {
                 }
             }
         }
+        $return = array_merge($return, $return['integerKeys']);
         unset($return['integerKeys']);
         return $return;
     }

@@ -2,6 +2,8 @@
 
 namespace DScribe\Form;
 
+use Object;
+
 /**
  * Validates a group of elements
  * @author Ezra Obiwale
@@ -42,10 +44,28 @@ abstract class AValidator {
     }
 
     /**
+     * Fetches the name of the Fieldset/Form
+     * @return string
+     */
+    public function getName() {
+        return $this->name;
+    }
+
+    /**
+     * Set the name of the Fieldset/Form
+     * @param string $name
+     * @return AValidator
+     */
+    public function setName($name) {
+        $this->name = $name;
+        return $this;
+    }
+
+    /**
      * Add filters to specified element
      * @param string $elementName
      * @param array $filters
-     * @return \DScribe\Form\AValidator
+     * @return AValidator
      */
     final public function addFilters($elementName, array $filters) {
         $this->elements[$elementName]->filters->add($filters);
@@ -60,8 +80,7 @@ abstract class AValidator {
         $filterer = new Filterer();
         $valid = true;
         foreach ($this->elements as $element) {
-            if (!$element->validate($filterer, $this->data))
-                $valid = false;
+            if (!$element->validate($filterer, $this->data)) $valid = false;
             $this->data[$element->name] = ($element->type === 'fieldset') ?
                     $element->options->value->getData(true) : $element->data;
         }
@@ -84,7 +103,7 @@ abstract class AValidator {
 
     /**
      * Sets data to validate
-     * @param \Object|array $data
+     * @param Object|array $data
      */
     abstract public function setData($data);
 }

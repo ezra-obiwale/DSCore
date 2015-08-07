@@ -137,27 +137,26 @@ class Fieldset extends Element {
                     __toggleButton(fieldset);
                 }
                 document.addEventListener('DOMContentLoaded', function () {
-                    var fieldsets = document.querySelectorAll('fieldset');
-                    for (i = 0; i < fieldsets.length; i++) {
-                        if (__fieldsets[fieldsets[i].id].extras) {
-                            var extras = __fieldsets[fieldsets[i].id].extras;
+                    for (var key in __fieldsets) {
+                        if (__fieldsets[key].extras) {
+                            var extras = __fieldsets[key].extras;
                             var values = {};
-                            for (var key in extras) {
-                                if (!extras.hasOwnProperty(key)) {
+                            for (var ky in extras) {
+                                if (!extras.hasOwnProperty(ky)) {
                                     continue;
                                 }
-                                if (typeof extras[key] === 'object') {
-                                    extras[key].forEach(function (v, j) {
+                                if (typeof extras[ky] === 'object') {
+                                    extras[ky].forEach(function (v, j) {
                                         if (j) {
                                             if (!values[j])
                                                 values[j] = new Array;
 
-                                            values[j].push({name: key, value: v});
+                                            values[j].push({name: ky, value: v});
                                         }
                                     });
                                 }
                             }
-                            __createFChildren(fieldsets[i], values);
+                            __createFChildren(document.getElementById(key), values);
                         }
                     }
                     var btns = document.querySelectorAll('button.__multi');

@@ -22,7 +22,8 @@ class Csrf {
     }
 
     public function create() {
-        \Session::save($this->name, \Util::randomPassword(20));
+        if (!$this->fetch())
+                \Session::save($this->name, \Util::randomPassword(20));
         return $this;
     }
 
@@ -38,7 +39,7 @@ class Csrf {
         \Session::remove($this->name);
         return $this;
     }
-    
+
     public function getName() {
         return $this->name;
     }

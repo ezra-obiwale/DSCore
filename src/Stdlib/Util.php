@@ -22,8 +22,7 @@ class Util {
      * @return string
      */
     public static function camelTo_($str) {
-        if (!is_string($str))
-            return '';
+        if (!is_string($str)) return '';
         $str[0] = strtolower($str[0]);
         $func = create_function('$c', 'return "_" . strtolower($c[1]);');
         return preg_replace_callback('/([A-Z])/', $func, $str);
@@ -36,8 +35,7 @@ class Util {
      * @return string
      */
     public static function camelToHyphen($str, $strtolower = true) {
-        if (!is_string($str))
-            return '';
+        if (!is_string($str)) return '';
         $str[0] = strtolower($str[0]);
         $func = create_function('$c', 'return "-" . $c[1];');
         $str = preg_replace_callback('/([A-Z])/', $func, $str);
@@ -45,10 +43,10 @@ class Util {
     }
 
     public static function arrayValuesCamelTo(array &$array, $to) {
-        $func = create_function('$c', 'return "' . $to . '" . strtolower($c[1]);');
+        $func = create_function('$c',
+                'return "' . $to . '" . strtolower($c[1]);');
         foreach ($array as &$value) {
-            if (!is_string($value))
-                continue;
+            if (!is_string($value)) continue;
             $value[0] = strtolower($value[0]);
             $value = preg_replace_callback('/([A-Z])/', $func, $value);
         }
@@ -61,8 +59,7 @@ class Util {
      * @return string
      */
     public static function camelToSpace($str) {
-        if (!is_string($str))
-            return '';
+        if (!is_string($str)) return '';
         $str[0] = strtolower($str[0]);
         $func = create_function('$c', 'return " " . $c[1];');
         return preg_replace_callback('/([A-Z])/', $func, $str);
@@ -74,9 +71,9 @@ class Util {
      * @return string
      */
     public static function _toCamel($str) {
-        if (!is_string($str))
-            return '';
-        return preg_replace_callback('/_([a-z])/', function($c) {
+        if (!is_string($str)) return '';
+        return preg_replace_callback('/_([a-z])/',
+                function($c) {
             return strtoupper($c[1]);
         }, $str);
     }
@@ -87,8 +84,7 @@ class Util {
      * @return string
      */
     public static function hyphenToCamel($str) {
-        if (!is_string($str))
-            return '';
+        if (!is_string($str)) return '';
         $func = create_function('$c', 'return strtoupper($c[1]);');
         return preg_replace_callback('/-([a-z])/', $func, $str);
     }
@@ -104,9 +100,11 @@ class Util {
      * @return array
      * @throws \Exception
      */
-    public static function readDir($dir, $return = Util::ALL, $recursive = false, $extension = NULL, $nameOnly = false, array $options = array()) {
+    public static function readDir($dir, $return = Util::ALL,
+            $recursive = false, $extension = NULL, $nameOnly = false,
+            array $options = array()) {
         if (!is_dir($dir))
-            return array(
+                return array(
                 'error' => 'Directory "' . $dir . '" does not exist',
             );
 
@@ -115,37 +113,38 @@ class Util {
         }
 
         if (substr($dir, strlen($dir) - 1) !== DIRECTORY_SEPARATOR)
-            $dir .= DIRECTORY_SEPARATOR;
+                $dir .= DIRECTORY_SEPARATOR;
 
         $toReturn = array('dirs' => array(), 'files' => array());
         try {
             foreach (scandir($dir) as $current) {
-                if (in_array($current, array('.', '..')))
-                    continue;
+                if (in_array($current, array('.', '..'))) continue;
 
                 if (is_dir($dir . $current)) {
                     if (in_array($return, array(self::DIRS_ONLY, self::ALL))) {
                         $toReturn['dirs'][] = ($nameOnly) ? $current : $dir . $current;
                     }
                     if ($recursive) {
-                        $toReturn = array_merge_recursive($toReturn, self::readDir($dir . $current, self::ALL, true, $extension, $nameOnly, $options));
+                        $toReturn = array_merge_recursive($toReturn,
+                                self::readDir($dir . $current, self::ALL, true,
+                                        $extension, $nameOnly, $options));
                     }
-                } else if (is_file($dir . $current) && in_array($return, array(self::FILES_ONLY, self::ALL))) {
-                    if ($extension)
-                        $info = pathinfo($current);
-                    if (empty($extension) || (is_array($extension) && in_array($info['extension'], $extension))) {
+                }
+                else if (is_file($dir . $current) && in_array($return,
+                                array(self::FILES_ONLY, self::ALL))) {
+                    if ($extension) $info = pathinfo($current);
+                    if (empty($extension) || (is_array($extension) && in_array($info['extension'],
+                                    $extension))) {
                         $toReturn['files'][$dir][] = ($nameOnly) ? $current : $dir . $current;
                     }
                 }
             }
 
-            if ($return == self::ALL)
-                return $toReturn;
-            elseif ($return == self::DIRS_ONLY)
-                return $toReturn['dirs'];
-            elseif ($return == self::FILES_ONLY)
-                return $toReturn['files'];
-        } catch (\Exception $ex) {
+            if ($return == self::ALL) return $toReturn;
+            elseif ($return == self::DIRS_ONLY) return $toReturn['dirs'];
+            elseif ($return == self::FILES_ONLY) return $toReturn['files'];
+        }
+        catch (\Exception $ex) {
             throw new \Exception($ex->getMessage());
         }
     }
@@ -158,29 +157,35 @@ class Util {
      * @param boolean $recursive
      * @throws \Exception
      */
-    public static function copyDir($source, $destination, $permission = 0777, $recursive = true) {
+    public static function copyDir($source, $destination, $permission = 0777,
+            $recursive = true) {
         if (substr($source, strlen($destination) - 1) !== DIRECTORY_SEPARATOR)
-            $destination .= DIRECTORY_SEPARATOR;
+                $destination .= DIRECTORY_SEPARATOR;
 
         try {
-            if (!is_dir($destination))
-                mkdir($destination, $permission);
+            if (!is_dir($destination)) mkdir($destination, $permission);
 
             $contents = self::readDir($source, self::ALL, $recursive, NULL);
             if (isset($contents['dirs'])) {
                 foreach ($contents['dirs'] as $fullPath) {
-                    @mkdir(str_replace(array($source, DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR), array($destination, DIRECTORY_SEPARATOR), $fullPath), $permission);
+                    @mkdir(str_replace(array($source, DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR),
+                                            array($destination, DIRECTORY_SEPARATOR),
+                                            $fullPath), $permission);
                 }
             }
 
             if (isset($contents['files'])) {
                 foreach ($contents['files'] as $fullPathsArray) {
                     foreach ($fullPathsArray as $fullPath) {
-                        @copy($fullPath, str_replace(array($source, DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR), array($destination, DIRECTORY_SEPARATOR), $fullPath));
+                        @copy($fullPath,
+                                        str_replace(array($source, DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR),
+                                                array($destination, DIRECTORY_SEPARATOR),
+                                                $fullPath));
                     }
                 }
             }
-        } catch (\Exception $ex) {
+        }
+        catch (\Exception $ex) {
             throw new \Exception($ex->getMessage());
         }
     }
@@ -201,7 +206,8 @@ class Util {
                             return false;
                         }
                     }
-                } else {
+                }
+                else {
                     if (!unlink($file)) {
                         return false;
                     }
@@ -217,7 +223,8 @@ class Util {
                             return false;
                         }
                     }
-                } else {
+                }
+                else {
                     if (!rmdir($_dir)) {
                         return false;
                     }
@@ -238,9 +245,9 @@ class Util {
      * the source does not bear an explicit extension
      * @return boolean
      */
-    public static function resizeImage($source, $desiredWidth = 200, $destination = null, $extension = null) {
-        if (!$destination)
-            $destination = $source;
+    public static function resizeImage($source, $desiredWidth = 200,
+            $destination = null, $extension = null) {
+        if (!$destination) $destination = $source;
 
         $info = pathinfo($source);
         $extension = !$extension ? $info['extension'] : $extension;
@@ -267,7 +274,8 @@ class Util {
         $virtualImage = imagecreatetruecolor($desiredWidth, $desiredHeight);
 
         /* copy source image at a resized size */
-        imagecopyresampled($virtualImage, $sourceImage, 0, 0, 0, 0, $desiredWidth, $desiredHeight, $width, $height);
+        imagecopyresampled($virtualImage, $sourceImage, 0, 0, 0, 0,
+                $desiredWidth, $desiredHeight, $width, $height);
 
         $return = false;
         /* create the physical thumbnail image to its destination */
@@ -297,8 +305,10 @@ class Util {
      * @param string $subDir If not overwrite, name of subfolder within the $dir
      *  to resize into
      */
-    public static function resizeImageDirectory($dir, $desiredWidth = 200, $overwrite = false, $recursive = true, $subDir = 'resized') {
-        foreach (self::readDir($dir, self::FILES_ONLY, $recursive, null, true) as $path => $filesArray) {
+    public static function resizeImageDirectory($dir, $desiredWidth = 200,
+            $overwrite = false, $recursive = true, $subDir = 'resized') {
+        foreach (self::readDir($dir, self::FILES_ONLY, $recursive, null, true) as
+                    $path => $filesArray) {
             foreach ($filesArray as $file) {
                 $destination = null;
                 if (!$overwrite) {
@@ -320,8 +330,7 @@ class Util {
      * @return string
      */
     public static function shortenString($str, $length = 75, $break = '...') {
-        if (strlen($str) < $length)
-            return $str;
+        if (strlen($str) < $length) return $str;
 
         $str = strip_tags($str);
 
@@ -335,8 +344,7 @@ class Util {
      */
     public static function makeValuesArray(array &$array) {
         foreach ($array as &$value) {
-            if (!is_array($value))
-                $value = array($value);
+            if (!is_array($value)) $value = array($value);
         }
         return $array;
     }
@@ -351,8 +359,8 @@ class Util {
     public static function uploadFiles(\Object $data, array $options = array()) {
         $return = array('success' => array(), 'errors' => array());
         foreach ($data->toArray(TRUE) as $ppt => $info) {
-            if (is_array($options['ignore']) && in_array($ppt, $options['ignore']))
-                continue;
+            if (is_array($options['ignore']) && in_array($ppt,
+                            $options['ignore'])) continue;
             self::makeValuesArray($info);
 
             foreach ($info['name'] as $key => $name) {
@@ -368,24 +376,28 @@ class Util {
 
                 $tmpName = $info['tmp_name'][$key];
                 $pInfo = pathinfo($name);
-                if (isset($options['extensions']) && !in_array(strtolower($pInfo['extension']), $options['extensions'])) {
+                if (isset($options['extensions']) && !in_array(strtolower($pInfo['extension']),
+                                $options['extensions'])) {
                     $return['errors'][$ppt][$name] = self::UPLOAD_ERROR_EXTENSION;
                     continue;
                 }
                 $dir = isset($options['path']) ? $options['path'] : DATA . 'uploads';
                 if (substr($dir, strlen($dir) - 1) !== DIRECTORY_SEPARATOR)
-                    $dir .= DIRECTORY_SEPARATOR;
+                        $dir .= DIRECTORY_SEPARATOR;
                 if (!is_dir($dir)) {
                     if (!mkdir($dir, 0777, true)) {
                         $return['errors'][$ppt][$name] = self::UPLOAD_ERROR_PATH;
                         continue;
                     }
                 }
-                $savePath = $dir . $options['prefix'] . preg_replace('/[^A-Z0-9._-]/i', '_', basename($pInfo['filename'])) . '.' . $pInfo['extension'];
+                $savePath = $dir . $options['prefix'] . preg_replace('/[^A-Z0-9._-]/i',
+                                '_', basename($pInfo['filename'])) . '.' . $pInfo['extension'];
                 if (move_uploaded_file($tmpName, $savePath)) {
-                    $return['success'][$ppt][$name] = $savePath;
+                    $return['success'][$ppt][$name] = str_replace('\\', '/',
+                            $savePath);
                     self::$uploadSuccess = $savePath;
-                } else {
+                }
+                else {
                     $return['errors'][$ppt][$name] = self::UPLOAD_ERROR_FAILED;
                 }
             }
@@ -400,7 +412,7 @@ class Util {
      */
     public static function randomPassword($length = 8, $string = null) {
         if (!$string)
-            $string = 'bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ123456789&^%$#@!_-+=';
+                $string = 'bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ123456789&^%$#@!_-+=';
         $chars = str_split(str_shuffle($string));
         $password = '';
         foreach (array_rand($chars, $length) as $key) {
@@ -418,17 +430,20 @@ class Util {
      * the config file will be overwritten with the array
      * @return boolean
      */
-    public static function updateConfig($path, array $data = array(), $recursiveMerge = false, $configArray = null) {
+    public static function updateConfig($path, array $data = array(),
+            $recursiveMerge = false, $configArray = null) {
         if (is_null($configArray)) {
-            if (is_readable($path))
-                $configArray = include $path;
+            if (is_readable($path)) $configArray = include $path;
             else {
                 $configArray = array();
             }
         }
-        $config = ($recursiveMerge) ? array_replace_recursive($configArray, $data) : array_replace($configArray, $data);
+        $config = ($recursiveMerge) ? array_replace_recursive($configArray,
+                        $data) : array_replace($configArray, $data);
         $content = str_replace("=> \n", '=>', var_export($config, true));
-        return (file_put_contents($path, '<' . '?php' . "\r\n\treturn " . $content . ';') === FALSE) ? false : true;
+        return (file_put_contents($path,
+                        '<' . '?php' . "\r\n\treturn " . $content . ';') === FALSE)
+                    ? false : true;
     }
 
     /**
@@ -492,37 +507,32 @@ class Util {
      * @param bool $multiple Indicates whether to return all found arrays or just one - the first
      * @return array|null The array containing the expected value
      */
-    public static function searchArray(array $array, $value, $recursive = false, $key = array(), $multiple = false) {
-        if (!is_array($value))
-            $value = array($value);
-        if ($key !== null && !is_array($key))
-            $key = array($key);
-        else if ($key === null)
-            $key = array();
+    public static function searchArray(array $array, $value, $recursive = false,
+            $key = array(), $multiple = false) {
+        if (!is_array($value)) $value = array($value);
+        if ($key !== null && !is_array($key)) $key = array($key);
+        else if ($key === null) $key = array();
         $found = array();
         foreach ($array as $ky => $val) {
             if (is_array($val)) {
-                if (!$recursive)
-                    continue;
-                $ret = static::searchArray($val, $value, $recursive, $key, $multiple);
+                if (!$recursive) continue;
+                $ret = static::searchArray($val, $value, $recursive, $key,
+                                $multiple);
                 if (count($ret)) {
-                    if ($multiple)
-                        $found = array_merge($found, $ret);
-                    else
-                        return $ret;
+                    if ($multiple) $found = array_merge($found, $ret);
+                    else return $ret;
                 }
                 continue;
             }
-            if (count($key) && !in_array($ky, $key))
-                continue;
+            if (count($key) && !in_array($ky, $key)) continue;
 
             $keys = array_flip($key);
             if ($val === $value[$keys[$ky]]) {
                 if ($multiple) {
                     $k = ($multiple === true) ? 0 : $array[$multiple];
                     $found[$k] = $array;
-                } else
-                    return $array;
+                }
+                else return $array;
             }
         }
 
@@ -544,10 +554,21 @@ class Util {
 
         $yearDiff = ($date2[0] - $date1[0]) * 12;
         $monthDiff = $date2[1] - $date1[1];
-        
+
         $yearDiff += $monthDiff;
 
         return $yearDiff;
+    }
+
+    public static function parseAttrArray(array $array,
+            array $ignoreAttrs = array()) {
+        $return = '';
+        foreach ($array as $attr => $val) {
+            if (in_array($attr, $ignoreAttrs)) continue;
+            if (!empty($return)) $return .= ' ';
+            $return .= $attr . '="' . $val . '"';
+        }
+        return $return;
     }
 
 }
