@@ -14,9 +14,9 @@ class Session {
         session_set_cookie_params(self::getLifetime());
         if (!isset($_SESSION)) {
             if (!self::$lifetime) {
-                $sessionExpirationHours = engineGet('Config', 'sessionExpirationHours');
-                if (!$sessionExpirationHours)
-                    $sessionExpirationHours = 2;
+                $sessionExpirationHours = engineGet('Config',
+                        'sessionExpirationHours');
+                if (!$sessionExpirationHours) $sessionExpirationHours = 2;
                 self::$lifetime = 60 * 60 * $sessionExpirationHours;
             }
             @session_start();
@@ -24,7 +24,8 @@ class Session {
     }
 
     private static function close() {
-        session_write_close();
+        // commented out because it renders each session inactive
+//        session_write_close();
     }
 
     /**
@@ -41,9 +42,9 @@ class Session {
      */
     public function getLifetime() {
         if (!self::$lifetime) {
-            $sessionExpirationHours = engineGet('Config', 'sessionExpirationHours', false);
-            if (!$sessionExpirationHours)
-                $sessionExpirationHours = 2;
+            $sessionExpirationHours = engineGet('Config',
+                    'sessionExpirationHours', false);
+            if (!$sessionExpirationHours) $sessionExpirationHours = 2;
             self::$lifetime = 60 * 60 * $sessionExpirationHours;
         }
 
@@ -71,7 +72,7 @@ class Session {
     public static function fetch($key) {
         static::init();
         if (isset($_SESSION[self::$prepend . $key]))
-            return $_SESSION[self::$prepend . $key];
+                return $_SESSION[self::$prepend . $key];
         self::close();
     }
 
@@ -82,7 +83,7 @@ class Session {
     public static function remove($key) {
         static::init();
         if (isset($_SESSION[self::$prepend . $key]))
-            unset($_SESSION[self::$prepend . $key]);
+                unset($_SESSION[self::$prepend . $key]);
         self::close();
     }
 

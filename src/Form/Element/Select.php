@@ -6,7 +6,8 @@
 namespace DScribe\Form\Element;
 
 use DScribe\Form\Element,
-    Object;
+    Object,
+    Exception;
 
 /**
  * Description of Element
@@ -22,8 +23,8 @@ class Select extends Element {
             $this->attributes = new Object();
 
         if ((isset($this->options->values) && !is_array($this->options->values)))
-            throw new Exception('Values in options for select element "' . $this->name .
-            '" must an array of "element_value" => "element_label"');
+            throw new \Exception('Values in options for select element "' . $this->name .
+            '" must have an array of "element_value" => "element_label"');
         else if (isset($this->options->object)) {
             if (!isset($this->options->object->class))
                 throw new Exception('Class not specified for select object in element "' . $this->name . '"');
@@ -117,7 +118,6 @@ class Select extends Element {
     private function targetObject() {
         $model = new $this->options->object->class;
         $table = engineGet('DB')->table($model->getTableName(), $model);
-        $this->options->values = new Object();
 
         $values = array();
         $criteria = (isset($this->options->object->criteria)) ?
@@ -197,7 +197,7 @@ class Select extends Element {
 
         }
 
-        $this->options->values->add($values);
+        $this->options->values = $values;
     }
 
     private function dependant() {

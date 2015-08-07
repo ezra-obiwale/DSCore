@@ -158,8 +158,7 @@ class Engine {
      */
     public static function getServerPath() {
         return (static::isVirtual() || static::$serverPath == '/public') ?
-                DIRECTORY_SEPARATOR : str_replace('/', DIRECTORY_SEPARATOR,
-                        static::$serverPath) . DIRECTORY_SEPARATOR;
+                '/' : static::$serverPath . '/';
     }
 
     /**
@@ -532,7 +531,7 @@ class Engine {
     }
 
     /**
-     *
+     * 
      * @return Cache|Null
      */
     protected static function canCache() {

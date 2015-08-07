@@ -16,12 +16,6 @@ use DScribe\Core\IModel,
 class Fieldset extends AValidator {
 
     /**
-     * Name of form
-     * @var string
-     */
-    private $name;
-
-    /**
      * Attribute array
      * @var array
      */
@@ -45,27 +39,8 @@ class Fieldset extends AValidator {
      */
     public function __construct($name, array $attributes = array()) {
         parent::__construct($name);
-        $this->name = $name;
         $this->attributes = $this->noFilter = array();
         $this->setAttributes($attributes);
-    }
-
-    /**
-     * Fetches the name of the form
-     * @return string
-     */
-    public function getName() {
-        return $this->name;
-    }
-
-    /**
-     * Set the name of the Fieldset
-     * @param string $name
-     * @return \DScribe\Form\Fieldset
-     */
-    public function setName($name) {
-        $this->name = $name;
-        return $this;
     }
 
     /**
@@ -117,8 +92,7 @@ class Fieldset extends AValidator {
     final public function parseAttributes($ignore = array()) {
         $return = '';
         foreach ($this->attributes as $attr => $val) {
-            if (in_array($attr, $ignore))
-                continue;
+            if (in_array($attr, $ignore)) continue;
             $return .= Util::camelToHyphen($attr) . '="' . $val . '" ';
         }
         return $return;
@@ -144,14 +118,12 @@ class Fieldset extends AValidator {
      * @return IModel
      */
     public function getModel() {
-        if (!$this->model)
-            return null;
+        if (!$this->model) return null;
 
         $data = $this->data;
         if ($this->isValid() && $this->model) {
             foreach ($this->fieldsets as $name) {
-                if (!isset($this->elements[$name]))
-                    continue;
+                if (!isset($this->elements[$name])) continue;
 
                 $fieldset = $this->elements[$name]->options->value;
                 $fieldsetModel = $fieldset->getModel();
@@ -168,8 +140,7 @@ class Fieldset extends AValidator {
      * @return null|string
      */
     final public function getModelClass() {
-        if ($this->model === null)
-            return null;
+        if ($this->model === null) return null;
 
         return get_class($this->model);
     }
@@ -181,15 +152,16 @@ class Fieldset extends AValidator {
      * @throws Exception
      */
     public function add($element) {
-        if ((is_object($element) && !is_a($element, 'DScribe\Form\Element')) ||
-                (!is_object($element) && !is_array($element)))
-            throw new Exception('Form elements must be either an array or an object subclass of DScribe\Form\Element');
+        if ((is_object($element) && !is_a($element, 'DScribe\Form\Element')) || (!is_object($element) &&
+                !is_array($element)))
+                throw new Exception('Form elements must be either an array or an object subclass of DScribe\Form\Element');
         else if (is_array($element)) {
             if (!isset($element['type'])) {
                 throw new \Exception('Form elements must of key type');
             }
             $elementClass = 'DScribe\Form\Element\\' . ucfirst($element['type']);
-            $element = class_exists($elementClass) ? new $elementClass($element, true, 'values') : new Element($element, true, 'values');
+            $element = class_exists($elementClass) ? new $elementClass($element,
+                    true, 'values') : new Element($element, true, 'values');
         }
         if (@$this->data[$element->name]) {
             $element->data = $this->data[$element->name];
@@ -198,17 +170,20 @@ class Fieldset extends AValidator {
 
         if (in_array($element->type, array('checkbox', 'radio'))) {
             $this->booleans[$element->name] = $element->name;
-        } else if ($element->type === 'fieldset') {
+        }
+        else if ($element->type === 'fieldset') {
             $this->fieldsets[] = $element->name;
-        } else if ($element->type === 'hidden' && $element->name === 'csrf')
+        }
+        else if ($element->type === 'hidden' && $element->name === 'csrf') {
             $element->setCsrfKey($this->getName());
+        }
 
         $this->elements[$element->name] = $element;
 
         if (!$element->filters) {
             $filters = $this->getFilters();
             if (@$filters[$element->name])
-                $element->filters = $filters[$element->name];
+                    $element->filters = $filters[$element->name];
         }
 
         return $this;
@@ -257,8 +232,7 @@ class Fieldset extends AValidator {
      */
     final public function remove($elementName, $return = false) {
         if (isset($this->elements[$elementName])) {
-            if ($return)
-                $return = $this->elements[$elementName];
+            if ($return) $return = $this->elements[$elementName];
             $this->ignoreFilter($elementName);
             unset($this->elements[$elementName]);
             $elementName = str_replace('[]', '', $elementName);
@@ -276,8 +250,9 @@ class Fieldset extends AValidator {
      * @throws Exception
      */
     final public function setData($data) {
-        if ((is_object($data) && !is_a($data, 'Object')) || (!is_object($data) && !is_array($data)))
-            throw new \Exception('Data must be either an array or an object that extends Object: ' . gettype($data));
+        if ((is_object($data) && !is_a($data, 'Object')) || (!is_object($data) &&
+                !is_array($data)))
+                throw new \Exception('Data must be either an array or an object that extends Object: ' . gettype($data));
         $data = is_array($data) ? $data : $data->toArray();
         foreach ($data as $attr => $value) {
             if (@$this->elements[$attr]) {
@@ -295,12 +270,10 @@ class Fieldset extends AValidator {
      */
     final public function getData($toArray = false) {
         if (is_null($this->valid))
-            throw new \Exception('Form must be validated before you can get data');
+                throw new \Exception('Form must be validated before you can get data');
 
-        if ($toArray)
-            return ($this->data) ? $this->data : array();
-        else
-            return ($this->data) ? new \Object($this->data) : new \Object();
+        if ($toArray) return ($this->data) ? $this->data : array();
+        else return ($this->data) ? new \Object($this->data) : new \Object();
     }
 
     final public function isMultiple() {

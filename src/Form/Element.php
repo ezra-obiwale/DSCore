@@ -18,14 +18,14 @@ class Element extends Object {
     public static $css = false;
     public $data;
 
-    public function __construct(array $data = array(), $preserveArray = false, $preserveKeyOnly = null) {
+    public function __construct(array $data = array(), $preserveArray = false,
+            $preserveKeyOnly = null) {
         $this->options = new Object();
         $this->attributes = new Object();
 
         parent::__construct($data, $preserveArray, $preserveKeyOnly);
 
-        if (!$this->name)
-            throw new Exception('Form elements must have a name');
+        if (!$this->name) throw new Exception('Form elements must have a name');
         $this->type = strtolower($this->type);
 
         if (get_class($this->options) !== 'Object')
@@ -46,8 +46,7 @@ class Element extends Object {
         if (empty($this->options->value) && empty($this->options->values))
             $this->options->value = null;
 
-        if ($this->options->toggleShow)
-            $this->toggleShow();
+        if ($this->options->toggleShow) $this->toggleShow();
     }
 
     protected function toggleShow() {
@@ -97,8 +96,7 @@ class Element extends Object {
      */
     final public function parseAttributes() {
         $return = '';
-        if (!$this->attributes)
-            $this->attributes = new Object();
+        if (!$this->attributes) $this->attributes = new Object();
         foreach ($this->attributes->toArray() as $attr => $val) {
             $return .= \Util::camelToHyphen($attr) . '="' . $val . '" ';
         }
@@ -172,13 +170,37 @@ class Element extends Object {
     }
 
     /**
+     * Renders the label of the element
+     * @param bool $close Inidicates whether to close the label or leave open
+     * @return string
+     */
+    public function renderLabel($close = true) {
+        ob_start();
+        if ($this->options->label):
+            $label = $this->options->label;
+            if (is_object($label)) {
+                if ($label->attrs)
+                        $attrs = \Util::parseAttrArray($label->attrs->toArray());
+                $label = $label->text;
+            }
+            ?>
+            <label for="<?= $this->attributes->id ?>" <?= $attrs ?>><?= $label ?>
+                <?php if ($close): ?>
+                </label>
+                <?php
+            endif;
+        endif;
+        return ob_get_clean();
+    }
+
+    /**
      * Render the element for output
      * @return string
      */
     public function render() {
         if ($this->parent) {
             if (!static::$count[$this->parent])
-                static::$count[$this->parent] = 0;
+                    static::$count[$this->parent] = 0;
             static::$count[$this->parent] ++;
 
             $this->attributes->id += static::$count[$this->parent];
@@ -186,9 +208,7 @@ class Element extends Object {
         ob_start();
         ?>
         <div class="element-group <?= $this->type ?> <?= $this->errors ? 'form-error' : null ?>">
-            <?php if ($this->options->label): ?>
-                <label for="<?= $this->attributes->id ?>"><?= $this->options->label ?></label>
-            <?php endif; ?>
+            <?= $this->renderLabel() ?>
             <?= $this->prepare() ?>
         </div>
         <?php
@@ -196,20 +216,20 @@ class Element extends Object {
     }
 
     public function validate(Filterer $filterer, $data) {
-        if ($this->noFilter)
-            return true;
+        if ($this->noFilter) return true;
         $filterer->reset();
         $filterer->setData($data);
         $filterer->setElementData($this->data);
 
         if (!is_object($this->data))
-            $filterer->StripTags($this->data, $this->filters->allowTags ?
+                $filterer->StripTags($this->data,
+                    $this->filters->allowTags ?
                             $this->filters->allowTags :
-                            ($this->filters->allowTags ? $this->filters->allowTags : ''));
+                            ($this->filters->allowTags ? $this->filters->allowTags
+                                        : ''));
         $valid = true;
         foreach ($this->filters as $filter => $options) {
-            if (is_object($options))
-                $options = $options->toArray();
+            if (is_object($options)) $options = $options->toArray();
 
             if (method_exists($filterer, $filter)) {
                 if (!call_user_func_array(array($filterer, $filter), array($options))) {

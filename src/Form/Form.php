@@ -8,12 +8,18 @@ namespace DScribe\Form;
 class Form extends Fieldset {
 
     public function __construct($name = 'form', array $attributes = array()) {
-        if (!isset($attributes['name']))
-            $attributes['name'] = $name;
-        if (!isset($attributes['id']))
-            $attributes['id'] = $name;
+        if (!isset($attributes['name'])) $attributes['name'] = $name;
+        if (!isset($attributes['id'])) $attributes['id'] = $name;
 
         parent::__construct($name, $attributes);
+    }
+
+    public function setName($name) {
+        $this->setAttributes(array('name' => $name, 'id' => $name));
+        if ($this->elements['csrf']) {
+            $this->elements['csrf']->setCsrfKey($name);
+        }
+        return parent::setName($name);
     }
 
     /**

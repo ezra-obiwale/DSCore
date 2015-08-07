@@ -129,9 +129,11 @@ class Request {
             $key = str_replace('request_', '', strtolower($key));
             if (substr($key, 0, 5) === 'http_') {
                 $this->http->{Util::_toCamel(substr($key, 5))} = $val;
-            } elseif (substr($key, 0, 7) === 'server_') {
+            }
+            elseif (substr($key, 0, 7) === 'server_') {
                 $this->server->{Util::_toCamel(substr($key, 7))} = $val;
-            } else {
+            }
+            else {
                 $this->{Util::_toCamel($key)} = $val;
             }
         }

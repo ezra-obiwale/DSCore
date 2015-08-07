@@ -110,8 +110,7 @@ class Renderer extends AInjector {
     }
 
     protected function currentPath() {
-        return $this->url($this->module(), $this->controller(), $this->action(),
-                        $this->params());
+        return $_SERVER['REQUEST_URI'];
     }
 
     /**
@@ -320,8 +319,8 @@ class Renderer extends AInjector {
      * @return string
      */
     private function parseFile($file) {
-        return engineGet('serverPath') . str_replace(ROOT . 'public' . DIRECTORY_SEPARATOR,
-                        '', $this->publicAssetsPath) . $file;
+        return str_replace('\\', '/', engineGet('serverPath') . str_replace(ROOT . 'public' . DIRECTORY_SEPARATOR,
+                        '', $this->publicAssetsPath) . $file);
     }
 
     /**
@@ -333,6 +332,7 @@ class Renderer extends AInjector {
      * @return string
      */
     private function getFile($file, $fromTheme) {
+        $file = str_replace('/', DIRECTORY_SEPARATOR, $file);
         $this->updateAssets($file);
 
         if (!$fromTheme && is_readable($this->publicAssetsPath . $this->view->getModule() . DIRECTORY_SEPARATOR . $file)) {
