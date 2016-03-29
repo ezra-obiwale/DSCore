@@ -1,6 +1,6 @@
 {
     "name": "d-scribe/core",
-    "description": "Library of classes for the DScribe Framework to function.",
+    "description": "Library of classes for the dScribe Framework to function.",
     "license": "MIT",
     "keywords": ["dscribe", "core", "library"],
     "authors": [
@@ -16,7 +16,7 @@
     },
     "autoload": {
         "psr-4": {
-            "DScribe\\": "src/"
+            "dScribe\\": "src/"
         },
         "psr-0": {
             "": "src/Stdlib/"

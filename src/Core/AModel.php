@@ -1,8 +1,8 @@
 <?php
 
-namespace DScribe\Core;
+namespace dScribe\Core;
 
-use DBScribe\Mapper;
+use dbScribe\Mapper;
 
 class AModel extends Mapper implements IModel {
 

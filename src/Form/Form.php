@@ -1,6 +1,6 @@
 <?php
 
-namespace DScribe\Form;
+namespace dScribe\Form;
 
 /**
  * @todo allow as much external adding, changing and removing of elements and attributes as possible
@@ -24,7 +24,7 @@ class Form extends Fieldset {
 
     /**
      * Opens the form
-     * @return \DScribe\Form\Forms
+     * @return \dScribe\Form\Forms
      */
     public function openTag() {
         return '<form ' . $this->parseAttributes($this->attributes) . '>' . "\n";
@@ -32,7 +32,7 @@ class Form extends Fieldset {
 
     /**
      * Closes the form
-     * @return \DScribe\Form\Forms
+     * @return \dScribe\Form\Forms
      */
     public function closeTag() {
         return '</form>' . "\n";
@@ -40,7 +40,7 @@ class Form extends Fieldset {
 
     /**
      * Renders the form to the browser
-     * @return \DScribe\Form\Forms
+     * @return \dScribe\Form\Forms
      */
     public function render() {
         ob_start();

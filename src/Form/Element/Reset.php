@@ -3,7 +3,7 @@
 /*
  */
 
-namespace DScribe\Form\Element;
+namespace dScribe\Form\Element;
 
 /**
  * Description of Element

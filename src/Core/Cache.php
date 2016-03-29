@@ -1,6 +1,6 @@
 <?php
 
-namespace DScribe\Core;
+namespace dScribe\Core;
 
 /*
  * To change this license header, choose License Headers in Project Properties.

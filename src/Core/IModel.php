@@ -1,6 +1,6 @@
 <?php
 
-namespace DScribe\Core;
+namespace dScribe\Core;
 
 interface IModel {
 

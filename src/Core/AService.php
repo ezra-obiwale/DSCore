@@ -1,10 +1,10 @@
 <?php
 
-namespace DScribe\Core;
+namespace dScribe\Core;
 
-use DBScribe\Repository,
-    DScribe\Core\AService,
-    DScribe\Core\IModel;
+use dbScribe\Repository,
+    dScribe\Core\AService,
+    dScribe\Core\IModel;
 
 class AService extends ACore {
 
@@ -16,7 +16,7 @@ class AService extends ACore {
 
     /**
      *
-     * @var \DScribe\Form\Form
+     * @var \dScribe\Form\Form
      */
     protected $form;
 
@@ -75,14 +75,14 @@ class AService extends ACore {
      * @return boolean
      */
     protected function initRepository() {
-        if ($this->model === null || ($this->model !== null && !in_array('DScribe\Core\IModel',
+        if ($this->model === null || ($this->model !== null && !in_array('dScribe\Core\IModel',
                         class_implements($this->model)))) return false;
 
         if ($this->repository !== null && $this->model->getTableName() === $this->repository->getTableName())
                 return true;
 
         $repository = ($this->repositoryClass !== null) ? $this->repositoryClass
-                    : 'DBScribe\Repository';
+                    : 'dbScribe\Repository';
         $this->repository = new $repository($this->model, engineGet('DB'), true);
         return true;
     }

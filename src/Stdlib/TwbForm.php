@@ -1,7 +1,7 @@
 <?php
 
-use DScribe\Form\Element,
-    DScribe\Form\Form;
+use dScribe\Form\Element,
+    dScribe\Form\Form;
 
 /**
  * Description of TwbForm

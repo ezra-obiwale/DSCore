@@ -1,8 +1,8 @@
 <?php
 
-namespace DScribe\Form;
+namespace dScribe\Form;
 
-use DScribe\Core\IModel,
+use dScribe\Core\IModel,
     Exception,
     Object,
     Util;
@@ -147,19 +147,19 @@ class Fieldset extends AValidator {
 
     /**
      * Adds an element to the fieldset
-     * @param array | \DScribe\Form\Element $element
+     * @param array | \dScribe\Form\Element $element
      * @return Fieldset
      * @throws Exception
      */
     public function add($element) {
-        if ((is_object($element) && !is_a($element, 'DScribe\Form\Element')) || (!is_object($element) &&
+        if ((is_object($element) && !is_a($element, 'dScribe\Form\Element')) || (!is_object($element) &&
                 !is_array($element)))
-                throw new Exception('Form elements must be either an array or an object subclass of DScribe\Form\Element');
+                throw new Exception('Form elements must be either an array or an object subclass of dScribe\Form\Element');
         else if (is_array($element)) {
             if (!isset($element['type'])) {
                 throw new \Exception('Form elements must of key type');
             }
-            $elementClass = 'DScribe\Form\Element\\' . ucfirst($element['type']);
+            $elementClass = 'dScribe\Form\Element\\' . ucfirst($element['type']);
             $element = class_exists($elementClass) ? new $elementClass($element,
                     true, 'values') : new Element($element, true, 'values');
         }

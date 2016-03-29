@@ -2,9 +2,9 @@
 /*
  */
 
-namespace DScribe\Form\Element;
+namespace dScribe\Form\Element;
 
-use DScribe\Form\Element,
+use dScribe\Form\Element,
     Exception;
 
 /**
@@ -18,9 +18,9 @@ class Fieldset extends Element {
 
     public function __construct(array $data = array(), $preserveArray = false, $preserveKeyOnly = null) {
         if (!is_object($data['options']['value']) ||
-                (is_object($data['options']['value']) && !is_a($data['options']['value'], 'DScribe\Form\Fieldset'))) {
+                (is_object($data['options']['value']) && !is_a($data['options']['value'], 'dScribe\Form\Fieldset'))) {
             throw new Exception('Form element "' . $data['name'] .
-            '" must have a value of type "DScribe\Form\Fieldset"');
+            '" must have a value of type "dScribe\Form\Fieldset"');
         }
         parent::__construct($data, $preserveArray, $preserveKeyOnly);
     }

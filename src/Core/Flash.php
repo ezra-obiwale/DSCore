@@ -1,6 +1,6 @@
 <?php
 
-namespace DScribe\Core;
+namespace dScribe\Core;
 
 use Session;
 
@@ -42,7 +42,7 @@ class Flash {
     /**
      * Sets the flash message
      * @param string $message
-     * @return \DScribe\Core\Flash
+     * @return \dScribe\Core\Flash
      */
     final public function setMessage($message) {
         $this->messages = array($message);
@@ -61,7 +61,7 @@ class Flash {
     /**
      * Adds a(n array of) message(s)
      * @param string|array $message
-     * @return \DScribe\Core\Flash
+     * @return \dScribe\Core\Flash
      */
     final public function addMessage($message) {
         return $this->addMsg('messages', $message);
@@ -70,7 +70,7 @@ class Flash {
     /**
      * Sets the flash success message
      * @param string $message
-     * @return \DScribe\Core\Flash
+     * @return \dScribe\Core\Flash
      */
     final public function setSuccessMessage($message) {
         $this->successMessages = array($message);
@@ -89,7 +89,7 @@ class Flash {
     /**
      * Adds a(n array of) success message(s)
      * @param string|array $message
-     * @return \DScribe\Core\Flash
+     * @return \dScribe\Core\Flash
      */
     final public function addSuccessMessage($message) {
         return $this->addMsg('successMessages', $message);
@@ -98,7 +98,7 @@ class Flash {
     /**
      * Sets the flash error message
      * @param string $message
-     * @return \DScribe\Core\Flash
+     * @return \dScribe\Core\Flash
      */
     final public function setErrorMessage($message) {
         $this->errorMessages = array($message);
@@ -117,7 +117,7 @@ class Flash {
     /**
      * Adds a(n array of) error message(s)
      * @param string|array $message
-     * @return \DScribe\Core\Flash
+     * @return \dScribe\Core\Flash
      */
     final public function addErrorMessage($message) {
         return $this->addMsg('errorMessages', $message);
@@ -149,7 +149,7 @@ class Flash {
 
     /**
      * Resets the messages
-     * @return \DScribe\Core\Flash
+     * @return \dScribe\Core\Flash
      */
     final public function reset() {
         $this->messages = $this->successMessages = $this->errorMessages = array();

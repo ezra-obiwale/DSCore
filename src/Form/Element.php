@@ -2,7 +2,7 @@
 /*
  */
 
-namespace DScribe\Form;
+namespace dScribe\Form;
 
 use Object,
     Exception;

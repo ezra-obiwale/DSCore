@@ -1,6 +1,6 @@
 <?php
 
-namespace DScribe\Core;
+namespace dScribe\Core;
 
 /**
  * @todo Distinguish between warning and fatal errors
@@ -27,7 +27,7 @@ class Exception extends \Exception {
 
         $request = new Request();
         if (!$noLayout && !$request->isAjax()) {
-            $view = new \DScribe\View\View(true);
+            $view = new \dScribe\View\View(true);
             $return = $this->prepareOutput($ex);
             $view->variables(array('exception' => $return))->render($return->messageWithTrace);
         }

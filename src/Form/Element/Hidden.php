@@ -3,11 +3,11 @@
 /*
  */
 
-namespace DScribe\Form\Element;
+namespace dScribe\Form\Element;
 
-use DScribe\Form\Csrf,
-    DScribe\Form\Element,
-    DScribe\Form\Filterer;
+use dScribe\Form\Csrf,
+    dScribe\Form\Element,
+    dScribe\Form\Filterer;
 
 /**
  * Description of Element

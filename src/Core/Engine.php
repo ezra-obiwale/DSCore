@@ -1,9 +1,9 @@
 <?php
 
-namespace DScribe\Core;
+namespace dScribe\Core;
 
-use DBScribe\Connection,
-    DScribe\View\View,
+use dbScribe\Connection,
+    dScribe\View\View,
     PDO,
     ReflectionMethod,
     Session,
@@ -101,7 +101,7 @@ class Engine {
     }
 
     /**
-     * Creates a database connection using \DBScribe\Connection
+     * Creates a database connection using \dbScribe\Connection
      */
     protected static function initDB() {
         $dbConfig = static::getConfig('db', static::getServer());
@@ -332,8 +332,8 @@ class Engine {
                 'Controller';
 
         if (!class_exists($class)) ControllerException::notFound($class);
-        if (!in_array('DScribe\Core\AController', class_parents($class)))
-                throw new \Exception('Controller Exception: Controller "' . $class . '" does not extend "DScribe\Core\AController"');
+        if (!in_array('dScribe\Core\AController', class_parents($class)))
+                throw new \Exception('Controller Exception: Controller "' . $class . '" does not extend "dScribe\Core\AController"');
         
         return ($live) ? new $class()
                 : $class;
@@ -496,7 +496,7 @@ class Engine {
                     $params);
 
             if ($actionRet !== null && !is_array($actionRet) && (is_object($actionRet) &&
-                    get_class($actionRet) !== 'DScribe\View\View')) {
+                    get_class($actionRet) !== 'dScribe\View\View')) {
                 ControllerException::invalidActionResult();
             }
 

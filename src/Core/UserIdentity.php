@@ -1,6 +1,6 @@
 <?php
 
-namespace DScribe\Core;
+namespace dScribe\Core;
 
 final class UserIdentity {
 
@@ -30,7 +30,7 @@ final class UserIdentity {
 
     /**
      * Class contructor
-     * @param \DScribe\Core\AUser $user
+     * @param \dScribe\Core\AUser $user
      * @param int $duration Duration for which the identity should be valid
      */
     final public function __construct(AUser $user = null, $duration = null) {
@@ -53,7 +53,7 @@ final class UserIdentity {
 
     /**
      * Fetches the current user
-     * @return \DScribe\Core\AUser
+     * @return \dScribe\Core\AUser
      * @todo get user from file not session
      */
     final public function getUser() {

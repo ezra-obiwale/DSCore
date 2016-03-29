@@ -3,9 +3,9 @@
 /*
  */
 
-namespace DScribe\Form\Element;
+namespace dScribe\Form\Element;
 
-use DScribe\Form\Element,
+use dScribe\Form\Element,
     Object;
 
 /**
@@ -21,7 +21,7 @@ class Link extends Element {
             throw new \Exception('Link element "' . $this->name . '" does not have a specified url in the options');
     }
     
-    public function validate(\DScribe\Form\Filterer $filterer) {
+    public function validate(\dScribe\Form\Filterer $filterer) {
         return true;
     }
 

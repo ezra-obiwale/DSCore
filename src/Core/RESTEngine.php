@@ -1,8 +1,8 @@
 <?php
 
-namespace DScribe\Core;
+namespace dScribe\Core;
 
-use DScribe\View\View,
+use dScribe\View\View,
     ReflectionMethod,
     Session,
     Util;

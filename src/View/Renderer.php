@@ -1,9 +1,9 @@
 <?php
 
-namespace DScribe\View;
+namespace dScribe\View;
 
-use DScribe\Core\AInjector,
-    DScribe\Core\Flash,
+use dScribe\Core\AInjector,
+    dScribe\Core\Flash,
     Exception,
     Object,
     Util;
@@ -133,7 +133,7 @@ class Renderer extends AInjector {
 
     /**
      * Fetches the identity of the current user
-     * @return \DScribe\Core\AUserIdentity
+     * @return \dScribe\Core\AUserIdentity
      */
     final protected function userIdentity() {
         return engineGet('userIdentity');

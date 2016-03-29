@@ -1,18 +1,18 @@
 <?php
 
-namespace DScribe\Core;
+namespace dScribe\Core;
 
 class Authenticate {
 
 	/**
 	 * Current user identity object
-	 * @var \DScribe\Core\UserIdentity
+	 * @var \dScribe\Core\UserIdentity
 	 */
 	protected $userId;
 
 	/**
 	 * Current controller object
-	 * @var \DScribe\Core\AController
+	 * @var \dScribe\Core\AController
 	 */
 	protected $controller;
 
@@ -24,8 +24,8 @@ class Authenticate {
 
 	/**
 	 * Class constructor
-	 * @param \DScribe\Core\UserIdentity $userId
-	 * @param \DScribe\Core\AController $controller
+	 * @param \dScribe\Core\UserIdentity $userId
+	 * @param \dScribe\Core\AController $controller
 	 * @param string $action
 	 */
 	final public function __construct(UserIdentity $userId, AController $controller, $action) {

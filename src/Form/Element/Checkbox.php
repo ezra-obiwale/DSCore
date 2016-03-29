@@ -2,9 +2,9 @@
 /*
  */
 
-namespace DScribe\Form\Element;
+namespace dScribe\Form\Element;
 
-use DScribe\Form\Element,
+use dScribe\Form\Element,
     Object;
 
 /**

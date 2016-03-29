@@ -1,6 +1,6 @@
 <?php
 
-namespace DScribe\Form;
+namespace dScribe\Form;
 
 /**
  * A collection of filters with which to filter elements

@@ -1,6 +1,6 @@
 <?php
 
-namespace DScribe\Core;
+namespace dScribe\Core;
 
 abstract class AInjector extends ACore {
 
@@ -120,7 +120,7 @@ abstract class AInjector extends ACore {
 
         $refClass = new \ReflectionClass($classArray['class']);
 
-        if ($refClass->isSubclassOf('DScribe\Core\AInjector')) {
+        if ($refClass->isSubclassOf('dScribe\Core\AInjector')) {
             $class = new $classArray['class']();
 
             if (!$class->checkInjections($className))

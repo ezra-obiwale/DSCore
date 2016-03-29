@@ -1,9 +1,9 @@
 <?php
 
-namespace DScribe\View;
+namespace dScribe\View;
 
-use DScribe\Core\AController,
-    DScribe\Core\Flash,
+use dScribe\Core\AController,
+    dScribe\Core\Flash,
     Util;
 
 class View {
@@ -315,7 +315,7 @@ class View {
                 ->setModule(ucfirst(\Util::hyphenToCamel($module)));
         $actionRet = call_user_func_array(array($controllerClass, $action . 'Action'),
                 $params);
-        if (is_object($actionRet) && is_a($actionRet, 'DScribe\View\View')) {
+        if (is_object($actionRet) && is_a($actionRet, 'dScribe\View\View')) {
             $view = $actionRet;
         }
         else {
