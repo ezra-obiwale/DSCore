@@ -26,7 +26,7 @@ class Table {
 
         self::setAttributes($attributes);
     }
-    
+
     /**
      * Checks if the table has rows
      * @return bool
@@ -67,9 +67,11 @@ class Table {
      * Adds column data to the current row
      * @param string $data Column data
      * @param array $attributes Array of attr => value to apply to the column
+     * @return int The locaton index of the current column/row data
      */
     public static function addRowData($data = '', array $attributes = array()) {
         self::$row_data[] = array($data, $attributes);
+        return (count(self::$row_data) - 1);
     }
 
     /**
@@ -95,13 +97,29 @@ class Table {
     /**
      * Signals beginning of a new row
      * @param array $attrs Array of attr => value to apply to the row
+     * @return int The location index of the new row
      */
     public static function newRow(array $attrs = array()) {
         if (!empty(self::$row_data))
             self::$rows[count(self::$rows) - 1][] = self::$row_data;
         self::$row_data = array();
         self::$rows[][] = $attrs;
-        return count(self::$rows);
+        return (count(self::$rows) - 1);
+    }
+
+    /**
+     * Set the data on a particular row which already existed.
+     * @param int $rowIndex Index position of the as returned by @method newRow()
+     * @param int $columnIndex Index position of the column as return by @method
+     * addRowData()
+     * @param mixed $data
+     * @param array $attributes
+     */
+    public static function setRowData($rowIndex, $columnIndex, $data,
+            array $attributes = array()) {
+        static::$rows[$rowIndex][1][$columnIndex][0] = $data;
+        if (count($attributes))
+            static::$rows[$rowIndex][1][$columnIndex][1] = $attributes;
     }
 
     private static function parseAttributes(array $attrs) {
@@ -118,24 +136,26 @@ class Table {
      */
     public static function render() {
         self::newRow();
+
         ob_start();
         ?>
 
-        <table <?php echo (!empty(self::$table_attributes)) ? self::parseAttributes(self::$table_attributes) : ""; ?>>
-            <?php
-            if (!empty(self::$headers)) {
-                ?>
+        <table <?php echo (!empty(self::$table_attributes)) ? self::parseAttributes(self::$table_attributes)
+                    : ""; ?>>
+        <?php
+        if (!empty(self::$headers)) {
+            ?>
 
                 <thead>
                     <tr>
-                        <?php
-                        foreach (self::$headers as $header) {
-                            ?>
+            <?php
+            foreach (self::$headers as $header) {
+                ?>
 
                             <th <?php echo self::parseAttributes($header[1]); ?>><?php echo $header[0] ?></th>
-                            <?php
-                        }
-                        ?>
+                <?php
+            }
+            ?>
 
                     </tr>
                 </thead>
@@ -155,9 +175,9 @@ class Table {
                                 foreach ($rowData[1] as $row) {
                                     ?>
                                     <td <?php echo self::parseAttributes($row[1]); ?>><?php echo $row[0] ?></td>
-                                    <?php
-                                }
-                                ?>
+                        <?php
+                    }
+                    ?>
 
                             </tr>
                             <?php
@@ -173,19 +193,19 @@ class Table {
 
                 <tfoot>
                     <tr>
-                        <?php
-                        foreach (self::$footers as $footer) {
-                            ?>
+            <?php
+            foreach (self::$footers as $footer) {
+                ?>
 
                             <th <?php echo self::parseAttributes($footer[1]); ?>><?php echo $footer[0] ?></th>
-                            <?php
-                        }
-                        ?>
+                <?php
+            }
+            ?>
 
                     </tr>
                 </tfoot>
-            <?php }
-            ?>
+        <?php }
+        ?>
         </table>
         <?php
         return ob_get_clean();

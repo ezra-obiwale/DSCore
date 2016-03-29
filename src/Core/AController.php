@@ -4,7 +4,7 @@ namespace DScribe\Core;
 
 use DScribe\View\View;
 
-abstract class AController extends AInjector {
+abstract class AController extends ACore {
 
     /**
      * The view instance
@@ -53,13 +53,25 @@ abstract class AController extends AInjector {
     /**
      * The magic method __construct() replacement
      */
-    final protected function construct() {
+    final public function __construct() {
         $this->request = new Request();
         $this->view = new View();
         if (!$this->initializedView) {
             $this->initializedView = true;
             $this->init();
         }
+        if ($serviceName = $this->getDefaultServiceName())
+            $this->service = new $serviceName(false); // no injections
+    }
+
+    /**
+     * Creates the correct service name for the controller
+     * @return string|null
+     */
+    private function getDefaultServiceName() {
+        $serviceName = $this->getModule() . '\Services\\' . $this->getClassName() .
+                'Service';
+        return class_exists($serviceName) ? $serviceName : null;
     }
 
     /**
@@ -74,8 +86,7 @@ abstract class AController extends AInjector {
      * @return Request
      */
     final protected function getRequest() {
-        if (!$this->request)
-            $this->request = new Request ();
+        if (!$this->request) $this->request = new Request ();
         return $this->request;
     }
 
@@ -85,26 +96,10 @@ abstract class AController extends AInjector {
      * @param int $duration Duration for which the identity should be valid
      * @return AController
      */
-    final protected function resetUserIdentity(AUser $user = null, $duration = null) {
+    final protected function resetUserIdentity(AUser $user = null,
+            $duration = null) {
         engine('resetUserIdentity', $user, $duration);
         return $this;
-    }
-
-    /**
-     * Prepares the injection
-     * @return array
-     */
-    final protected function prepareInject() {
-        $service = $this->getModule() . '\Services\\' . $this->getClassName() . 'Service';
-        if (class_exists($service)) {
-            return array_merge(parent::prepareInject(), $this->getConfigInject('controllers'), array(
-                'service' => array(
-                    'class' => $service
-                ),
-            ));
-        }
-
-        return array_merge($this->getConfigInject('controllers'), $this->inject());
     }
 
     /**
@@ -123,7 +118,7 @@ abstract class AController extends AInjector {
         $return = array();
         foreach (get_class_methods($this) as $method) {
             if (substr($method, strlen($method) - 6) === 'Action')
-                $return[] = substr($method, 0, strlen($method) - 6);
+                    $return[] = substr($method, 0, strlen($method) - 6);
         }
         return $return;
     }
@@ -143,18 +138,16 @@ abstract class AController extends AInjector {
      * @param string|null $action
      * @param array $params
      * @param string $hash
+     * @param bool $withQueryString Indicates whether to include current path's
+     * GET query string in the new path
      */
-    final protected function redirect($module, $controller = null, $action = null, array $params = array(), $hash = null) {
-        header('Location: ' . $this->view->url($module, $controller, $action, $params, $hash));
+    final protected function redirect($module, $controller = null,
+            $action = null, array $params = array(), $hash = null,
+            $withQueryString = false) {
+        header('Location: ' . $this->view->url($module, $controller, $action,
+                        $params, $hash) . ($withQueryString ? '?' . $_SERVER['QUERY_STRING']
+                            : ''));
         exit;
-    }
-
-    /**
-     * Fetches an array of classes to inject
-     * @return array
-     */
-    protected function inject() {
-        return array();
     }
 
     /**

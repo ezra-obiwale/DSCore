@@ -220,6 +220,15 @@ class Fieldset extends AValidator {
      * @return Fieldset
      */
     final public function ignoreFilter($elementName) {
+        return $this->removeFilter($elementName);
+    }
+
+    /**
+     * Removes a filter for an element
+     * @param string $elementName
+     * @return Fieldset
+     */
+    final public function removeFilter($elementName) {
         $this->elements[$elementName]->noFilter = true;
         return $this;
     }
@@ -257,8 +266,8 @@ class Fieldset extends AValidator {
         foreach ($data as $attr => $value) {
             if (@$this->elements[$attr]) {
                 $this->elements[$attr]->setData($value);
-            } else
-                $this->data[$attr] = $value;
+            }
+            else $this->data[$attr] = $value;
         }
         $this->valid = null;
         return $this;

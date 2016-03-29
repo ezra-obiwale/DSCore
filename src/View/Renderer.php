@@ -205,20 +205,26 @@ class Renderer extends AInjector {
             }
 
             $viewFile = $this->view->getViewFile();
-            if (!is_readable(MODULES . $viewFile[0] . DIRECTORY_SEPARATOR . 'View' .
+            if (is_array($viewFile) && !is_readable(MODULES . $viewFile[0] . DIRECTORY_SEPARATOR . 'View' .
                             DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR .
                             $viewFile[1] . DIRECTORY_SEPARATOR . $viewFile[2] . '.phtml'))
                     throw new Exception('View layout "' . join(DIRECTORY_SEPARATOR,
                         $viewFile) . '" not found');
+            else if (is_string($viewFile) && !is_readable($viewFile)) // loading from vendor
+                    throw new Exception('View layout "' . $viewFile . '" not found');
 
             // include action view
             ob_start();
 
-            include_once MODULES . $viewFile[0] . DIRECTORY_SEPARATOR . 'View' .
-                    DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR .
-                    $viewFile[1] . DIRECTORY_SEPARATOR . $viewFile[2] . '.phtml';
+            if (is_array($viewFile))
+                    include_once MODULES . $viewFile[0] . DIRECTORY_SEPARATOR . 'View' .
+                        DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR .
+                        $viewFile[1] . DIRECTORY_SEPARATOR . $viewFile[2] . '.phtml';
+            else if (is_string($viewFile)) // loading from vendor
+                    include_once $viewFile;
 
             $content = ob_get_clean();
+
             if (!$this->view->isPartial()) {
                 // include controller layout
                 $controllerLayout = self::getLayoutPath();
@@ -319,7 +325,8 @@ class Renderer extends AInjector {
      * @return string
      */
     private function parseFile($file) {
-        return str_replace('\\', '/', engineGet('serverPath') . str_replace(ROOT . 'public' . DIRECTORY_SEPARATOR,
+        return str_replace('\\', '/',
+                engineGet('serverPath') . str_replace(ROOT . 'public' . DIRECTORY_SEPARATOR,
                         '', $this->publicAssetsPath) . $file);
     }
 

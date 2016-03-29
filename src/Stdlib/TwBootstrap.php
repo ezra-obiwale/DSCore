@@ -71,8 +71,10 @@ class TwBootstrap {
                 $count = 1;
                 foreach ($contents as $tab => $content) {
                     ?>
-                    <div class="tab-pane <?= ($tab == @$options["active"]) ? "active" : "" ?>" id="tab-<?= preg_replace('/[^a-zA-z0-9]/', '-', $tab) ?>">
-                        <?= $content ?>
+                    <div class="tab-pane <?= ($tab == @$options["active"]) ? "active" : "" ?>" id="tab-<?=
+                    preg_replace('/[^a-zA-z0-9]/', '-', $tab)
+                    ?>">
+                             <?= $content ?>
                     </div>
                     <?php
                     $count++;
@@ -154,40 +156,63 @@ class TwBootstrap {
         ob_start();
         ?>
         <!-- Button to trigger modal -->
-        <a href="<?= isset($options['href']) ? $options['href'] : '#' ?>" data-target="#<?= $id ?>" role="button" <?= isset($options['linkAttrs']) ? self::parseAttributes($options['linkAttrs']) : '' ?> data-toggle="modal"><?= isset($options['linkLabel']) ? $options['linkLabel'] : 'Launch Modal' ?></a>
+        <a href="<?= isset($options['href']) ? $options['href'] : '#' ?>" data-target="#<?= $id ?>" role="button" <?=
+        isset($options['linkAttrs']) ? self::parseAttributes($options['linkAttrs'])
+                    : ''
+        ?> data-toggle="modal"><?=
+               isset($options['linkLabel']) ? $options['linkLabel'] : 'Launch Modal'
+               ?></a>
 
         <?php
         self::$modalLinks[$id] = ob_get_clean();
         ob_start();
-        if ($withLink)
-            echo self::$modalLinks[$id];
+        if ($withLink) echo self::$modalLinks[$id];
         ?>
         <!-- Modal -->
-        <section id="<?= $id ?>" class="modal hide fade <?= $options['modalAttrs']['class'] ?> <?= isset($options['modalClass']) ? $options['modalClass'] : '' ?>" <?= isset($options['modalAttrs']) ? self::parseAttributes($options['modalAttrs'], array('class')) : '' ?> tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-            <?php
-            if (isset($options['header']) &&
-                    !is_bool($options['header']) ||
-                    (isset($options['header']) && is_bool($options['header']) &&
-                    $options['header'])):
-                ?>
+        <section id="<?= $id ?>" class="modal hide fade <?= $options['modalAttrs']['class'] ?> <?=
+        isset($options['modalClass']) ? $options['modalClass'] : ''
+        ?>" <?=
+        isset($options['modalAttrs']) ? self::parseAttributes($options['modalAttrs'],
+                        array('class')) : ''
+        ?> tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                     <?php
+                     if (isset($options['header']) && !is_bool($options['header']) ||
+                             (isset($options['header']) && is_bool($options['header']) &&
+                             $options['header'])):
+                         ?>
                 <header class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                    <h3 id="myModalLabel" <?= isset($options['headerAttrs']) ? self::parseAttributes($options['headerAttrs']) : '' ?>><?= isset($options['header']) ? $options['header'] : 'Modal Header' ?></h3>
+                    <h3 id="myModalLabel" <?=
+                    isset($options['headerAttrs']) ? self::parseAttributes($options['headerAttrs'])
+                                : ''
+                    ?>><?= isset($options['header']) ? $options['header'] : 'Modal Header'
+                    ?></h3>
                 </header>
             <?php endif; ?>
-            <div style="overflow-x: visible!important" class="modal-body <?= isset($options['contentClass']) ? $options['contentClass'] : '' ?>">
+            <div style="overflow-x: visible!important" class="modal-body <?=
+            isset($options['contentClass']) ? $options['contentClass'] : ''
+            ?>">
                 <p><?= isset($options['content']) ? $options['content'] : '<i icon="icon-refresh"></i> loading content ...' ?></p>
             </div>
             <?php
-            if (isset($options['footer']) &&
-                    !is_bool($options['footer']) ||
-                    (isset($options['footer']) && is_bool($options['footer']) &&
-                    $options['footer'])):
+            if (isset($options['footer']) && !is_bool($options['footer']) || (isset($options['footer']) &&
+                    is_bool($options['footer']) && $options['footer'])):
                 ?>
-                <footer class="modal-footer" <?= isset($options['footerAttrs']) ? self::parseAttributes($options['footerAttrs']) : '' ?>>
-                    <?php if (empty($options['footer']) || is_bool($options['footer'])): ?>
-                        <button class="btn" data-dismiss="modal" aria-hidden="true"><?= isset($options['closeButtonLabel']) ? $options['closeButtonLabel'] : 'Close' ?></button>
-                        <?php if (!isset($options['noActionButton']) || (isset($options['noActionButton']) && !$options['noActionButton'])): ?>
+                <footer class="modal-footer" <?=
+                isset($options['footerAttrs']) ? self::parseAttributes($options['footerAttrs'])
+                            : ''
+                ?>>
+                            <?php
+                            if (empty($options['footer']) || is_bool($options['footer'])):
+                                ?>
+                        <button class="btn" data-dismiss="modal" aria-hidden="true"><?=
+                            isset($options['closeButtonLabel']) ? $options['closeButtonLabel']
+                                        : 'Close'
+                            ?></button>
+                        <?php
+                        if (!isset($options['noActionButton']) || (isset($options['noActionButton']) &&
+                                !$options['noActionButton'])):
+                            ?>
                             <button class="btn btn-primary">Save changes</button>
                             <?php
                         endif;
@@ -236,55 +261,75 @@ class TwBootstrap {
      * If not, the link can be accessed through method modalLink() with the id as the parameter.
      * @return string
      */
-    public static function customModal(array $options = array(), $withLink = true) {
+    public static function customModal(array $options = array(),
+            $withLink = true) {
         self::$modals++;
         $id = isset($options['modalId']) ? $options['modalId'] : 'myModal' . self::$modals;
 
         $linkAttrs = isset($options['linkAttrs']) ? $options['linkAttrs'] : array();
-        if ($linkAttrs['class'])
-            $linkAttrs['class'] .= ' open-modal';
-        else
-            $linkAttrs['class'] = 'open-modal';
+        if ($linkAttrs['class']) $linkAttrs['class'] .= ' open-modal';
+        else $linkAttrs['class'] = 'open-modal';
 
         $options['linkAttrs'] = $linkAttrs;
 
         ob_start();
         ?>
         <!-- Button to trigger modal -->
-        <a href="<?= isset($options['href']) ? $options['href'] : '#' ?>" data-post="<?= $options['post'] ? 'true' : 'false' ?>" data-request-data="<?= $options['requestData'] ?>" data-target="#<?= $id ?>" role="button" <?= isset($options['linkAttrs']) ? self::parseAttributes($options['linkAttrs']) : '' ?> ><?= isset($options['linkLabel']) ? $options['linkLabel'] : 'Launch Modal' ?></a>
+        <a href="<?= isset($options['href']) ? $options['href'] : '#' ?>" data-post="<?=
+        $options['post'] ? 'true' : 'false'
+        ?>" data-request-data="<?= $options['requestData'] ?>" data-target="#<?= $id ?>" role="button" <?=
+           isset($options['linkAttrs']) ? self::parseAttributes($options['linkAttrs'])
+                       : ''
+           ?> ><?= isset($options['linkLabel']) ? $options['linkLabel'] : 'Launch Modal'
+           ?></a>
 
         <?php
         self::$modalLinks[$id] = ob_get_clean();
         ob_start();
-        if ($withLink)
-            echo self::$modalLinks[$id];
+        if ($withLink) echo self::$modalLinks[$id];
         ?>
         <!-- Modal -->
-        <section id="<?= $id ?>" style="overflow-x:auto!important" class="modal hide fade <?= isset($options['modalClass']) ? $options['modalClass'] : '' ?>" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-            <?php
-            if (isset($options['header']) &&
-                    !is_bool($options['header']) ||
-                    (isset($options['header']) && is_bool($options['header']) &&
-                    $options['header'])):
-                ?>
+        <section id="<?= $id ?>" style="overflow-x:auto!important" class="modal hide fade <?=
+        isset($options['modalClass']) ? $options['modalClass'] : ''
+        ?>" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                     <?php
+                     if (isset($options['header']) && !is_bool($options['header']) ||
+                             (isset($options['header']) && is_bool($options['header']) &&
+                             $options['header'])):
+                         ?>
                 <header class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                    <h3 id="myModalLabel" <?= isset($options['headerAttrs']) ? self::parseAttributes($options['headerAttrs']) : '' ?>><?= isset($options['header']) ? $options['header'] : 'Modal Header' ?></h3>
+                    <h3 id="myModalLabel" <?=
+                    isset($options['headerAttrs']) ? self::parseAttributes($options['headerAttrs'])
+                                : ''
+                    ?>><?= isset($options['header']) ? $options['header'] : 'Modal Header'
+                    ?></h3>
                 </header>
             <?php endif; ?>
-            <article style="overflow-x: auto!important;position:relative" class="modal-body <?= isset($options['contentClass']) ? $options['contentClass'] : '' ?>">
+            <article style="overflow-x: auto!important;position:relative" class="modal-body <?=
+            isset($options['contentClass']) ? $options['contentClass'] : ''
+            ?>">
                 <p><?= isset($options['content']) ? $options['content'] : '<i icon="icon-refresh"></i> loading content ...' ?></p>
             </article>
             <?php
-            if (isset($options['footer']) &&
-                    !is_bool($options['footer']) ||
-                    (isset($options['footer']) && is_bool($options['footer']) &&
-                    $options['footer'])):
+            if (isset($options['footer']) && !is_bool($options['footer']) || (isset($options['footer']) &&
+                    is_bool($options['footer']) && $options['footer'])):
                 ?>
-                <footer class="modal-footer" <?= isset($options['footerAttrs']) ? self::parseAttributes($options['footerAttrs']) : '' ?>>
-                    <?php if (empty($options['footer']) || is_bool($options['footer'])): ?>
-                        <button class="btn" data-dismiss="modal" aria-hidden="true"><?= isset($options['closeButtonLabel']) ? $options['closeButtonLabel'] : 'Close' ?></button>
-                        <?php if (!isset($options['noActionButton']) || (isset($options['noActionButton']) && !$options['noActionButton'])): ?>
+                <footer class="modal-footer" <?=
+                isset($options['footerAttrs']) ? self::parseAttributes($options['footerAttrs'])
+                            : ''
+                ?>>
+                            <?php
+                            if (empty($options['footer']) || is_bool($options['footer'])):
+                                ?>
+                        <button class="btn" data-dismiss="modal" aria-hidden="true"><?=
+                            isset($options['closeButtonLabel']) ? $options['closeButtonLabel']
+                                        : 'Close'
+                            ?></button>
+                        <?php
+                        if (!isset($options['noActionButton']) || (isset($options['noActionButton']) &&
+                                !$options['noActionButton'])):
+                            ?>
                             <button class="btn btn-primary">Save changes</button>
                             <?php
                         endif;
@@ -307,39 +352,38 @@ class TwBootstrap {
                 $(document).ready(function () {
                     $('a.open-modal').live('click', function (e) {
                         e.preventDefault();
-                        var modal = $(this).attr('data-target');
-                        $(modal).on('shown', function () {
+                        var $a = $(this);
+                        var $modal = $($(this).attr('data-target'));
+                        $modal.on('shown', function () {
                             $('body').addClass('no-scroll');
                         }).on('hidden', function () {
                             $('body').removeClass('no-scroll');
                         }).modal();
 
                         h = $(window).height() - 200;
-                        $(modal).css({
+                        $modal.css({
                             position: 'fixed',
-                            left: ($(window).width() - $(modal).width()) / 2,
+                            left: ($(window).width() - $modal.width()) / 2,
                             'max-height': h,
                             top: 100,
                             margin: 0,
                             'overflow-x': 'auto'
                         });
-                        $(modalBody).css({
-                            height: $(modal).height(),
-                            'max-height': $(modal).height() - 30
-                        });
-                        if (!$(modal).hasClass('loaded') || $(modal).hasClass('reuse')) {
-                            var modalBody = $(modal).children('.modal-body');
-                            $(modalBody).html('<div class="progress progress-striped active"><div class="bar" style="width:100%">Loading content. Please wait ...</div></div>');
+                        if (!$modal.hasClass('loaded') || ($modal.hasClass('reuse') && $modal.data('last') != ($a.attr('href') + $a.data('requestData')))) {
+                            var $modalBody = $modal.children('.modal-body');
+                            $modalBody.html('<div class="progress progress-striped active">'
+                                    + '<div class="bar" style="width:100%">Loading content. '
+                                    + 'Please wait ...</div></div>');
                             if ($(this).data('post')) {
                                 $.post($(this).attr('href'), $(this).data('requestData'), function (data) {
-                                    $(modalBody).html(data);
-                                    $(this).addClass('loaded');
+                                    $modalBody.html(data);
+                                    $modal.addClass('loaded').data('last', $a.attr('href'));
                                 });
                             }
                             else {
                                 $.get($(this).attr('href'), $(this).data('requestData'), function (data) {
-                                    $(modalBody).html(data);
-                                    $(this).addClass('loaded');
+                                    $modalBody.html(data);
+                                    $modal.addClass('loaded').data('last', $a.attr('href') + $a.data('requestData'));
                                 });
                             }
                         }
@@ -360,7 +404,7 @@ class TwBootstrap {
      */
     public static function modalLink($modalId) {
         if (isset(self::$modalLinks[$modalId]))
-            return self::$modalLinks[$modalId];
+                return self::$modalLinks[$modalId];
     }
 
     /**
@@ -372,7 +416,8 @@ class TwBootstrap {
      * @param string $linkClass Class to add to the link
      * @return string
      */
-    public static function createDropDown($label, array $list, $groupClass = null, $linkClass = null) {
+    public static function createDropDown($label, array $list,
+            $groupClass = null, $linkClass = null) {
         ob_start();
         ?>
         <div class = "btn-group <?php echo $groupClass ?>">
@@ -391,20 +436,27 @@ class TwBootstrap {
         <ul class = "dropdown-menu">
             <?php
             foreach ($list as $label => $options):
-                if (!isset($options['link']))
-                    $options['link'] = '#';
+                if (!isset($options['link'])) $options['link'] = '#';
                 ?>
-                <?php if (!is_array($options) && strtolower($options) === 'divider'): ?>
+                <?php
+                if (!is_array($options) && strtolower($options) === 'divider'):
+                    ?>
                     <li class="divider"></li>
                     <?php continue; ?>
                 <?php endif; ?>
                 <li <?= (isset($options['children'])) ? 'class="dropdown-submenu"' : '' ?>>
-                    <a <?= (isset($options['children'])) ? 'class="dropdown-toggle" data-toggle="dropdown"' : '' ?> href="<?php echo @$options["link"] ?>" <?php echo (!empty($options["attributes"])) ? self::parseAttributes($options["attributes"]) : "" ?>><?php echo $label ?></a>
-                    <?php
-                    if (isset($options['children'])) {
-                        self::doDropDown($options['children']);
-                    }
-                    ?>
+                    <a <?=
+                    (isset($options['children'])) ? 'class="dropdown-toggle" data-toggle="dropdown"'
+                                : ''
+                    ?> href="<?php echo @$options["link"] ?>" <?php
+                        echo (!empty($options["attributes"])) ? self::parseAttributes($options["attributes"])
+                                    : ""
+                        ?>><?php echo $label ?></a>
+                        <?php
+                        if (isset($options['children'])) {
+                            self::doDropDown($options['children']);
+                        }
+                        ?>
                 </li>
             <?php endforeach; ?>
         </ul>
@@ -424,8 +476,7 @@ class TwBootstrap {
         }
         $return = "";
         foreach ($attributes as $attr => $value) {
-            if (in_array($attr, $ignore))
-                continue;
+            if (in_array($attr, $ignore)) continue;
             $return .= $attr . '="' . $value . '" ';
         }
 
@@ -458,10 +509,12 @@ class TwBootstrap {
     public static function carousel(array $items, array $attributes = array()) {
         self::$carousels++;
         $id = (isset($attributes['id'])) ? $attributes['id'] : 'myCarousel' . self::$carousels;
-        $class = (isset($attributes['class'])) ? $attributes['class'] . ' carousel slide' : 'carousel slide';
+        $class = (isset($attributes['class'])) ? $attributes['class'] . ' carousel slide'
+                    : 'carousel slide';
         $attributes['id'] = $id;
         $attributes['class'] = $class;
-        $controls = (isset($attributes['controls']) && !$attributes['controls']) ? false : true;
+        $controls = (isset($attributes['controls']) && !$attributes['controls'])
+                    ? false : true;
         unset($attributes['controls']);
         ob_start();
         ?>
@@ -470,9 +523,11 @@ class TwBootstrap {
             <div class="carousel-inner">
                 <?php foreach ($items as $t_id => $item): ?>
                     <?php if (isset($item['img'])): ?>
-                        <div id="<?= $t_id ?>" class="item <?= (isset($item['active']) && $item['active']) ? 'active' : '' ?>">
-                            <?= $item['img'] ?>
-                            <?php if (isset($item['caption'])): ?>
+                        <div id="<?= $t_id ?>" class="item <?=
+                        (isset($item['active']) && $item['active']) ? 'active' : ''
+                        ?>">
+                                 <?= $item['img'] ?>
+                                 <?php if (isset($item['caption'])): ?>
                                 <div class="carousel-caption">
                                     <?= $item['caption'] ?>
                                 </div>
@@ -555,13 +610,15 @@ class TwBootstrap {
         $collapse = 1;
         ob_start();
         ?>
-        <div data-close="<?= @$attributes['close'] ?>" class="accordion <?= @$attributes['class'] ?>" id="accordion<?= self::$accordions ?>" <?= self::parseAttributes($attributes, array('class', 'id', 'close')) ?>>
-            <?php
-            foreach ($groups as $key => $group) {
-                if (empty($group['heading']) || empty($group['body'])) {
-                    throw new Exception('Each accordion group must have a heading and a body');
-                }
-                ?>
+        <div data-close="<?= @$attributes['close'] ?>" class="accordion <?= @$attributes['class'] ?>" id="accordion<?= self::$accordions ?>" <?=
+        self::parseAttributes($attributes, array('class', 'id', 'close'))
+        ?>>
+                 <?php
+                 foreach ($groups as $key => $group) {
+                     if (empty($group['heading']) || empty($group['body'])) {
+                         throw new Exception('Each accordion group must have a heading and a body');
+                     }
+                     ?>
                 <div class="accordion-group">
                     <div class="accordion-heading">
                         <a class="accordion-toggle" data-toggle="collapse"
@@ -602,11 +659,14 @@ class TwBootstrap {
      *  only applicable if option wrap is True.
      * @return string
      */
-    public static function groupIntoRows(array $items, $itemsPerRow, array $options = array()) {
+    public static function groupIntoRows(array $items, $itemsPerRow,
+            array $options = array()) {
         ob_start();
         ?>
         <div class="row-fluid <?= @$options['rows']['class'] ?>"
-             <?= self::parseAttributes(@$options['rows'], array('class')) ?>>
+        <?=
+        self::parseAttributes(@$options['rows'], array('class'))
+        ?>>
                  <?php
                  foreach ($items as $key => $item) {
                      if ($key && $key % $itemsPerRow === 0) {
@@ -619,7 +679,9 @@ class TwBootstrap {
                 if (@$options['wrap'] !== false):
                     ?>
                     <div class="span<?= round(12 / $itemsPerRow) ?> <?= @$options['spans']['class'] ?>"
-                         <?= self::parseAttributes(@$options['spans'], array('class')) ?>>
+                    <?=
+                    self::parseAttributes(@$options['spans'], array('class'))
+                    ?>>
                              <?php
                          endif;
                          echo $item;
@@ -644,10 +706,13 @@ class TwBootstrap {
      * @param boolean $active Indicates whether bar should be active
      * @return string
      */
-    public static function progress($message = 'Loading. Please wait ...', $percentage = 100, $style = 'info', $striped = true, $active = true) {
+    public static function progress($message = 'Loading. Please wait ...',
+            $percentage = 100, $style = 'info', $striped = true, $active = true) {
         ob_start();
         ?>
-        <div class="progress <?= ($striped) ? 'progress-striped' : '' ?> progress-<?= $style ?> <?= ($striped) ? 'active' : '' ?>">
+        <div class="progress <?= ($striped) ? 'progress-striped' : '' ?> progress-<?= $style ?> <?=
+        ($striped) ? 'active' : ''
+        ?>">
             <div class="bar" style="width:<?= $percentage ?>%"><?= $message ?></div>
         </div>
         <?php
@@ -658,7 +723,7 @@ class TwBootstrap {
 
     /**
      * Create a popover and it's link
-     * 
+     *
      * @param string $content Content of the popover
      * @param string $label The label for the link that'll call the popover
      * @param string $placement top|bottom|left|right
@@ -666,7 +731,8 @@ class TwBootstrap {
      * @param string $class
      * @return string
      */
-    public static function popover($content, $label, $placement = 'top', $title = null, $class = null) {
+    public static function popover($content, $label, $placement = 'top',
+            $title = null, $class = null) {
         ob_start();
         ?>
         <a href="#" class="<?= $class ?>" rel="popover" data-placement="<?= $placement ?>"

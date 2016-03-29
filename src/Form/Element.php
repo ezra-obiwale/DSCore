@@ -18,6 +18,10 @@ class Element extends Object {
     public static $css = false;
     public $data;
 
+    const INLINE_INFO = 1;
+    const BLOCK_INFO = 2;
+    const ALL_INFO = 3;
+
     public function __construct(array $data = array(), $preserveArray = false,
             $preserveKeyOnly = null) {
         $this->options = new Object();
@@ -29,33 +33,33 @@ class Element extends Object {
         $this->type = strtolower($this->type);
 
         if (get_class($this->options) !== 'Object')
-            throw new Exception('Form element options of "' . $this->name . '" must be an array');
+                throw new Exception('Form element options of "' . $this->name . '" must be an array');
 
         if (empty($this->attributes->id)) {
             $this->attributes->id = $this->name;
             $this->dId = true;
-        } else
-            $this->dId = false;
+        }
+        else $this->dId = false;
 
         if ($this->attributes->value) {
             if (!$this->options->value && $this->options->value != 0)
-                $this->options->value = $this->attributes->value;
+                    $this->options->value = $this->attributes->value;
             unset($this->attributes->value);
         }
 
         if (empty($this->options->value) && empty($this->options->values))
-            $this->options->value = null;
+                $this->options->value = null;
 
         if ($this->options->toggleShow) $this->toggleShow();
     }
 
     protected function toggleShow() {
         if (!$this->options->toggleShow->element)
-            throw new \Exception('Element must be specified for option toggleShow'
+                throw new \Exception('Element must be specified for option toggleShow'
             . ' in element "' . $this->name . '"');
         else if (!isset($this->options->toggleShow->on) || !isset($this->options->toggleShow->on->action) ||
                 !isset($this->options->toggleShow->on->value) || !isset($this->options->toggleShow->on->show))
-            throw new \Exception('Option toggleShow must have key "on" with an array value '
+                throw new \Exception('Option toggleShow must have key "on" with an array value '
             . 'having keys "action" (click, blur, change, etc), "value" (element value), "disable" (bool)');
 
         if (!Element::$css):
@@ -73,15 +77,18 @@ class Element extends Object {
             document.addEventListener('DOMContentLoaded', function () {
                 $this = document.querySelector('[name="<?= $this->name ?>"]');
                 $this.addEventListener('<?= $this->options->toggleShow->on->action ?>', function () {
-//                    alert(('<?= in_array($this->type, array('checkbox', 'radio')) ?>' +
-//                                    $this.('checked')));
-//                    if (('<?= !in_array($this->type, array('checkbox', 'radio')) ?>' &&
-//                            $this.value == '<?= $this->options->toggleShow->on->value ?>') ||
-//                            ('<?= in_array($this->type, array('checkbox', 'radio')) ?>' &&
-//                                    $this.getAttribute('checked')))
-//                        document.querySelector('[name="<?= $this->options->toggleShow->element ?>"]').setAttribute('readonly', 'readonly');
-//                    else
-//                        document.querySelector('[name="<?= $this->options->toggleShow->element ?>"]').removeAttribute('readonly');
+        //                    alert(('<?= in_array($this->type,
+                array('checkbox', 'radio')) ?>' +
+        //                                    $this.('checked')));
+        //                    if (('<?= !in_array($this->type,
+                array('checkbox', 'radio')) ?>' &&
+        //                            $this.value == '<?= $this->options->toggleShow->on->value ?>') ||
+        //                            ('<?= in_array($this->type,
+                array('checkbox', 'radio')) ?>' &&
+        //                                    $this.getAttribute('checked')))
+        //                        document.querySelector('[name="<?= $this->options->toggleShow->element ?>"]').setAttribute('readonly', 'readonly');
+        //                    else
+        //                        document.querySelector('[name="<?= $this->options->toggleShow->element ?>"]').removeAttribute('readonly');
 
                 });
             });
@@ -106,15 +113,18 @@ class Element extends Object {
     /**
      * Renders all element info (inlineInfo, blockInfo and error message) to the
      * element tag. This should be appended to the input tag after rendering.
-     * @param array $errorMsgs
+     * @param array $infoType
      * @return string
      */
-    public function prepareInfo() {
+    public function prepareInfo($infoType = self::ALL_INFO) {
         $return = '';
-        if ($this->options->inlineInfo)
-            $return .= '<span class="help-inline">' . $this->options->inlineInfo . '</span>';
-        if ($this->options->blockInfo || $this->errors)
-            $return .= '<span class="help-block">' . $this->errors . $this->options->blockInfo . '</span>';
+        if ($this->options->inlineInfo && in_array($infoType,
+                        array(self::INLINE_INFO, self::ALL_INFO)))
+                $return .= '<span class="help-inline">' . $this->options->inlineInfo . '</span>';
+        if (($this->options->blockInfo && in_array($infoType,
+                        array(self::BLOCK_INFO, self::ALL_INFO))) || ($this->errors &&
+                $infoType == self::ALL_INFO))
+                $return .= '<span class="help-block">' . $this->errors . $this->options->blockInfo . '</span>';
         return $return;
     }
 
@@ -131,9 +141,12 @@ class Element extends Object {
         $value = null;
         if (($this->data == '0' || !empty($this->data)) && !is_object($this->data)) {
             $value = ($this->parent && is_array($this->data)) ? $this->data[0] : $this->data;
-        } else if ($this->options->default == '0' || !empty($this->options->default)) {
+        }
+        else if ($this->options->default == '0' || !empty($this->options->default)) {
             $value = $this->options->default;
-        } else if (($this->options->value == '0' || !empty($this->options->value)) && !is_object($this->options->value)) {
+        }
+        else if (($this->options->value == '0' || !empty($this->options->value)) &&
+                !is_object($this->options->value)) {
             $value = $this->options->value;
         }
 
@@ -164,8 +177,7 @@ class Element extends Object {
      * @return string
      */
     public function prepare() {
-        if ($this->type === 'file')
-            $this->data = '';
+        if ($this->type === 'file') $this->data = '';
         return $this->create() . $this->prepareInfo();
     }
 
@@ -185,7 +197,7 @@ class Element extends Object {
             }
             ?>
             <label for="<?= $this->attributes->id ?>" <?= $attrs ?>><?= $label ?>
-                <?php if ($close): ?>
+            <?php if ($close): ?>
                 </label>
                 <?php
             endif;
@@ -208,8 +220,8 @@ class Element extends Object {
         ob_start();
         ?>
         <div class="element-group <?= $this->type ?> <?= $this->errors ? 'form-error' : null ?>">
-            <?= $this->renderLabel() ?>
-            <?= $this->prepare() ?>
+        <?= $this->renderLabel() ?>
+        <?= $this->prepare() ?>
         </div>
         <?php
         return ob_get_clean();
@@ -232,7 +244,8 @@ class Element extends Object {
             if (is_object($options)) $options = $options->toArray();
 
             if (method_exists($filterer, $filter)) {
-                if (!call_user_func_array(array($filterer, $filter), array($options))) {
+                if (!call_user_func_array(array($filterer, $filter),
+                                array($options))) {
                     $valid = false;
                 }
             }
@@ -243,12 +256,11 @@ class Element extends Object {
     }
 
     private function prepareErrorMsgs($errors) {
-        if (!$errors || ($errors && !count($errors)))
-            return null;
+        if (!$errors || ($errors && !count($errors))) return null;
         ob_start();
         ?>
         <ul class="errors">
-            <?php foreach ($errors as $error): ?>
+        <?php foreach ($errors as $error): ?>
                 <li><?= $error ?></li>
         <?php endforeach; ?>
         </ul>

@@ -21,10 +21,8 @@ class Json {
     }
 
     public function addData($data, $key = null) {
-		if (is_array($this->content))
-	        $this->content[$key] = $data;
-		else if (is_object($this->content))
-			$this->content->{$key} = $data;
+        if (is_array($this->content)) $this->content[$key] = $data;
+        else if (is_object($this->content)) $this->content->{$key} = $data;
         return $this;
     }
 
@@ -96,8 +94,7 @@ class Json {
     public function toScreen($terminate = false) {
         header('Content-Type: application/json');
         echo $this->encode();
-        if ($terminate)
-            exit;
+        if ($terminate) exit;
     }
 
 }

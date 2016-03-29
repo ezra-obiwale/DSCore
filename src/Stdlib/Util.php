@@ -541,23 +541,23 @@ class Util {
 
     /**
      *
-     * @param string $date1
-     * @param string $date2
+     * @param string|int $date1
+     * @param string|int $date2
      * @param int $return 1 - years, 2 - months, 3 - days
-     * @return int
+     * @return int|float|string
      */
     public static function dateDiff($date1, $date2, $return = 2) {
-        // 2014-03-15
-        $date1 = explode('-', date('Y-m-d', strtotime($date1)));
-        // 2015-02-15
-        $date2 = explode('-', date('Y-m-d', strtotime($date2)));
-
-        $yearDiff = ($date2[0] - $date1[0]) * 12;
-        $monthDiff = $date2[1] - $date1[1];
-
-        $yearDiff += $monthDiff;
-
-        return $yearDiff;
+        $date1 = is_int($date1) ? $date1 : strtotime($date1);
+        $date2 = is_int($date2) ? $date2 : strtotime($date2);
+        $diff = abs($date1 - $date2);
+        switch ($return) {
+            case 1:
+                return floor($diff / (60 * 60 * 24 * 365));
+            case 2:
+                return floor($diff / (60 * 60 * 24 * 30));
+            case 3:
+                return floor($diff / (60 * 60 * 24));
+        }
     }
 
     public static function parseAttrArray(array $array,
@@ -569,6 +569,32 @@ class Util {
             $return .= $attr . '="' . $val . '"';
         }
         return $return;
+    }
+
+    /**
+     * Fetches the differences in the given arrays recursively
+     * @param array $array1 The first array
+     * @param array $array2 The second array
+     * @param bool $binary Indicates whether to compare the values binarywise or not
+     * @return array
+     */
+    public static function arrayDiff(array $array1, array $array2,
+            $binary = false) {
+        $diff = array();
+        foreach ($array1 as $key => $val) {
+            if (!array_key_exists($val, $array2)) {
+                $diff[$key] = $val;
+                continue;
+            }
+            else if (is_array($val)) {
+                $diff = array_merge($diff,
+                        self::arrayDiff($val, $array2[$key], $binary));
+            }
+            else if (($binary && $val !== $array2[$key])
+                    || (!$binary && $val != $array2[$key])) $diff[$key] = $val;
+            unset($array2[$key]);
+        }
+        return array_merge($diff, $array2);
     }
 
 }

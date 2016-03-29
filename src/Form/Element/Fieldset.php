@@ -96,7 +96,7 @@ class Fieldset extends Element {
                             }
                             var m = document.createElement('div');
                             var content = __fieldsets[fieldset.id].content;
-                            m.innerHTML = '<div style="position:relative"><button tabIndex="-1" class="close" type="button" data-fieldset="' +
+                            m.innerHTML = '<div class="extra" style="position:relative"><button tabIndex="-1" class="close" type="button" data-fieldset="' +
                                     fieldset.id + '" onclick="__deleteExtra(this)" style="display:block;margin:5px;color:red">x</button>' + content + ' </div>';
                             values[key].forEach(function (v, i) {
                                 var field = m.querySelector('[name$="[' + v.name + '][]"]');
@@ -118,7 +118,7 @@ class Fieldset extends Element {
                     } else {
                         var m = document.createElement('div');
                         var content = __fieldsets[fieldset.id].content;
-                        m.innerHTML = '<div style="position:relative"><button tabIndex="-1" class="close" type="button" data-fieldset="' +
+                        m.innerHTML = '<div class="extra" style="position:relative"><button tabIndex="-1" class="close" type="button" data-fieldset="' +
                                 fieldset.id + '" onclick="__deleteExtra(this)" style="display:block;margin:5px;color:red">x</button>' + content + ' </div>';
 
                         var field = m.querySelector('input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]),select,textarea');

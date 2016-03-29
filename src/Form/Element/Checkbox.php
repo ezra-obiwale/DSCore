@@ -41,7 +41,6 @@ class Checkbox extends Element {
 
             $return = '';
             foreach ($this->options->values as $label => $value) {
-
                 if (is_object($value) || is_array($value)) {
                     throw new Exception('Values for ' . $this->type .
                     ' element "' . $this->name . '" cannot be an object or '
@@ -50,8 +49,10 @@ class Checkbox extends Element {
 
                 if ($this->options->valueIsLabel) $label = $value;
 
-                $checked = (($this->data && $this->data === $value) || (isset($this->options->default) &&
-                        $this->options->default == $value)) ?
+                $checked = (($this->data == $value || (is_array($this->data) && in_array($value,
+                                $this->data))) || (!$this->data && isset($this->options->default) &&
+                        ($this->options->default == $value || (is_array($this->options->default) &&
+                        in_array($value, $this->options->default))))) ?
                         'checked="checked" ' : '';
 
                 $return .= '<label class="inner">' .

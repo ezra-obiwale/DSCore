@@ -98,13 +98,6 @@ class Exception extends \Exception {
         }
         $return .= '</pre>';
         $return .= '</div>';
-//        $return .= '
-//<script>
-//	$(function(){
-//		$(\'a\').css("border-radius","0 15px");
-//	});
-//</script>
-//';
         return $return;
     }
 

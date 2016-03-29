@@ -75,7 +75,7 @@ class TwbForm3 {
             ?>">
                      <?php
                  endif;
-                 if (!in_array($element->type, array('checkbox', 'radio')) && $element->options->label):
+                 if ($element->options->label):
                      $class = $attrs = null;
                      $label = $element->options->label;
                      if (is_object($label)) {
@@ -99,32 +99,18 @@ class TwbForm3 {
                 ?>
                 <div class="<?= $class . ' ' . $element->type ?> " <?= $attrs ?>>
                     <?php
-                    if (in_array($element->type, array('checkbox', 'radio')) && $element->options->label):
-                        $class = $attrs = null;
-                        $label = $element->options->label;
-                        if (is_object($label)) {
-                            $class = $label->attrs->class;
-                            if ($label->attrs)
-                                    $attrs = Util::parseAttrArray($label->attrs->toArray(),
-                                                array('class'));
-                            $label = $label->text;
-                        }
-                        ?>
-                        <label class="control-label <?= $class ?>" <?= $attrs ?> for="<?= $element->attributes->id ?>">
-                            <?= $label ?>
-                            <?php
-                        endif;
-                    endif;
-                    ?>
-                    <?= $element->create() . $element->prepareInfo() ?>
-                    <?php
-                    if ($element->type !== 'hidden'):
-                        if (in_array($element->type, array('checkbox', 'radio')) &&
-                                $element->options->label):
-                            ?>
-                        </label>
-                    <?php endif; ?>
+                endif;
+                if ($element->attributes->class) {
+                    $element->attributes->class .= ' form-control';
+                }
+                else {
+                    $element->attributes->class = ' form-control';
+                }
+                ?>
+                <?= $element->create() . $element->prepareInfo(Element::BLOCK_INFO) ?>
+                <?php if ($element->type !== 'hidden'): ?>
                 </div>
+                <div><?= $element->prepareInfo(Element::INLINE_INFO) ?></div>
             </div>
             <?php
         endif;
@@ -198,14 +184,9 @@ class TwbForm3 {
                 $element->attributes->class = ' form-control';
             }
             echo $element->create() . $element->prepareInfo;
-            if (in_array($element->type, array('checkbox', 'radio'))):
+            if (!in_array($element->type,
+                            array('checkbox', 'radio', 'submit', 'button', 'reset'))) {
                 ?>
-            </label>
-            <?php
-        endif;
-        if (!in_array($element->type,
-                        array('checkbox', 'radio', 'submit', 'button', 'reset'))) {
-            ?>
             </div>
             <?php
         }

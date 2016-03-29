@@ -187,30 +187,37 @@ class View {
     /**
      * Determines which action's view to use instead of current's
      * @param string $_ You may pass 1 to 3 parameters as [module],[controller],action
+     * @param bool $fromVendor Set to true if to load the first parameter from the
+     * vendor directory
      * @return View
      */
-    final public function file($_) {
+    final public function file($_, $fromVendor = false) {
         $args = func_get_args();
 
-        if (count($args) > 3) {
-            for ($i = 3; $i < count($args); $i++) {
-                unset($args[$i]);
-            }
+        if (count($args) == 2 && is_bool($fromVendor) && $fromVendor) {
+            $this->viewFile = VENDOR . $_ . '.phtml';
         }
+        else {
+            if (count($args) > 3) {
+                for ($i = 3; $i < count($args); $i++) {
+                    unset($args[$i]);
+                }
+            }
 
-        switch (count($args)) {
-            case 1:
-                $this->viewFile[2] = Util::camelToHyphen($args[0]);
-                break;
-            case 2:
-                $this->viewFile[1] = Util::camelToHyphen($args[0]);
-                $this->viewFile[2] = Util::camelToHyphen($args[1]);
-                break;
-            case 3:
-                $this->viewFile[0] = ucfirst(Util::hyphenToCamel($args[0]));
-                $this->viewFile[1] = Util::camelToHyphen($args[1]);
-                $this->viewFile[2] = Util::camelToHyphen($args[2]);
-                break;
+            switch (count($args)) {
+                case 1:
+                    $this->viewFile[2] = Util::camelToHyphen($args[0]);
+                    break;
+                case 2:
+                    $this->viewFile[1] = Util::camelToHyphen($args[0]);
+                    $this->viewFile[2] = Util::camelToHyphen($args[1]);
+                    break;
+                case 3:
+                    $this->viewFile[0] = ucfirst(Util::hyphenToCamel($args[0]));
+                    $this->viewFile[1] = Util::camelToHyphen($args[1]);
+                    $this->viewFile[2] = Util::camelToHyphen($args[2]);
+                    break;
+            }
         }
 
         return $this;
@@ -223,7 +230,7 @@ class View {
      * @return array
      */
     final public function getViewFile($addOthers = true) {
-        if ($addOthers) {
+        if ($addOthers && is_array($this->viewFile)) {
             if (!isset($this->viewFile[0]))
                 $this->viewFile[0] = ucfirst(Util::hyphenToCamel(engineGet('module')));
             if (!isset($this->viewFile[1]))
@@ -245,20 +252,19 @@ class View {
      * @param string $hash 
      * @return string
      */
-    final public function url($module, $controller = null, $action = null, array $params = array(), $hash = null) {
+    final public function url($module, $controller = null, $action = null,
+            array $params = array(), $hash = null) {
         $module = ucfirst(Util::hyphenToCamel($module));
         $moduleOptions = engineGet('config', 'modules', $module, false);
         $module = (isset($moduleOptions['alias'])) ? $moduleOptions['alias'] : $module;
 
         $return = Util::camelToHyphen($module);
-        if ($controller)
-            $return .= '/' . Util::camelToHyphen($controller);
-        if ($action)
-            $return .= '/' . Util::camelToHyphen($action);
+        if ($controller) $return .= '/' . Util::camelToHyphen($controller);
+        if ($action) $return .= '/' . Util::camelToHyphen($action);
         if (!empty($params))
-            $return .= str_replace('//', '/' . urlencode(' ') . '/', '/' . join('/', $this->encodeParams($params)));
-        if ($hash)
-            $return .= '#' . $hash;
+                $return .= str_replace('//', '/' . urlencode(' ') . '/',
+                    '/' . join('/', $this->encodeParams($params)));
+        if ($hash) $return .= '#' . $hash;
 
         return engineGet('serverPath') . $return;
     }
@@ -276,7 +282,7 @@ class View {
      */
     final public function getRenderer() {
         if (!$this->renderer) {
-            $this->renderer = new Renderer();
+            $this->renderer = new Renderer(false);
         }
         return $this->renderer->setView($this);
     }
@@ -297,7 +303,8 @@ class View {
      * @param boolean $partial Indicates whether to return partial or full view
      * @return string
      */
-    final public function getOutput($module, $controller, $action, array $params = array(), $partial = true) {
+    final public function getOutput($module, $controller, $action,
+            array $params = array(), $partial = true) {
         $view = new View();
         $controllerClass = ucfirst(\Util::hyphenToCamel($module)) . '\Controllers\\' . ucfirst(\Util::hyphenToCamel($controller)) . 'Controller';
         $controllerClass = new $controllerClass;
@@ -306,7 +313,8 @@ class View {
         $view->setController($controllerClass)
                 ->setAction(lcfirst(\Util::hyphenToCamel($action)))
                 ->setModule(ucfirst(\Util::hyphenToCamel($module)));
-        $actionRet = call_user_func_array(array($controllerClass, $action . 'Action'), $params);
+        $actionRet = call_user_func_array(array($controllerClass, $action . 'Action'),
+                $params);
         if (is_object($actionRet) && is_a($actionRet, 'DScribe\View\View')) {
             $view = $actionRet;
         }

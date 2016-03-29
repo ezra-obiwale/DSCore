@@ -129,27 +129,15 @@ class Engine {
      */
     public static function getUrls() {
         if (static::$urls !== null) return static::$urls;
-
-        $uri = $_SERVER['REQUEST_URI'];
-
-        static::$isVirtual = true;
-        if (substr($uri, 0, strlen($_SERVER['SCRIPT_NAME'])) === $_SERVER['SCRIPT_NAME']) {
-            $uri = str_replace('/index.php', '', $uri);
-        }
-        else if (stristr($_SERVER['SCRIPT_NAME'], '/index.php', true)) {
-            static::$serverPath = stristr($_SERVER['SCRIPT_NAME'], '/index.php',
-                    true);
-
-            $uri = str_replace(array(static::$serverPath, '/index.php'), '',
-                    $uri);
-            static::$isVirtual = false;
-        }
-
-        parse_str($_SERVER['QUERY_STRING'], $_GET);
+		if (FALSE === $uri = strstr($_SERVER['REQUEST_URI'],'?',true))
+			$uri = $_SERVER['REQUEST_URI'];
+		$script = strtolower($_SERVER['SCRIPT_NAME']);
+        static::$serverPath = dirname($script);
+		$uri = str_replace(array($script, static::$serverPath, BASE . '/'), '', $uri);
         static::$urls = static::updateArrayKeys(explode('/',
                                 str_replace('?' . $_SERVER['QUERY_STRING'], '',
                                         $uri)), true);
-        return static::$urls;
+		return static::$urls;
     }
 
     /**
@@ -344,11 +332,11 @@ class Engine {
                 'Controller';
 
         if (!class_exists($class)) ControllerException::notFound($class);
-
         if (!in_array('DScribe\Core\AController', class_parents($class)))
                 throw new \Exception('Controller Exception: Controller "' . $class . '" does not extend "DScribe\Core\AController"');
-
-        return ($live) ? new $class() : $class;
+        
+        return ($live) ? new $class()
+                : $class;
     }
 
     /**
@@ -467,12 +455,6 @@ class Engine {
 
     public static function getModulePath() {
         return MODULES . static::getModule() . DIRECTORY_SEPARATOR;
-    }
-
-    public static function reloadPage() {
-        header('Location: ' . static::getServerPath() . join('/',
-                        static::getUrls()));
-        exit;
     }
 
     /**

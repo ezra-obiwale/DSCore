@@ -8,31 +8,26 @@ class Session {
      */
     private static $prepend = '__DS_';
     private static $lifetime;
+    private static $initialized = false;
 
     private static function init() {
-        ini_set('session.gc_maxlifetime', self::getLifetime());
-        session_set_cookie_params(self::getLifetime());
-        if (!isset($_SESSION)) {
-            if (!self::$lifetime) {
-                $sessionExpirationHours = engineGet('Config',
-                        'sessionExpirationHours');
-                if (!$sessionExpirationHours) $sessionExpirationHours = 2;
-                self::$lifetime = 60 * 60 * $sessionExpirationHours;
-            }
-            @session_start();
+        if (self::getLifetime()) {
+            ini_set('session.gc_maxlifetime', self::getLifetime());
+            session_set_cookie_params(self::getLifetime());
         }
+        session_start();
+        self::$initialized = true;
     }
 
     private static function close() {
-        // commented out because it renders each session inactive
-//        session_write_close();
+        // session_write_close();
     }
 
     /**
      * Set the life time for the session
      * @param int $lifetime
      */
-    public function setLifetime($lifetime) {
+    public static function setLifetime($lifetime) {
         self::$lifetime = $lifetime;
     }
 
@@ -40,11 +35,9 @@ class Session {
      * Fetch the life time for the session
      * @return int
      */
-    public function getLifetime() {
-        if (!self::$lifetime) {
-            $sessionExpirationHours = engineGet('Config',
-                    'sessionExpirationHours', false);
-            if (!$sessionExpirationHours) $sessionExpirationHours = 2;
+    public static function getLifetime() {
+        if (!self::$lifetime && $sessionExpirationHours = engineGet('Config',
+                'sessionExpirationHours', false)) {
             self::$lifetime = 60 * 60 * $sessionExpirationHours;
         }
 
@@ -70,10 +63,10 @@ class Session {
      * @return mixed
      */
     public static function fetch($key) {
-        static::init();
+        if (!self::$initialized) self::init();
+
         if (isset($_SESSION[self::$prepend . $key]))
                 return $_SESSION[self::$prepend . $key];
-        self::close();
     }
 
     /**

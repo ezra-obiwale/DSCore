@@ -2,18 +2,23 @@
 
 namespace DScribe\Core;
 
-use DScribe\Core\AService,
-    DScribe\Core\IModel,
-    DBScribe\Repository,
-    Exception;
+use DBScribe\Repository,
+    DScribe\Core\AService,
+    DScribe\Core\IModel;
 
-class AService extends AInjector {
+class AService extends ACore {
 
     /**
      * Model to operate on
      * @var IModel
      */
     protected $model;
+
+    /**
+     *
+     * @var \DScribe\Form\Form
+     */
+    protected $form;
 
     /**
      * Repository of models
@@ -30,10 +35,11 @@ class AService extends AInjector {
     /**
      * class constructor
      */
-    final protected function construct() {
+    final public function __construct() {
+        if ($model = $this->getModule() . '\Models\\' . $this->getClassName())
+                if (class_exists($model)) $this->setModel(new $model);
         $this->init();
-        if ($this->repository === null)
-            $this->initRepository();
+        if ($this->repository === null) $this->initRepository();
     }
 
     /**
@@ -42,8 +48,7 @@ class AService extends AInjector {
      */
     public function setModel(IModel $model, $initRepo = true) {
         $this->model = $model;
-        if ($initRepo)
-            $this->initRepository();
+        if ($initRepo) $this->initRepository();
         return $this;
     }
 
@@ -70,14 +75,14 @@ class AService extends AInjector {
      * @return boolean
      */
     protected function initRepository() {
-        if ($this->model === null ||
-                ($this->model !== null && !in_array('DScribe\Core\IModel', class_implements($this->model))))
-            return false;
+        if ($this->model === null || ($this->model !== null && !in_array('DScribe\Core\IModel',
+                        class_implements($this->model)))) return false;
 
         if ($this->repository !== null && $this->model->getTableName() === $this->repository->getTableName())
-            return true;
+                return true;
 
-        $repository = ($this->repositoryClass !== null) ? $this->repositoryClass : 'DBScribe\Repository';
+        $repository = ($this->repositoryClass !== null) ? $this->repositoryClass
+                    : 'DBScribe\Repository';
         $this->repository = new $repository($this->model, engineGet('DB'), true);
         return true;
     }
@@ -98,41 +103,13 @@ class AService extends AInjector {
     }
 
     /**
-     * prepares injection of classes
-     * @return array
-     */
-    protected function prepareInject() {
-        $model = ($this->model) ? $this->model : $this->getModule() . '\Models\\' . $this->getClassName();
-
-        if (is_object($model))
-            $model = get_class($model);
-
-        if (!class_exists($model))
-            return array_merge(parent::prepareInject(), $this->getConfigInject('services'));
-
-        return array_merge(parent::prepareInject(), $this->getConfigInject('services'), array(
-            'model' => array(
-                'class' => $model
-            ),
-        ));
-    }
-
-    /**
      * Fetches the class name
      * @return string
      */
     public function getClassName() {
         return parent::className('Service');
     }
-
-    /**
-     * Returns an array of classes to inject
-     * @return string
-     */
-    protected function inject() {
-        return array();
-    }
-
+    
     /**
      * Commits all database transactions
      * @return boolean
@@ -147,6 +124,30 @@ class AService extends AInjector {
      */
     protected function cancel() {
         return engineGet('db')->cancel();
+    }
+
+    /**
+     * Creates the correct form name for the service
+     * @return string|null
+     */
+    private function getDefaultFormName() {
+        return (class_exists($this->getModule() . '\Forms\\' . $this->getClassName() . 'Form'))
+                    ?
+                $this->getModule() . '\Forms\\' . $this->getClassName() . 'Form'
+                    : null;
+    }
+
+    /**
+     * Allows public access to form
+     * @return \DScibe\Form\Form
+     */
+    public function getForm() {
+        if (!$this->form) {
+            if ($defaultFormName = $this->getDefaultFormName())
+                    $this->form = new $defaultFormName;
+        }
+
+        return $this->form;
     }
 
 }

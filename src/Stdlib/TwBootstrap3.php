@@ -116,13 +116,13 @@ class TwBootstrap3 {
         ob_start();
         ?>
         <div class="alert alert-<?= $type . ' ' . $class ?> alert-dismissible" role="alert">
-        <?php if (($class === true || !is_bool($class)) && $closable): ?>
+            <?php if (($class === true || !is_bool($class)) && $closable): ?>
                 <button type="button" class="close" data-dismiss="alert">
                     <span aria-hidden="true">&times;</span>
                     <span class="sr-only">Close</span>
                 </button>
             <?php endif; ?>
-        <?= $message ?>
+            <?= $message ?>
         </div>
         <?php
         return ob_get_clean();
@@ -169,8 +169,8 @@ class TwBootstrap3 {
         isset($options['linkAttrs']) ? self::parseAttributes($options['linkAttrs'])
                     : ''
         ?> data-toggle="modal"><?=
-            isset($options['linkLabel']) ? $options['linkLabel'] : 'Launch Modal'
-            ?></a>
+               isset($options['linkLabel']) ? $options['linkLabel'] : 'Launch Modal'
+               ?></a>
 
         <?php
         self::$modalLinks[$id] = ob_get_clean();
@@ -185,13 +185,12 @@ class TwBootstrap3 {
                         array('class')) : ''
         ?> tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
             <div class="modal-dialog <?= $options['small'] ? 'modal-sm' : '' ?> <?=
-                 $options['large'] ? 'modal-lg' : ''
-                 ?>">
+            $options['large'] ? 'modal-lg' : ''
+            ?>">
                 <div class="modal-content">
                     <?php
-                    if (isset($options['header']) && !is_bool($options['header']) ||
-                            (isset($options['header']) && is_bool($options['header']) &&
-                            $options['header'])):
+                    if (isset($options['header']) && (!is_bool($options['header']) ||
+                            (is_bool($options['header'] && $options['header'])))):
                         ?>
                         <header class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;<span class="sr-only">Close</span></button>
@@ -205,12 +204,12 @@ class TwBootstrap3 {
                         </header>
                     <?php endif; ?>
                     <main class="modal-body <?=
-                          isset($options['contentClass']) ? $options['contentClass']
-                                      : ''
-                          ?>">
+                    isset($options['contentClass']) ? $options['contentClass'] : ''
+                    ?>">
                               <?=
                               isset($options['content']) ? $options['content'] : '<i icon="icon-refresh"></i> loading content ...'
                               ?>
+                    </main>
                 </div>
                 <?php
                 if (isset($options['footer']) && !is_bool($options['footer']) ||
@@ -218,29 +217,33 @@ class TwBootstrap3 {
                         $options['footer'])):
                     ?>
                     <footer class="modal-footer" <?=
-                            isset($options['footerAttrs']) ? self::parseAttributes($options['footerAttrs'])
-                                        : ''
-                            ?>>
+                    isset($options['footerAttrs']) ? self::parseAttributes($options['footerAttrs'])
+                                : ''
+                    ?>>
+                        <div class="row">
+                            <div class="col-md-12">
                                 <?php
                                 if (empty($options['footer']) || is_bool($options['footer'])):
                                     ?>
-                            <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true"><?=
-                                isset($options['closeButtonLabel']) ? $options['closeButtonLabel']
-                                            : 'Close'
-                                ?></button>
-                            <?php
-                            if (!isset($options['noActionButton']) || (isset($options['noActionButton']) &&
-                                    !$options['noActionButton'])):
+                                    <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true"><?=
+                                        isset($options['closeButtonLabel']) ? $options['closeButtonLabel']
+                                                    : 'Close'
+                                        ?></button>
+                                    <?php
+                                    if (!isset($options['noActionButton']) || (isset($options['noActionButton']) &&
+                                            !$options['noActionButton'])):
+                                        ?>
+                                        <button type="button" class="btn btn-primary">Save changes</button>
+                                        <?php
+                                    endif;
+                                else:
+                                    echo $options['footer'];
+                                endif;
                                 ?>
-                                <button type="button" class="btn btn-primary">Save changes</button>
-                                <?php
-                            endif;
-                        else:
-                            echo $options['footer'];
-                        endif;
-                        ?>
+                            </div>
+                        </div>
                     </footer>
-        <?php endif; ?>
+                <?php endif; ?>
             </div>
         </div>
         </section>
@@ -273,10 +276,10 @@ class TwBootstrap3 {
         ?>
         <div class = "dropdown <?php echo $groupClass ?>">
             <a class = "btn dropdown-toggle <?php echo $linkClass ?>" style="margin-top:-10px!important;" data-toggle = "dropdown" href = "#">
-            <?php echo $label ?>
+                <?php echo $label ?>
                 <span class = "caret"></span>
             </a>
-        <?php self::doDropDown($list) ?>
+            <?php self::doDropDown($list) ?>
         </div>
         <?php
         return ob_get_clean();
@@ -296,12 +299,12 @@ class TwBootstrap3 {
                     <?php continue; ?>
                 <?php endif; ?>
                 <li role="presentation" <?=
-            (isset($options['children'])) ? 'class="dropdown-submenu"' : ''
+                (isset($options['children'])) ? 'class="dropdown-submenu"' : ''
                 ?>>
                     <a role="menuitem" tabindex="-1" <?=
-                       (isset($options['children'])) ? 'class="dropdown-toggle" data-toggle="dropdown"'
-                                   : ''
-                       ?> href="<?php echo @$options["link"] ?>" <?php
+                    (isset($options['children'])) ? 'class="dropdown-toggle" data-toggle="dropdown"'
+                                : ''
+                    ?> href="<?php echo @$options["link"] ?>" <?php
                        echo (!empty($options["attributes"])) ? self::parseAttributes($options["attributes"])
                                    : ""
                        ?>><?php echo $label ?></a>
@@ -311,7 +314,7 @@ class TwBootstrap3 {
                        }
                        ?>
                 </li>
-        <?php endforeach; ?>
+            <?php endforeach; ?>
         </ul>
 
         <?php
@@ -351,7 +354,8 @@ class TwBootstrap3 {
      * 		Example:<br />
      * 			Array (<br />
      * 				array(<br />
-     * 					'controls' => true|false,<br />
+     * 					'controls' => true[|false],<br />
+     * 					'indicators' => true[|false],<br />
      * 					'class' => '',<br />
      * 				)<br />
      * 			)<br />
@@ -360,6 +364,8 @@ class TwBootstrap3 {
     public static function carousel(array $items, array $attributes = array()) {
         self::$carousels++;
         $id = (isset($attributes['id'])) ? $attributes['id'] : 'myCarousel' . self::$carousels;
+        $attributes['indicators'] = isset($attributes['indicators']) ? $attributes['indicators']
+                    : true;
         $class = (isset($attributes['class'])) ? $attributes['class'] . ' carousel slide'
                     : 'carousel slide';
         $attributes['id'] = $id;
@@ -370,29 +376,39 @@ class TwBootstrap3 {
         ob_start();
         ?>
         <div <?= self::parseAttributes($attributes) ?> data-ride="carousel" >
+            <?php if ($attributes['indicators']): ?>
+                <ol class="carousel-indicators">
+                    <?php
+                    for ($i = 0; $i < count($items); $i++):
+                        ?>
+                        <li style="border:1px solid #000;background-color:#aaa;" data-target="#<?= $id ?>" data-slide-to="<?= $i ?>" class="<?=
+                        !$i ? 'active' : ''
+                        ?>"></li>
+                        <?php endfor; ?>
+                </ol>
+            <?php endif; ?>
             <!-- Carousel items -->
             <div class="carousel-inner">
                 <?php foreach ($items as $t_id => $item): ?>
                     <?php if (isset($item['img'])): ?>
                         <div id="<?= $t_id ?>" class="item <?=
-                                 (isset($item['active']) && $item['active']) ? 'active'
-                                             : ''
-                                 ?>">
-                                <?= $item['img'] ?>
-                            <?php if (isset($item['caption'])): ?>
+                        (isset($item['active']) && $item['active']) ? 'active' : ''
+                        ?>">
+                                 <?= $item['img'] ?>
+                                 <?php if (isset($item['caption'])): ?>
                                 <div class="carousel-caption">
-                            <?= $item['caption'] ?>
+                                    <?= $item['caption'] ?>
                                 </div>
-                        <?php endif; ?>
+                            <?php endif; ?>
                         </div>
-                <?php endif; ?>
-        <?php endforeach; ?>
+                    <?php endif; ?>
+                <?php endforeach; ?>
             </div>
             <?php if ($controls): ?>
                 <!-- Carousel nav -->
                 <a class="carousel-control left" href="#<?= $id ?>" data-slide="prev">&lsaquo;</a>
                 <a class="carousel-control right" href="#<?= $id ?>" data-slide="next">&rsaquo;</a>
-        <?php endif; ?>
+            <?php endif; ?>
         </div>
         <?php
         return ob_get_clean();
@@ -420,11 +436,11 @@ class TwBootstrap3 {
         $attributes['style'] ? $attributes['style'] :
                 'default'
         ?> <?= $attributes['class'] ?>" <?=
-                 static::parseAttributes($attributes, array('class', 'style'))
-                 ?>>
-            <?php
-            if ($sections['heading']):
-                ?>
+        static::parseAttributes($attributes, array('class', 'style'))
+        ?>>
+             <?php
+                 if ($sections['heading']):
+                     ?>
                 <div class="panel-heading"><?= $sections['heading'] ?></div>
                 <?php
             endif;
@@ -437,9 +453,9 @@ class TwBootstrap3 {
             if ($sections['footer']):
                 ?>
                 <div class="panel-footer"><?= $sections['footer'] ?></div>
-            <?php
-        endif;
-        ?>
+                <?php
+            endif;
+            ?>
         </div>
         <?php
         return ob_get_clean();
@@ -466,10 +482,9 @@ class TwBootstrap3 {
         ob_start();
         ?>
         <div data-close="<?= @$attributes['close'] ?>" class="accordion <?= @$attributes['class'] ?>" id="accordion<?= self::$accordions ?>" <?=
-                 self::parseAttributes($attributes,
-                         array('class', 'id', 'close'))
-                 ?>>
-                 <?php
+        self::parseAttributes($attributes, array('class', 'id', 'close'))
+        ?>>
+             <?php
                  foreach ($groups as $key => $group) {
                      if (empty($group['heading']) || empty($group['body'])) {
                          throw new Exception('Each accordion group must have a heading and a body');
@@ -480,19 +495,19 @@ class TwBootstrap3 {
                         <a class="accordion-toggle" data-toggle="collapse"
                            data-parent="#accordion<?= self::$accordions ?>"
                            href="#group-<?= self::$accordions . $key ?>">
-                            <?= $group['heading'] ?>
+                               <?= $group['heading'] ?>
                         </a>
                     </div>
                     <div class="accordion-body collapse in" id="group-<?= self::$accordions . $key ?>">
                         <div class="accordion-inner">
-                <?= $group['body'] ?>
+                            <?= $group['body'] ?>
                         </div>
                     </div>
                 </div>
-            <?php
-            $collapse++;
-        }
-        ?>
+                <?php
+                $collapse++;
+            }
+            ?>
         </div>
         <script>
             $(document).ready(function () {
@@ -520,13 +535,13 @@ class TwBootstrap3 {
         ob_start();
         ?>
         <div class="row <?= @$options['rows']['class'] ?>"
-                 <?=
-                 self::parseAttributes(@$options['rows'], array('class'))
-                 ?>>
-        <?php
-        foreach ($items as $key => $item) {
-            if ($key && $key % $itemsPerRow === 0) {
-                ?>
+        <?=
+        self::parseAttributes(@$options['rows'], array('class'))
+        ?>>
+             <?php
+                 foreach ($items as $key => $item) {
+                     if ($key && $key % $itemsPerRow === 0) {
+                         ?>
                 </div>
                 <div class="row <?= @$options['rows']['class'] ?>">
                     <?php
@@ -535,20 +550,19 @@ class TwBootstrap3 {
                 if (@$options['wrap'] !== false):
                     ?>
                     <div class="col-md-<?= round(12 / $itemsPerRow) ?> <?= @$options['spans']['class'] ?>"
-                             <?=
-                             self::parseAttributes(@$options['spans'],
-                                     array('class'))
-                             ?>>
+                    <?=
+                    self::parseAttributes(@$options['spans'], array('class'))
+                    ?>>
+                         <?php
+                         endif;
+                         echo $item;
+                         if (@$options['wrap'] !== false):
+                             ?>
+                    </div>
                     <?php
                 endif;
-                echo $item;
-                if (@$options['wrap'] !== false):
-                    ?>
-                    </div>
-                <?php
-            endif;
-        }
-        ?>
+            }
+            ?>
         </div>
         <?php
         return ob_get_clean();
@@ -566,14 +580,14 @@ class TwBootstrap3 {
         ?>
         <div class="progress">
             <div role="progressbar" aria-valuenow="<?=
-                 $options['current'] ? $options['current'] : '100'
-                 ?>" aria-valuemin="<?= $options['min'] ? $options['min'] : '0' ?>"
+        $options['current'] ? $options['current'] : '100'
+        ?>" aria-valuemin="<?= $options['min'] ? $options['min'] : '0' ?>"
                  aria-valuemax="<?= $options['max'] ? $options['max'] : '100'
-         ?>" class="progress-bar <?=
-        ($options['striped']) ? 'progress-bar-striped' : ''
-        ?> progress-bar-<?= $options['style'] ?> <?=
-        ($options['active']) ? 'active' : ''
-        ?>" style="width:<?= $options['current'] ?>%"><?= $message ?></div>
+        ?>" class="progress-bar <?=
+                 ($options['striped']) ? 'progress-bar-striped' : ''
+                 ?> progress-bar-<?= $options['style'] ?> <?=
+                 ($options['active']) ? 'active' : ''
+                 ?>" style="width:<?= $options['current'] ?>%"><?= $message ?></div>
         </div>
         <?php
         return ob_get_clean();
@@ -595,9 +609,9 @@ class TwBootstrap3 {
         ?>
         <a href="#" data-toggle="popover" class="<?= $class ?> popover-dismiss" data-container="<?= $container ?>"
            rel="popover" data-placement="<?= $placement ?>" data-content="<?= $content ?>" <?=
-           $title ? ' data-original-title="' .
-                   $title . '"' : ''
-           ?>><?= $label ?></a>
+        $title ? ' data-original-title="' .
+                $title . '"' : ''
+        ?>><?= $label ?></a>
            <?php
            return ob_get_clean();
        }
@@ -622,9 +636,9 @@ class TwBootstrap3 {
                 <div class="media-body">
                     <h4 class="media-heading"><?= $medium['heading'] ?></h4>
             <?= $medium['body'] ?>
-            <?=
-            $medium['children'] ? static::media($medium['children']) : null
-            ?>
+                    <?=
+                    $medium['children'] ? static::media($medium['children']) : null
+                    ?>
                 </div>
             </div>
             <?php
@@ -646,34 +660,34 @@ class TwBootstrap3 {
         for ($i = 1; $i <= 5; $i++) {
             ?>
             <i class="glyphicon glyphicon-<?= !$useHearts ? 'star' : 'heart' ?><?=
-               ($rating < $i) ? '-empty' : ''
-               ?>"></i>
+            ($rating < $i) ? '-empty' : ''
+            ?>"></i>
+            <?php
+           }
+           if ($showNumber) {
+               ?>
+            <span class="badge badge-<?= is_string($showNumber) ? $showNumber : 'pill-count' ?>">
+               <?= $rating ?>
+            </span>
                 <?php
             }
-            if ($showNumber) {
-                ?>
-            <span class="badge badge-<?= is_string($showNumber) ? $showNumber : 'pill-count' ?>">
-            <?= $rating ?>
-            </span>
-            <?php
+            return ob_get_clean();
         }
-        return ob_get_clean();
-    }
 
-    private static $activeRatings = 1;
+        private static $activeRatings = 1;
 
-    /**
-     * Create ratings that can be selected
-     * @param int $defaultRating
-     * @param bool $useHearts Indicates whether to use hearts instead of stars
-     * @return string
-     */
-    public static function activeRatings($defaultRating = 3, $useHearts = false,
-            $elementName = 'rating') {
-        $class = !$useHearts ? 'star' : 'heart';
-        ob_start();
-        for ($i = 1; $i <= 5; $i++) {
-            ?>
+        /**
+         * Create ratings that can be selected
+         * @param int $defaultRating
+         * @param bool $useHearts Indicates whether to use hearts instead of stars
+         * @return string
+         */
+        public static function activeRatings($defaultRating = 3,
+                $useHearts = false, $elementName = 'rating') {
+            $class = !$useHearts ? 'star' : 'heart';
+            ob_start();
+            for ($i = 1; $i <= 5; $i++) {
+                ?>
             <a style="color:inherit;text-decoration: none" href="#" data-value="<?= $i ?>"
                class="active-ratings-<?= static::$activeRatings ?>">
                 <i class="glyphicon glyphicon-<?= $class ?><?=
