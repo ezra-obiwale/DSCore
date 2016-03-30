@@ -9,7 +9,7 @@ INSTALLATION
 There are two ways to install dSCore.
 
 1. COMPOSER (Recommended)
-   Download and setup dSSkeleton[https://github.com/ezra-obiwale/dSSkeleton]. All requirements are automatically installed.
+   Download and setup dsSkeleton[https://github.com/ezra-obiwale/dsSkeleton]. All requirements are automatically installed.
    
 2. MANUAL
    - Create "d-scribe/core" directory in your vendor directory
