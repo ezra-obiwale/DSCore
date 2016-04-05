@@ -128,16 +128,16 @@ class Engine {
      * @return array
      */
     public static function getUrls() {
-        if (static::$urls !== null) return static::$urls;
-		if (FALSE === $uri = strstr($_SERVER['REQUEST_URI'],'?',true))
-			$uri = $_SERVER['REQUEST_URI'];
-		$script = strtolower($_SERVER['SCRIPT_NAME']);
-        static::$serverPath = dirname($script);
-		$uri = str_replace(array($script, static::$serverPath, BASE . '/'), '', $uri);
-        static::$urls = static::updateArrayKeys(explode('/',
-                                str_replace('?' . $_SERVER['QUERY_STRING'], '',
-                                        $uri)), true);
-		return static::$urls;
+	if (static::$urls !== null) return static::$urls;
+	if (FALSE === $uri = strstr($_SERVER['REQUEST_URI'], '?', true)) $uri = $_SERVER['REQUEST_URI'];
+	if (($u = strstr($uri, '/' . BASE . '/public')) || ($u = strstr($uri, '/' . BASE))) $uri = $u;
+	if (substr($uri, 1, strlen(BASE)) === BASE) { // not virtual
+	    $uri = substr($uri, strlen(BASE) + 1);
+	    if (strtolower(substr($uri, 1, 6)) === 'public') $uri = substr($uri, 7);
+	}
+	static::$serverPath = dirname($_SERVER['SCRIPT_NAME']);
+	static::$urls = static::updateArrayKeys(explode('/', $uri), true);
+	return static::$urls;
     }
 
     /**
