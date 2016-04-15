@@ -10,100 +10,100 @@ use Object;
  */
 abstract class AValidator {
 
-    /**
-     * Form elements
-     * @var array
-     */
-    protected $elements;
+	/**
+	 * Form elements
+	 * @var array
+	 */
+	protected $elements;
 
-    /**
-     * Values to validate
-     * @var array
-     */
-    protected $data;
+	/**
+	 * Values to validate
+	 * @var array
+	 */
+	protected $data;
 
-    /**
-     * Indicates whether validation succeeds or fails
-     * @var boolean
-     */
-    protected $valid;
+	/**
+	 * Indicates whether validation succeeds or fails
+	 * @var boolean
+	 */
+	protected $valid;
 
-    /**
-     * Name of the fieldset/form to be used in csrf validation
-     * @var string
-     */
-    private $name;
+	/**
+	 * Name of the fieldset/form to be used in csrf validation
+	 * @var string
+	 */
+	private $name;
 
-    /**
-     * Class constructor
-     */
-    public function __construct($name) {
-        $this->name = $name;
-        $this->elements = array();
-        $this->data = array();
-    }
+	/**
+	 * Class constructor
+	 */
+	public function __construct($name) {
+		$this->name = $name;
+		$this->elements = array();
+		$this->data = array();
+	}
 
-    /**
-     * Fetches the name of the Fieldset/Form
-     * @return string
-     */
-    public function getName() {
-        return $this->name;
-    }
+	/**
+	 * Fetches the name of the Fieldset/Form
+	 * @return string
+	 */
+	public function getName() {
+		return $this->name;
+	}
 
-    /**
-     * Set the name of the Fieldset/Form
-     * @param string $name
-     * @return AValidator
-     */
-    public function setName($name) {
-        $this->name = $name;
-        return $this;
-    }
+	/**
+	 * Set the name of the Fieldset/Form
+	 * @param string $name
+	 * @return AValidator
+	 */
+	public function setName($name) {
+		$this->name = $name;
+		return $this;
+	}
 
-    /**
-     * Add filters to specified element
-     * @param string $elementName
-     * @param array $filters
-     * @return AValidator
-     */
-    final public function addFilters($elementName, array $filters) {
-        $this->elements[$elementName]->filters->add($filters);
-        return $this;
-    }
+	/**
+	 * Add filters to specified element
+	 * @param string $elementName
+	 * @param array $filters
+	 * @return AValidator
+	 */
+	final public function addFilters($elementName, array $filters) {
+		$this->elements[$elementName]->filters->add($filters);
+		return $this;
+	}
 
-    /**
-     * Validates the data
-     * @return boolean
-     */
-    private function validate() {
-        $filterer = new Filterer();
-        $valid = true;
-        foreach ($this->elements as $element) {
-            if (!$element->validate($filterer, $this->data)) $valid = false;
-            $this->data[$element->name] = ($element->type === 'fieldset') ?
-                    $element->options->value->getData(true) : $element->data;
-        }
-        $this->valid = $valid;
-        return $valid;
-    }
+	/**
+	 * Validates the data
+	 * @return boolean
+	 */
+	private function validate() {
+		$filterer = new Filterer($this->data);
+		$valid = true;
+		foreach ($this->elements as $element) {
+			if (!$element->validate($filterer, $this->data)) $valid = false;
+			$this->data[$element->name] = ($element->type === 'fieldset') ?
+					$element->options->value->getData(true) : $element->data;
+		}
+		$this->valid = $valid;
+		return $valid;
+	}
 
-    /**
-     * Validates the data
-     * @return boolean
-     */
-    final public function isValid() {
-        return ($this->valid === null) ? $this->validate() : $this->valid;
-    }
+	/**
+	 * Validates the data
+	 * @return boolean
+	 */
+	final public function isValid() {
+		return ($this->valid === null) ? $this->validate() : $this->valid;
+	}
 
-    /**
-     * return array of filters to validate data against
-     */
-    abstract public function getFilters();
+	/**
+	 * return array of filters to validate data against
+	 */
+	abstract public function getFilters();
 
-    /**
-     * Sets data to validate
-     * @param Object|array $data
-     */
-    abstract public function setData($data);
+	/**
+	 * Sets data to validate
+	 * @param Object|array $data
+	 */
+	abstract public function setData($data);
 }

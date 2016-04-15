@@ -11,14 +11,13 @@ namespace dScribe\Form\Element;
  * @author topman
  */
 class Radio extends Checkbox {
-    
-    public function getName() {
-        return $this->name;
-    }
-    
-    public function getType() {
-        return 'radio';
-    }
 
+	public function getName() {
+		return $this->name;
+	}
+
+	public function getType() {
+		return 'radio';
+	}
 
 }

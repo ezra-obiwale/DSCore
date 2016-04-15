@@ -6,8 +6,8 @@
 namespace dScribe\Form\Element;
 
 use dScribe\Form\Csrf,
-    dScribe\Form\Element,
-    dScribe\Form\Filterer;
+	dScribe\Form\Element,
+	dScribe\Form\Filterer;
 
 /**
  * Description of Element
@@ -16,49 +16,49 @@ use dScribe\Form\Csrf,
  */
 class Hidden extends Element {
 
-    public function setCsrfKey($key) {
-        $this->key = $key;
-        $this->prepCsrf();
-        return $this;
-    }
-    
-    protected function getValue() {
-        if ($this->name === 'csrf') {
-            $csrf = new Csrf($this->key);
-            return $csrf->fetch();
-        }
-        return parent::getValue();
-    }
+	public function setCsrfKey($key) {
+		$this->key = $key;
+		$this->prepCsrf();
+		return $this;
+	}
 
-    private function prepCsrf() {
-        $csrf = new Csrf($this->key);
-        $this->filters = array(
-            'required' => true,
-            'match' => array(
-                'value' => $csrf->fetch(),
-                'message' => ''
-        ));
-    }
+	protected function getValue() {
+		if ($this->name === 'csrf') {
+			$csrf = new Csrf($this->key);
+			return $csrf->fetch();
+		}
+		return parent::getValue();
+	}
 
-    public function validate(Filterer $filterer) {
-        $return = parent::validate($filterer);
-        if ($this->name === 'csrf') {
-            $csrf = new Csrf($this->key);
-            $csrf->remove();
-        }
-        return $return;
-    }
+	private function prepCsrf() {
+		$csrf = new Csrf($this->key);
+		$this->filters = array(
+			'required' => true,
+			'match' => array(
+				'value' => $csrf->fetch(),
+				'message' => ''
+		));
+	}
 
-    public function create() {
-        if ($this->name === 'csrf') { // store new csrf value
-            $csrf = new Csrf($this->key);
-            $this->options->value = $csrf->create()->fetch();
-        }
-        return parent::create();
-    }
+	public function validate(Filterer $filterer) {
+		$return = parent::validate($filterer);
+		if ($this->name === 'csrf') {
+			$csrf = new Csrf($this->key);
+			$csrf->remove();
+		}
+		return $return;
+	}
 
-    public function render() {
-        return $this->create();
-    }
+	public function create() {
+		if ($this->name === 'csrf') { // store new csrf value
+			$csrf = new Csrf($this->key);
+			$this->options->value = $csrf->create()->fetch();
+		}
+		return parent::create();
+	}
+
+	public function render() {
+		return $this->create();
+	}
 
 }

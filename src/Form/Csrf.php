@@ -15,33 +15,32 @@ namespace dScribe\Form;
  */
 class Csrf {
 
-    protected $name;
+	protected $name;
 
-    public function __construct($name = 'secureForm') {
-        $this->name = md5($name);
-    }
+	public function __construct($name = 'secureForm') {
+		$this->name = md5($name);
+	}
 
-    public function create() {
-        if (!$this->fetch())
-                \Session::save($this->name, \Util::randomPassword(20));
-        return $this;
-    }
+	public function create() {
+		if (!$this->fetch()) \Session::save($this->name, \Util::randomPassword(20));
+		return $this;
+	}
 
-    public function fetch() {
-        return \Session::fetch($this->name);
-    }
+	public function fetch() {
+		return \Session::fetch($this->name);
+	}
 
-    public function isValid($code) {
-        return ($code === $this->fetch());
-    }
+	public function isValid($code) {
+		return ($code === $this->fetch());
+	}
 
-    public function remove() {
-        \Session::remove($this->name);
-        return $this;
-    }
+	public function remove() {
+		\Session::remove($this->name);
+		return $this;
+	}
 
-    public function getName() {
-        return $this->name;
-    }
+	public function getName() {
+		return $this->name;
+	}
 
 }

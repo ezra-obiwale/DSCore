@@ -22,9 +22,9 @@ abstract class ACore {
 		$exp = explode('\\', $this->getClass());
 
 		return (!empty($suffix) &&
-			substr($exp[count($exp) - 1], (strlen($exp[count($exp) - 1]) - strlen($suffix))) === $suffix) ?
-			substr($exp[count($exp) - 1], 0, (strlen($exp[count($exp) - 1]) - strlen($suffix))) :
-			$exp[count($exp) - 1];
+				substr($exp[count($exp) - 1], (strlen($exp[count($exp) - 1]) - strlen($suffix))) === $suffix) ?
+				substr($exp[count($exp) - 1], 0, (strlen($exp[count($exp) - 1]) - strlen($suffix))) :
+				$exp[count($exp) - 1];
 	}
 
 	/**
@@ -55,5 +55,4 @@ abstract class ACore {
 	 * @access public
 	 */
 	abstract public function getClassName();
-
 }

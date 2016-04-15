@@ -11,5 +11,5 @@ namespace dScribe\Form\Element;
  * @author topman
  */
 class Reset extends Button {
-
+	
 }

@@ -2,91 +2,88 @@
 
 class Session {
 
-    /**
-     * String to prepend all session keys with
-     * @var string
-     */
-    private static $prepend = '__DS_';
-    private static $lifetime;
-    private static $initialized = false;
+	/**
+	 * String to prepend all session keys with
+	 * @var string
+	 */
+	private static $prepend = '__DS_';
+	private static $lifetime;
+	private static $initialized = false;
 
-    private static function init() {
-        if (self::getLifetime()) {
-            ini_set('session.gc_maxlifetime', self::getLifetime());
-            session_set_cookie_params(self::getLifetime());
-        }
-        session_start();
-        self::$initialized = true;
-    }
+	private static function init() {
+		if (self::getLifetime()) {
+			ini_set('session.gc_maxlifetime', self::getLifetime());
+			session_set_cookie_params(self::getLifetime());
+		}
+		session_start();
+		self::$initialized = true;
+	}
 
-    private static function close() {
-        // session_write_close();
-    }
+	private static function close() {
+		// session_write_close();
+	}
 
-    /**
-     * Set the life time for the session
-     * @param int $lifetime
-     */
-    public static function setLifetime($lifetime) {
-        self::$lifetime = $lifetime;
-    }
+	/**
+	 * Set the life time for the session
+	 * @param int $lifetime
+	 */
+	public static function setLifetime($lifetime) {
+		self::$lifetime = $lifetime;
+	}
 
-    /**
-     * Fetch the life time for the session
-     * @return int
-     */
-    public static function getLifetime() {
-        if (!self::$lifetime && $sessionExpirationHours = engineGet('Config',
-                'sessionExpirationHours', false)) {
-            self::$lifetime = 60 * 60 * $sessionExpirationHours;
-        }
+	/**
+	 * Fetch the life time for the session
+	 * @return int
+	 */
+	public static function getLifetime() {
+		if (!self::$lifetime && $sessionExpirationHours = engineGet('Config', 'sessionExpirationHours', false)) {
+			self::$lifetime = 60 * 60 * $sessionExpirationHours;
+		}
 
-        return self::$lifetime;
-    }
+		return self::$lifetime;
+	}
 
-    /**
-     * Saves to session
-     * @param string $key
-     * @param mixed $value
-     * @param int $duration Duration for which the identity should be valid
-     */
-    public static function save($key, $value, $duration = null) {
-        self::setLifetime($duration);
-        static::init();
-        $_SESSION[self::$prepend . $key] = $value;
-        self::close();
-    }
+	/**
+	 * Saves to session
+	 * @param string $key
+	 * @param mixed $value
+	 * @param int $duration Duration for which the identity should be valid
+	 */
+	public static function save($key, $value, $duration = null) {
+		self::setLifetime($duration);
+		static::init();
+		$_SESSION[self::$prepend . $key] = $value;
+		self::close();
+	}
 
-    /**
-     * Fetches from session
-     * @param string $key
-     * @return mixed
-     */
-    public static function fetch($key) {
-        if (!self::$initialized) self::init();
+	/**
+	 * Fetches from session
+	 * @param string $key
+	 * @return mixed
+	 */
+	public static function fetch($key) {
+		if (!self::$initialized) self::init();
 
-        if (isset($_SESSION[self::$prepend . $key]))
-                return $_SESSION[self::$prepend . $key];
-    }
+		if (isset($_SESSION[self::$prepend . $key])) return $_SESSION[self::$prepend . $key];
+	}
 
-    /**
-     * Removes from session
-     * @param string $key
-     */
-    public static function remove($key) {
-        static::init();
-        if (isset($_SESSION[self::$prepend . $key]))
-                unset($_SESSION[self::$prepend . $key]);
-        self::close();
-    }
+	/**
+	 * Removes from session
+	 * @param string $key
+	 */
+	public static function remove($key) {
+		static::init();
+		if (isset($_SESSION[self::$prepend . $key])) unset($_SESSION[self::$prepend . $key]);
+		self::close();
+	}
 
-    /**
-     * Reset (destroy) the session
-     */
-    public static function reset() {
-        static::init();
-        session_destroy();
-        self::close();
-    }
+	/**
+	 * Reset (destroy) the session
+	 */
+	public static function reset() {
+		static::init();
+		session_destroy();
+		self::close();
+	}
 
 }

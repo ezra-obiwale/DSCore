@@ -12,8 +12,8 @@ namespace dScribe\Form\Element;
  */
 class Submit extends Button {
 
-    public function create() {
-        return parent::create(true);
-    }
+	public function create() {
+		return parent::create(true);
+	}
 
 }

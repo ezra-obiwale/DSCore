@@ -36,11 +36,9 @@ class WordFigure {
 	public function toWords($todo = null) {
 		$this->toWords = true;
 
-		if ($todo !== null)
-			$this->todo = $todo;
+		if ($todo !== null) $this->todo = $todo;
 
-		if ($this->todo !== null)
-			return $this->doQuadrillion();
+		if ($this->todo !== null) return $this->doQuadrillion();
 	}
 
 	/**
@@ -50,17 +48,14 @@ class WordFigure {
 	public function toFigure($todo = null) {
 		$this->toWords = false;
 
-		if ($todo !== null)
-			$this->todo = $todo;
+		if ($todo !== null) $this->todo = $todo;
 
-		if ($this->todo !== null)
-			return $this->doQuadrillion();
+		if ($this->todo !== null) return $this->doQuadrillion();
 	}
 
 	private function doQuadrillion($value = null) {
 		$return = '';
-		if ($value === null)
-			$value = $this->todo;
+		if ($value === null) $value = $this->todo;
 
 		if ($this->toWords) {
 			$quadrillion = (int) ($value / 1000000000000000);
@@ -73,11 +68,11 @@ class WordFigure {
 			$diff = $value - ($quadrillion * 1000000000000000);
 			if ($diff > 0) {
 				if ($quadrillion > 0)
-					$return .= (($diff >= 100 && ($diff % 100) === 0) || $diff < 100) ? ' and ' : ', ';
+						$return .= (($diff >= 100 && ($diff % 100) === 0) || $diff < 100) ? ' and ' : ', ';
 				$return .= $this->doTrillion($diff);
 			}
 		} else {
-
+			
 		}
 
 		return $return;
@@ -85,8 +80,7 @@ class WordFigure {
 
 	private function doTrillion($value = null) {
 		$return = '';
-		if ($value === null)
-			$value = $this->todo;
+		if ($value === null) $value = $this->todo;
 
 		if ($this->toWords) {
 			$trillion = (int) ($value / 1000000000000);
@@ -99,11 +93,11 @@ class WordFigure {
 			$diff = $value - ($trillion * 1000000000000);
 			if ($diff > 0) {
 				if ($trillion > 0)
-					$return .= (($diff >= 100 && ($diff % 100) === 0) || $diff < 100) ? ' and ' : ', ';
+						$return .= (($diff >= 100 && ($diff % 100) === 0) || $diff < 100) ? ' and ' : ', ';
 				$return .= $this->doBillion($diff);
 			}
 		} else {
-
+			
 		}
 
 		return $return;
@@ -111,8 +105,7 @@ class WordFigure {
 
 	private function doBillion($value = null) {
 		$return = '';
-		if ($value === null)
-			$value = $this->todo;
+		if ($value === null) $value = $this->todo;
 
 		if ($this->toWords) {
 			$billion = (int) ($value / 1000000000);
@@ -125,11 +118,11 @@ class WordFigure {
 			$diff = $value - ($billion * 1000000000);
 			if ($diff > 0) {
 				if ($billion > 0)
-					$return .= (($diff >= 100 && ($diff % 100) === 0) || $diff < 100) ? ' and ' : ', ';
+						$return .= (($diff >= 100 && ($diff % 100) === 0) || $diff < 100) ? ' and ' : ', ';
 				$return .= $this->doMillion($diff);
 			}
 		} else {
-
+			
 		}
 
 		return $return;
@@ -137,8 +130,7 @@ class WordFigure {
 
 	private function doMillion($value = null) {
 		$return = '';
-		if ($value === null)
-			$value = $this->todo;
+		if ($value === null) $value = $this->todo;
 
 		if ($this->toWords) {
 			$million = (int) ($value / 1000000);
@@ -150,11 +142,11 @@ class WordFigure {
 			$diff = $value - ($million * 1000000);
 			if ($diff > 0) {
 				if ($million > 0)
-					$return .= (($diff >= 100 && ($diff % 100) === 0) || $diff < 100) ? ' and ' : ', ';
+						$return .= (($diff >= 100 && ($diff % 100) === 0) || $diff < 100) ? ' and ' : ', ';
 				$return .= $this->doThousand($diff);
 			}
 		} else {
-
+			
 		}
 
 		return $return;
@@ -162,8 +154,7 @@ class WordFigure {
 
 	private function doThousand($value = null) {
 		$return = '';
-		if ($value === null)
-			$value = $this->todo;
+		if ($value === null) $value = $this->todo;
 
 		if ($this->toWords) {
 			$thousand = (int) ($value / 1000);
@@ -175,11 +166,11 @@ class WordFigure {
 			$diff = $value - ($thousand * 1000);
 			if ($diff > 0) {
 				if ($thousand > 0)
-					$return .= (($diff >= 100 && ($diff % 100) === 0) || $diff < 100) ? ' and ' : ', ';
+						$return .= (($diff >= 100 && ($diff % 100) === 0) || $diff < 100) ? ' and ' : ', ';
 				$return .= $this->doHundred($diff);
 			}
 		} else {
-
+			
 		}
 
 		return $return;
@@ -187,8 +178,7 @@ class WordFigure {
 
 	private function doHundred($value = null) {
 		$return = '';
-		if ($value === null)
-			$value = $this->todo;
+		if ($value === null) $value = $this->todo;
 
 		if ($this->toWords) {
 			$hundred = (int) ($value / 100);
@@ -199,12 +189,11 @@ class WordFigure {
 
 			$diff = $value - ($hundred * 100);
 			if ($diff > 0) {
-				if ($hundred > 0)
-					$return .= ' and ';
+				if ($hundred > 0) $return .= ' and ';
 				$return .= $this->doTen($diff);
 			}
 		} else {
-
+			
 		}
 
 		return $return;
@@ -212,16 +201,12 @@ class WordFigure {
 
 	private function doTen($value = null) {
 		$return = '';
-		if ($value === null)
-			$value = $this->todo;
+		if ($value === null) $value = $this->todo;
 
 		if ($this->toWords) {
-			if ($value === 10)
-				return 'ten';
-			elseif ($value === 11)
-				return 'eleven';
-			elseif ($value === 12)
-				return 'twelve';
+			if ($value === 10) return 'ten';
+			elseif ($value === 11) return 'eleven';
+			elseif ($value === 12) return 'twelve';
 
 			$level = array(
 				2 => 'twenty',
@@ -244,27 +229,25 @@ class WordFigure {
 			$diff = $value - ($pref * 10);
 			$unit = $this->doUnit($diff);
 
-			if ($pref === 0)
-				return $unit;
+			if ($pref === 0) return $unit;
 
-			if ($diff === 0 && $pref > 1)
-				return $level[$pref];
+			if ($diff === 0 && $pref > 1) return $level[$pref];
 
 			if ($pref < 2) {
 				return (isset($irreg[$diff])) ? $irreg[$diff] . 'teen' : $unit . 'teen';
 			}
 
 			return $level[$pref] . '-' . strtolower($unit);
-		} else {
-
+		}
+		else {
+			
 		}
 
 		return $return;
 	}
 
 	private function doUnit($value) {
-		if ($value === null)
-			$value = $this->todo;
+		if ($value === null) $value = $this->todo;
 
 		if ($this->toWords) {
 			$words = array(
