@@ -156,8 +156,31 @@ class Fieldset extends AValidator {
 	 * @throws Exception
 	 */
 	public function add($element) {
-		if ((is_object($element) && !is_a($element, 'dScribe\Form\Element')) || (!is_object($element) &&
-				!is_array($element)))
+		$element = $this->processElement($element);
+		$this->elements[$element->name] = $element;
+
+		return $this;
+	}
+
+	/**
+	 * Changes the type element that was added
+	 * @param string $elementName The name of the added element
+	 * @param string $newElementType The type of element to change the added element to
+	 * @return \dScribe\Form\Fieldset
+	 */
+	final public function changeElementType($elementName, $newElementType) {
+		if (array_key_exists($elementName, $this->elements)) {
+			$element = $this->elements[$elementName]->toArray(true);
+			$element['type'] = $newElementType;
+			$elementClass = 'dScribe\Form\Element\\' . ucfirst($element['type']);
+			$this->elements[$elementName] = class_exists($elementClass) ? new $elementClass($element, true, 'values') : new Element($element, true, 'values');
+		}
+		return $this;
+	}
+
+	private function processElement($element) {
+		if ((is_object($element) && !is_a($element, 'dScribe\Form\Element')) ||
+				(!is_object($element) && !is_array($element)))
 				throw new Exception('Form elements must be either an array or an object subclass of dScribe\Form\Element');
 		else if (is_array($element)) {
 			if (!isset($element['type'])) {
@@ -181,13 +204,45 @@ class Fieldset extends AValidator {
 			$element->setCsrfKey($this->getName());
 		}
 
-		$this->elements[$element->name] = $element;
-
 		if (!$element->filters) {
 			$filters = $this->getFilters();
 			if (@$filters[$element->name]) $element->filters = $filters[$element->name];
 		}
 
+		return $element;
+	}
+
+	public function addBefore($elementName, $element) {
+		$element = $this->processElement($element);
+		if (array_key_exists($elementName, $this->elements)) {
+			$keys = array_keys($this->elements);
+			$values = array_values($this->elements);
+			$positions = array_flip($keys);
+			$position = $positions[$elementName];
+			array_splice($keys, $position, 0, $element->name);
+			array_splice($values, $position, 0, array($element));
+			$this->elements = array_combine($keys, $values);
+		}
+		else {
+			$this->elements[$element->name] = $element;
+		}
+		return $this;
+	}
+
+	public function addAfter($elementName, $element) {
+		$element = $this->processElement($element);
+		if (array_key_exists($elementName, $this->elements)) {
+			$keys = array_keys($this->elements);
+			$values = array_values($this->elements);
+			$positions = array_flip($keys);
+			$position = $positions[$elementName];
+			array_splice($keys, $position + 1, 0, $element->name);
+			array_splice($values, $position + 1, 0, array($element));
+			$this->elements = array_combine($keys, $values);
+		}
+		else {
+			$this->elements[$element->name] = $element;
+		}
 		return $this;
 	}
 

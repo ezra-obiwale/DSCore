@@ -31,7 +31,7 @@ class Exception extends \Exception {
 			$view->variables(array('exception' => $return))->render($return->messageWithTrace);
 		}
 		else {
-			echo $this->prepareOutput($ex)->messageWithTrace;
+			echo $this->prepareOutput($ex)->message;
 		}
 		exit;
 	}

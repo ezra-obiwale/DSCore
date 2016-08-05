@@ -102,7 +102,7 @@ class AService extends ACore {
 	}
 
 	/**
-	 * Fetches the class name
+	 * Fetches the class name without the Service suffix
 	 * @return string
 	 */
 	public function getClassName() {

@@ -127,16 +127,25 @@ class Engine {
 	 */
 	public static function getUrls() {
 		if (static::$urls !== null) return static::$urls;
-		if (FALSE === $uri = strstr($_SERVER['REQUEST_URI'], '?', true)) $uri = $_SERVER['REQUEST_URI'];
-		if (($u = strstr($uri, '/' . BASE . '/public')) || ($u = strstr($uri, '/' . BASE))) $uri = $u;
-		if (substr($uri, 1, strlen(BASE)) === BASE) { // not virtual
-			$uri = substr($uri, strlen(BASE) + 1);
-			if (strtolower(substr($uri, 1, 6)) === 'public') $uri = substr($uri, 7);
+		if (FALSE === $url = strstr($_SERVER['REQUEST_URI'], '?', true)) $url = $_SERVER['REQUEST_URI'];
+		static::$urls = static::parseUrl($url);
+		return static::$urls;
+	}
+
+	/**
+	 * Parse the given url into an array contain the target module, controller, action and parameters
+	 * @param string $url The url to parse
+	 * @return array
+	 */
+	public static function parseUrl($url) {
+		if (($u = strstr($url, '/' . BASE . '/public')) || ($u = strstr($url, '/' . BASE))) $url = $u;
+		if (substr($url, 1, strlen(BASE)) === BASE) { // not virtual
+			$url = substr($url, strlen(BASE) + 1);
+			if (strtolower(substr($url, 1, 6)) === 'public') $url = substr($url, 7);
 		}
 		static::$serverPath = dirname($_SERVER['SCRIPT_NAME']);
 		if (basename(static::$serverPath) == 'public') static::$serverPath = dirname(static::$serverPath);
-		static::$urls = static::updateArrayKeys(explode('/', $uri), true);
-		return static::$urls;
+		return static::updateArrayKeys(explode('/', $url), true);
 	}
 
 	/**

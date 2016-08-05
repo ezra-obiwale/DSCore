@@ -133,7 +133,7 @@ class Element extends Object {
 	 * Fetches the current value of the element
 	 * @return mixed
 	 */
-	protected function getValue() {
+	public function getValue() {
 		$value = null;
 		if (($this->data == '0' || !empty($this->data)) && !is_object($this->data)) {
 			$value = ($this->parent && is_array($this->data)) ? $this->data[0] : $this->data;
@@ -186,12 +186,17 @@ class Element extends Object {
 		ob_start();
 		if ($this->options->label):
 			$label = $this->options->label;
+			$attrs = '';
 			if (is_object($label)) {
 				if ($label->attrs) $attrs = \Util::parseAttrArray($label->attrs->toArray());
 				$label = $label->text;
+			} else if (is_array($label)) {
+				if ($label['attrs']) $attrs = \Util::parseAttrArray($label['attrs']);
+				$label = $label['text'];
 			}
 			?>
-			<label for="<?= $this->attributes->id ?>" <?= $attrs ?>><?= $label ?>
+			<label for="<?= $this->attributes->id ?>" <?= $attrs ?>>
+				<?= $label ?>
 				<?php if ($close): ?>
 				</label>
 				<?php
@@ -266,10 +271,20 @@ class Element extends Object {
 	/**
 	 * Checks whether element is of the given type
 	 * @param string $type
+	 * @param string $_ You may pass many arguments to be checked. TRUE is returned on first match
 	 * @return bool
 	 */
-	public function is($type) {
-		return (strtolower($type) === $this->type);
+	public function is($type, $_) {
+		$args = func_get_args();
+		for ($i = 0; $i < count($args); $i++) {
+			if (strtolower($args[$i]) === $this->type) return true;
+		}
+	}
+
+	public function __call($name, $arguments) {
+		if (strtolower(substr($name, 0, 2)) == 'is') {
+			return $this->is(substr($name, 2));
+		}
 	}
 
 	public function reset() {

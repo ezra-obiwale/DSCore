@@ -48,11 +48,15 @@ class Fieldset extends Element {
 			$fieldset = $fieldset->setName($this->name)
 					->render();
 			?>
-			<?php if ($this->options->label): ?>
-				<legend><?= $this->options->label ?> <?php $this->getMultipleButton($fieldset) ?></legend>
-			<?php endif; ?>
-
 			<?php
+			if ($this->options->label):
+				$label = $this->options->label->text;
+				if (!$label) $label = $this->options->label;
+				?>
+				<legend><?= $label ?> <?php $this->getMultipleButton($fieldset) ?></legend>
+			<?php
+			endif;
+
 			if (!$this->options->label) $this->getMultipleButton($fieldset);
 			echo $fieldset;
 			?>
@@ -119,7 +123,8 @@ class Fieldset extends Element {
 								fieldset.id + '" onclick="__deleteExtra(this)" style="display:block;margin:5px;color:red">x</button>' + content + ' </div>';
 
 						var field = m.querySelector('input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]),select,textarea');
-						field.value = '';
+						if (field)
+							field.value = '';
 						while (m.firstChild) {
 							fieldset.appendChild(m.firstChild);
 						}
@@ -182,7 +187,7 @@ class Fieldset extends Element {
 		</button>
 		<script>
 			__fieldsets['<?= $this->name ?>'] = {
-				content: '<?= trim(str_replace(array("\n", "\t", "  "), '', $fieldset)) ?>',
+				content: '<?= trim(str_replace(array("\n", "\r", "\t", "  "), '', $fieldset)) ?>',
 				max: parseInt('<?= $this->options->multiple->max ? $this->options->multiple->max : -1 ?>'),
 				count: 1,
 				extras: JSON.parse('<?= json_encode($this->data) ?>')

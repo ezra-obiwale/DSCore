@@ -390,11 +390,11 @@ class Filterer {
 	/**
 	 * Strips tags from the value of the given name
 	 * @see strip_tags()
-	 * @param string $name Name of the element to strip value's tags
+	 * @param string $data Name of the element to strip value's tags
 	 * @param string $allow Tags that will should not be stripped
 	 * @return boolean
 	 */
-	public function stripTags($data, $allow = '') {
+	public function stripTags(&$data, $allow = '') {
 		strip_tags($data, $allow);
 		return $this;
 	}

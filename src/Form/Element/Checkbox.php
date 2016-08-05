@@ -80,11 +80,10 @@ class Checkbox extends Element {
 		?>
 		<div class="element-group <?= $this->type ?> <?= $this->errors ? 'form-error' : null ?>">
 			<?php
-			echo $this->renderLabel($this->options->values ? true : false);
+			echo $this->renderLabel();
 			if (!$this->options->values): echo $this->prepare();
-				?>
-			</label>
-		<?php endif; ?>
+			endif;
+			?>
 		<?= $this->options->values ? $this->prepare() : null ?>
 		</div>
 		<?php

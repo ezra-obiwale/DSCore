@@ -22,7 +22,7 @@ class Hidden extends Element {
 		return $this;
 	}
 
-	protected function getValue() {
+	public function getValue() {
 		if ($this->name === 'csrf') {
 			$csrf = new Csrf($this->key);
 			return $csrf->fetch();

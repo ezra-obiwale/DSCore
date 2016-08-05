@@ -130,7 +130,7 @@ class Renderer extends AInjector {
 
 	/**
 	 * Fetches the identity of the current user
-	 * @return \dScribe\Core\AUserIdentity
+	 * @return \dScribe\Core\UserIdentity
 	 */
 	final protected function userIdentity() {
 		return engineGet('userIdentity');
@@ -210,10 +210,11 @@ class Renderer extends AInjector {
 			// include action view
 			ob_start();
 
-			if (is_array($viewFile))
-					include_once MODULES . $viewFile[0] . DIRECTORY_SEPARATOR . 'View' .
+			if (is_array($viewFile)) {
+				include_once MODULES . $viewFile[0] . DIRECTORY_SEPARATOR . 'View' .
 						DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR .
 						$viewFile[1] . DIRECTORY_SEPARATOR . $viewFile[2] . '.phtml';
+				}
 			else if (is_string($viewFile)) // loading from vendor
 				include_once $viewFile;
 
@@ -262,87 +263,32 @@ class Renderer extends AInjector {
 	}
 
 	/**
-	 * updates the cached asset files
-	 * @todo don't overwrite existing assets unless they are changed (both original && copied)
-	 */
-	private function updateAssets($file) {
-		$modulesAssets = MODULES . $this->view->getModule() . DIRECTORY_SEPARATOR . 'View' .
-				DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR;
-		$themeAssets = THEMES . engineGet('config', 'defaults', 'theme') .
-				DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR;
-
-		if (is_dir($modulesAssets) && is_readable($modulesAssets . $file)) {
-			$publicFile = ASSETS . $this->view->getModule() . DIRECTORY_SEPARATOR . $file;
-
-			if (!is_dir($modulesAssets . $file) && (!is_readable($publicFile) ||
-					$this->checkOutOfDate($publicFile, $modulesAssets . $file))) {
-				if (!is_dir(dirname($publicFile))) {
-					mkdir(dirname($publicFile), 0777, true);
-				}
-				copy($modulesAssets . $file, $publicFile);
-			}
-			else if (is_dir($modulesAssets . $file)) {
-				Util::copyDir($modulesAssets . $file, $publicFile);
-			}
-		}
-		else if (is_dir($themeAssets) && is_readable($themeAssets . $file)) {
-			$publicFile = ASSETS . engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR . $file;
-			if (!is_dir($themeAssets . $file) && (!is_readable($publicFile) || $this->checkOutOfDate($publicFile, $themeAssets . $file))) {
-				if (!is_dir(dirname($publicFile))) {
-					mkdir(dirname($publicFile), 0777, true);
-				}
-				copy($themeAssets . $file, $publicFile);
-			}
-			else if (is_dir($themeAssets . $file)) {
-				Util::copyDir($themeAssets . $file, $publicFile);
-			}
-		}
-		else {
-			return false;
-		}
-		return true;
-	}
-
-	/**
 	 * Fetches the absolute path to a file
 	 * @param string $file
+	 * @param boolean $fromTheme Indicates whether to get file from theme assets and not modules' assets
 	 * @return string
 	 */
-	private function parseFile($file) {
-		return engineGet('serverPath') . str_replace(array(ROOT, DIRECTORY_SEPARATOR), array('', '/'), ASSETS . $file);
+	private function parseFile($file, $fromTheme) {
+		return engineGet('serverPath') . str_replace(array(ROOT, DIRECTORY_SEPARATOR), array('', '/'), $fromTheme ? THEMES . $file : MODULES . $file);
 	}
 
 	/**
 	 * Fetches the path to file
 	 * @param string $file
 	 * @param boolean $fromTheme Indicates whether to get file from theme assets and not modules' assets
-	 * @todo Look for a way to use files directly without copying them to the public folder to guide
-	 * against script injections and what-have-yous
 	 * @return string
 	 */
 	private function getFile($file, $fromTheme) {
 		$file = str_replace('/', DIRECTORY_SEPARATOR, $file);
-		$this->updateAssets($file);
-
-		if (!$fromTheme && is_readable(ASSETS . $this->view->getModule() . DIRECTORY_SEPARATOR . $file)) {
-			return $this->parseFile($this->view->getModule() . DIRECTORY_SEPARATOR . $file);
-		}
-		elseif (is_readable(ASSETS . engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR . $file)) {
-			return $this->parseFile(engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR . $file);
-		}
-		else {
-			return 'not-found' . DIRECTORY_SEPARATOR . $file;
-		}
-	}
-
-	/**
-	 * Checks if the public file is older than the protected file
-	 * @param type $publicFile
-	 * @param type $protectedFile
-	 * @return type
-	 */
-	private function checkOutOfDate($publicFile, $protectedFile) {
-		return (filemtime($protectedFile) > filemtime($publicFile));
+		$end = $fromTheme ?
+				'assets' . DIRECTORY_SEPARATOR . $file :
+				'View' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . $file;
+		if ($fromTheme)
+				return $this->parseFile(engineGet('config', 'defaults', 'theme') . DIRECTORY_SEPARATOR
+							. $end, $fromTheme);
+		else
+				return $this->parseFile($this->view->getModule() . DIRECTORY_SEPARATOR
+							. $end, $fromTheme);
 	}
 
 	/**
@@ -352,7 +298,7 @@ class Renderer extends AInjector {
 	 * @param boolean $once Indicates whether to load the stylesheet only once
 	 * @return string
 	 */
-	final protected function loadCss($css, $fromTheme = false, $once = false) {
+	final public function loadCss($css, $fromTheme = false, $once = false) {
 		if ($once && !$this->canLoadAsset($css, 'css')) return null;
 		return '<link rel="stylesheet" type="text/css" href="' . $this->getFile($css . '.css', $fromTheme) . '" />' . "\n";
 	}
@@ -364,7 +310,7 @@ class Renderer extends AInjector {
 	 * @param boolean $once Indicates whether to load the stylesheet only once
 	 * @return string|null
 	 */
-	final protected function loadJs($src, $fromTheme = false, $once = false) {
+	final public function loadJs($src, $fromTheme = false, $once = false) {
 		if ($once && !$this->canLoadAsset($src, 'js')) return null;
 		return '<script type="text/javascript" src="' . $this->getFile($src . '.js', $fromTheme) . '"></script>' . "\n";
 	}
@@ -376,22 +322,9 @@ class Renderer extends AInjector {
 	 * @param boolean $once Indicates whether to load the stylesheet only once
 	 * @return string
 	 */
-	final protected function loadIcon($src, $fromTheme = false, $once = true) {
+	final public function loadIcon($src, $fromTheme = false, $once = true) {
 		if ($once && !$this->canLoadAsset($src, 'icon')) return null;
 		return '<link rel="shortcut icon" href="' . $this->getFile($src, $fromTheme) . '"/>' . "\n";
-	}
-
-	/**
-	 * Loads an asset file/dir to make it available
-	 * @param string $fileName File or Directory name
-	 * @return Renderer
-	 */
-	final protected function loadAsset($fileName) {
-		if (!in_array($fileName, $this->loadedAssets['update'])) {
-			$this->updateAssets($fileName, true);
-			$this->loadedAssets['update'][] = $fileName;
-		}
-		return $this;
 	}
 
 	/**
@@ -400,7 +333,7 @@ class Renderer extends AInjector {
 	 * @param stirng $type css|js|icon|misc|update
 	 * @return boolean
 	 */
-	final protected function canLoadAsset($file, $type) {
+	private function canLoadAsset($file, $type) {
 		$filename = basename($file);
 		if (in_array($filename, $this->loadedAssets[$type])) return false;
 
@@ -433,11 +366,31 @@ class Renderer extends AInjector {
 	}
 
 	/**
+	 * Fetches the absolute path to the current module's directory
+	 * @return string
+	 */
+	final public function getModulePath() {
+		return MODULES . ucfirst(Util::hyphenToCamel($this->module())) . DIRECTORY_SEPARATOR;
+	}
+
+	/**
+	 * Fetches the absolute path to the current module's View directory
+	 * @return string
+	 */
+	final public function getModuleViewPath() {
+		return $this->getModulePath() . 'View' . DIRECTORY_SEPARATOR;
+	}
+
+	final public function getClassName() {
+		return 'Renderer';
+	}
+
+	/**
 	 * Fetches the link of the home page
 	 * @return string The link for the home page
 	 */
 	final public function home() {
-		return $this->view->url(engineGet('defaultModule'));
+		return $this->view->url();
 	}
 
 	/**
@@ -449,18 +402,6 @@ class Renderer extends AInjector {
 
 	final protected function inject() {
 		return $this->getConfigInject('views');
-	}
-
-	final public function getClassName() {
-		
-	}
-
-	/**
-	 * @todo
-	 * @param array $paths
-	 */
-	final public function breadcrumb(array $paths) {
-		
 	}
 
 }

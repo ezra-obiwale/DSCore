@@ -87,7 +87,7 @@ class Flash {
 	}
 
 	/**
-	 * Adds a(n array of) success message(s)
+	 * Adds a (/an array of) success message(s)
 	 * @param string|array $message
 	 * @return \dScribe\Core\Flash
 	 */
@@ -115,7 +115,7 @@ class Flash {
 	}
 
 	/**
-	 * Adds a(n array of) error message(s)
+	 * Adds an (array of) error message(s)
 	 * @param string|array $message
 	 * @return \dScribe\Core\Flash
 	 */

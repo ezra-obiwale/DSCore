@@ -142,7 +142,7 @@ abstract class AController extends ACore {
 	 */
 	final protected function redirect($module, $controller = null, $action = null,
 								   array $params = array(), $hash = null, $withQueryString = false) {
-		header('Location: ' . $this->view->url($module, $controller, $action, $params, $hash) . ($withQueryString ? '?' . $_SERVER['QUERY_STRING'] : ''));
+		header('Location: ' . $this->view->url($module, $controller, $action, $params) . ($withQueryString ? '?' . $_SERVER['QUERY_STRING'] : '') . ($hash ? '#' . $hash : ''));
 		exit;
 	}
 

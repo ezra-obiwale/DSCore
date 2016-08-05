@@ -198,6 +198,7 @@ class View {
 			$this->viewFile = VENDOR . $_ . '.phtml';
 		}
 		else {
+			if (!is_array($this->viewFile)) $this->viewFile = array();
 			if (count($args) > 3) {
 				for ($i = 3; $i < count($args); $i++) {
 					unset($args[$i]);

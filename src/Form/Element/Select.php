@@ -1,8 +1,5 @@
 <?php
 
-/*
- */
-
 namespace dScribe\Form\Element;
 
 use dScribe\Form\Element,
@@ -33,15 +30,18 @@ class Select extends Element {
 			else $this->targetObject();
 		}
 
+		$dependant = false;
 		if (isset($this->options->dependant)) {
+			if (is_array($this->options->dependant))
+					$this->options->dependant = new Object($this->options->dependant);
 			if (!isset($this->options->dependant->element))
 					throw new \Exception('Element not specified for select dependant in element "' . $this->name . '"');
 			else if (!isset($this->options->dependant->url))
 					throw new \Exception('URL not specified for select dependant in element "' . $this->name . '"');
 			else if (!isset($this->options->dependant->labels))
 					throw new \Exception('Labels not specified for select dependant in element "' . $this->name . '"');
-			else if (static::$loadDependantScript) $this->dependant();
-			$this->attributes->class .= ' withDependant';
+			else if (static::$loadDependantScript) $dependant = true;
+			$this->attributes->class .= ' with-dependant';
 			$this->attributes->dataUrl = $this->options->dependant->url;
 			$this->attributes->dataGet = $this->options->dependant->get;
 			$this->attributes->dataLabels = $this->options->dependant->labels;
@@ -105,6 +105,7 @@ class Select extends Element {
 		$return .= '<span class="loading-message ' . $this->attributes->id . '" style="display:none">' .
 				($this->options->loadingMessage ? $this->options->loadingMessage :
 						'<i><b>loading...</b></i>') . '</span>';
+		if ($dependant) $return .= $this->dependant();
 		return $return;
 	}
 
@@ -118,20 +119,20 @@ class Select extends Element {
 
 		if (isset($this->options->object->sort)) {
 			if (is_string($this->options->object->sort)) {
-				$order = $table->orderBy($this->options->object->sort);
+				$table->orderBy($this->options->object->sort);
 			}
 			elseif (is_object($this->options->object->sort)) {
 				if (!isset($this->options->object->sort->column))
 						throw new Exception('Select element with object can only be sorted by columns. No column specified for element "' . $this->name . '"');
 				if (isset($this->options->object->sort->direction))
-						$order = $table->orderBy($this->options->object->sort->column, $this->options->object->sort->direction);
-				else $order = $table->orderBy($this->options->object->sort->column);
+						$table->orderBy($this->options->object->sort->column, $this->options->object->sort->direction);
+				else $table->orderBy($this->options->object->sort->column);
 			} else {
 				throw new Exception('Sort value for select element with object can be either an array or a string. Invalid value for element for element "' . $this->name . '"');
 			}
 		}
 
-		$rows = (isset($order)) ? $order->select($criteria) : $table->select($criteria);
+		$rows = $table->select($criteria);
 		foreach ($rows as $row) {
 			if (!isset($this->options->object->labels) && !isset($this->options->object->values))
 					throw new \Exception('Option(s) "labels" and/or "values" is required for select objects');
@@ -191,28 +192,38 @@ class Select extends Element {
 	}
 
 	private function dependant() {
+		ob_start();
 		?>
 		<script type="text/javascript">
 			var selectDefaults = {};
+			function emptyDependant(elem) {
+				while (elem.lastChild) {
+					elem.removeChild(elem.lastChild);
+					if (elem.className.indexOf('with-dependant') !== -1) {
+						emptyDependant(document.querySelector('#' + elem.getAttribute('data-dependant')));
+					}
+				}
+				if (elem.getAttribute('data-empty-value')) {
+					var def = document.createElement('option'),
+							defVal = document.createTextNode(elem.getAttribute('data-empty-value'));
+					def.setAttribute('value', '');
+					def.appendChild(defVal);
+					elem.appendChild(def);
+				}
+			}
 			document.addEventListener('DOMContentLoaded', function () {
-				var source = document.querySelector('select.withDependant');
-				source.addEventListener('change', function () {
-					var target = document.querySelector(source.getAttribute('data-dependant'));
-					while (target.lastChild) {
-						target.removeChild(target.lastChild);
-					}
-					if (!source.value && target.getAttribute('data-empty-value')) {
-						var def = document.createElement('option'),
-								defVal = document.createTextNode(target.getAttribute('data-empty-value'));
-						def.setAttribute('value', '');
-						def.appendChild(defVal);
-						target.appendChild(def);
-					}
-					else {
+				var sources = document.querySelectorAll('select.with-dependant');
+				for (var i = 0; i < sources.length; i++) {
+					var source = sources[i];
+					source.addEventListener('change', function () {
+						var current = this,
+								target = document.querySelector('#' + this.getAttribute('data-dependant'));
+						emptyDependant(target);
+						if (!this.value) return;
 						var targetDisplay = target.style.display;
 						target.style.display = 'none';
 						var loadingMessage = document.querySelector('.loading-message.' + target.getAttribute('id'));
-						loadingMessage.style.display = 'inline';
+						loadingMessage.style.display = 'inline-block';
 						var httpRequest = new XMLHttpRequest(), result = null;
 						httpRequest.onreadystatechange = function () {
 							if (!result && httpRequest.responseText) {
@@ -220,14 +231,14 @@ class Select extends Element {
 
 								result.forEach(function (v, i) {
 									var option = document.createElement('option'),
-											content = document.createTextNode(v[source.getAttribute('data-labels')]);
+											content = document.createTextNode(v[current.getAttribute('data-labels')]);
 
-									if (source.getAttribute('data-values'))
-										option.setAttribute('value', v[source.getAttribute('data-values')]);
-									if ((source.getAttribute('data-values') &&
-											target.getAttribute('data-selected') == v[source.getAttribute('data-values')]) ||
-											(!source.getAttribute('data-values') &&
-													target.getAttribute('data-selected') == v[source.getAttribute('data-labels')]))
+									if (current.getAttribute('data-values'))
+										option.setAttribute('value', v[current.getAttribute('data-values')]);
+									if ((current.getAttribute('data-values') &&
+											target.getAttribute('data-selected') == v[current.getAttribute('data-values')]) ||
+											(!current.getAttribute('data-values') &&
+													target.getAttribute('data-selected') == v[current.getAttribute('data-labels')]))
 										option.setAttribute('selected', 'selected');
 									option.appendChild(content);
 
@@ -235,25 +246,35 @@ class Select extends Element {
 								});
 								loadingMessage.style.display = 'none';
 								target.style.display = targetDisplay;
+								if (document.createEventObject) {
+									var evt = document.crateEventObject();
+									target.fireEvent('onChange', evt);
+								} else {
+									var evt = document.createEvent('HTMLEvents');
+									evt.initEvent('change', true, true);
+									target.dispatchEvent(evt);
+								}
+							} else {
+								target.style.display = targetDisplay;
 							}
 						};
-						if (source.getAttribute('data-get')) {
-							url = source.getAttribute('data-url') + '?' + source.getAttribute('data-get') + '=' + source.value;
+						if (current.getAttribute('data-get')) {
+							url = current.getAttribute('data-url') + '?' + current.getAttribute('data-get') + '=' + current.value;
 						} else {
-							url = source.getAttribute('data-url') + '/' + source.value;
+							url = current.getAttribute('data-url') + '/' + current.value;
 						}
 						httpRequest.open('GET', url);
 						httpRequest.send();
-					}
-				});
-				if (source.value) {
-					if (document.createEventObject) {
-						var evt = document.crateEventObject();
-						source.fireEvent('onChange', evt);
-					} else {
-						var evt = document.createEvent('HTMLEvents');
-						evt.initEvent('change', true, true);
-						source.dispatchEvent(evt);
+					});
+					if (source.value) {
+						if (document.createEventObject) {
+							var evt = document.crateEventObject();
+							source.fireEvent('onChange', evt);
+						} else {
+							var evt = document.createEvent('HTMLEvents');
+							evt.initEvent('change', true, true);
+							source.dispatchEvent(evt);
+						}
 					}
 				}
 			});
@@ -261,6 +282,7 @@ class Select extends Element {
 		<?php
 
 		static::$loadDependantScript = false;
+		return ob_get_clean();
 	}
 
 }

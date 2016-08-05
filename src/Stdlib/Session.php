@@ -9,18 +9,25 @@ class Session {
 	private static $prepend = '__DS_';
 	private static $lifetime;
 	private static $initialized = false;
+	private static $writeClosed = false;
 
 	private static function init() {
-		if (self::getLifetime()) {
+		if (!self::$initialized && self::getLifetime()) {
 			ini_set('session.gc_maxlifetime', self::getLifetime());
 			session_set_cookie_params(self::getLifetime());
 		}
-		session_start();
+		if (!self::$writeClosed) {
+			session_start();
+			self::$writeClosed = false;
+		}
 		self::$initialized = true;
 	}
 
 	private static function close() {
-		// session_write_close();
+		if (!self::$writeClosed) {
+			session_write_close();
+			self::$writeClosed = true;
+		}
 	}
 
 	/**
@@ -63,8 +70,8 @@ class Session {
 	 */
 	public static function fetch($key) {
 		if (!self::$initialized) self::init();
-
 		if (isset($_SESSION[self::$prepend . $key])) return $_SESSION[self::$prepend . $key];
+		if (self::$initialized) self::close();
 	}
 
 	/**
@@ -72,18 +79,18 @@ class Session {
 	 * @param string $key
 	 */
 	public static function remove($key) {
-		static::init();
+		if (!self::$initialized) self::init();
 		if (isset($_SESSION[self::$prepend . $key])) unset($_SESSION[self::$prepend . $key]);
-		self::close();
+		if (self::$initialized) self::close();
 	}
 
 	/**
 	 * Reset (destroy) the session
 	 */
 	public static function reset() {
-		static::init();
+		if (!self::$initialized) self::init();
 		session_destroy();
-		self::close();
+		if (self::$initialized) self::close();
 	}
 
 }
