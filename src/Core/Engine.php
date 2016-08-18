@@ -14,7 +14,7 @@ class Engine {
 	protected static $config;
 	protected static $userId;
 	protected static $flash;
-	protected static $isVirtual;
+	protected static $isVirtual = true;
 	protected static $db;
 	protected static $urls;
 	protected static $inject;
@@ -105,7 +105,8 @@ class Engine {
 	 */
 	protected static function initDB() {
 		$dbConfig = static::getConfig('db', static::getServer());
-		static::$db = new Connection($dbConfig['dsn'], $dbConfig['user'], $dbConfig['password'], $dbConfig['options']);
+		static::$db = new Connection($dbConfig['dsn'], $dbConfig['user'], $dbConfig['password'],
+							   $dbConfig['options']);
 		static::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 		if (!empty($dbConfig['tablePrefix'])) static::$db->setTablePrefix($dbConfig['tablePrefix']);
@@ -127,8 +128,7 @@ class Engine {
 	 */
 	public static function getUrls() {
 		if (static::$urls !== null) return static::$urls;
-		if (FALSE === $url = strstr($_SERVER['REQUEST_URI'], '?', true)) $url = $_SERVER['REQUEST_URI'];
-		static::$urls = static::parseUrl($url);
+		static::$urls = static::parseUrl($_SERVER['REQUEST_URI']);
 		return static::$urls;
 	}
 
@@ -138,13 +138,16 @@ class Engine {
 	 * @return array
 	 */
 	public static function parseUrl($url) {
+		$url = explode('?', $url);
+		$url = $url[0];
+		// Make sure url starts from base
 		if (($u = strstr($url, '/' . BASE . '/public')) || ($u = strstr($url, '/' . BASE))) $url = $u;
-		if (substr($url, 1, strlen(BASE)) === BASE) { // not virtual
+		if (strtolower(substr($url, 1, strlen(BASE))) === strtolower(BASE)) { // not virtual
 			$url = substr($url, strlen(BASE) + 1);
 			if (strtolower(substr($url, 1, 6)) === 'public') $url = substr($url, 7);
+			self::$isVirtual = false;
 		}
-		static::$serverPath = dirname($_SERVER['SCRIPT_NAME']);
-		if (basename(static::$serverPath) == 'public') static::$serverPath = dirname(static::$serverPath);
+		static::$serverPath = '/' . BASE . '/';
 		return static::updateArrayKeys(explode('/', $url), true);
 	}
 
@@ -153,8 +156,7 @@ class Engine {
 	 * @return string
 	 */
 	public static function getServerPath() {
-		return (static::isVirtual() || static::$serverPath == '/public') ?
-				'/' : static::$serverPath . '/';
+		return static::isVirtual() ? '/' : static::$serverPath;
 	}
 
 	/**
@@ -411,17 +413,23 @@ class Engine {
 
 	protected static function checkConfig(array $config) {
 		if (!static::getConfig('modules', false))
-				throw new \Exception('Modules not specified in the config file. Please consult the documentation', true);
+				throw new \Exception('Modules not specified in the config file. Please consult the documentation',
+						 true);
 		elseif (!static::checkModules(static::getConfig('modules', false)))
-				throw new \Exception('Invalid "modules" settings in the config file. Please consult the documentation', true);
+				throw new \Exception('Invalid "modules" settings in the config file. Please consult the documentation',
+						 true);
 		elseif (!static::getConfig('app', false))
-				throw new \Exception('App settings not specified in the config file. Please consult the documentation', true);
+				throw new \Exception('App settings not specified in the config file. Please consult the documentation',
+						 true);
 		elseif (!static::getConfig('app', 'name', false))
-				throw new \Exception('App name not specified in the config file. Please consult the documentation', true);
+				throw new \Exception('App name not specified in the config file. Please consult the documentation',
+						 true);
 		elseif (!static::getConfig('defaults', false))
-				throw new \Exception('Defaults settings not specified in the config file. Please consult the documentation', true);
+				throw new \Exception('Defaults settings not specified in the config file. Please consult the documentation',
+						 true);
 		elseif (!static::getConfig('defaults', 'theme', false))
-				throw new \Exception('Default theme not specified in the config file. Please consult the documentation', true);
+				throw new \Exception('Default theme not specified in the config file. Please consult the documentation',
+						 true);
 	}
 
 	protected static function checkModules($modules) {
@@ -440,7 +448,8 @@ class Engine {
 	}
 
 	protected static function moduleIsActivated() {
-		if (!array_key_exists(ucfirst(Util::hyphenToCamel(static::getModule())), static::getConfig('modules')))
+		if (!array_key_exists(ucfirst(Util::hyphenToCamel(static::getModule())),
+													static::getConfig('modules')))
 				throw new \Exception('Module "' . static::getModule() . '" not activated');
 	}
 
@@ -515,7 +524,8 @@ class Engine {
 		$noCacheActions = call_user_func(array(static::getControllerClass(false),
 			'noCache'));
 		return ((is_bool($noCacheActions) && !$noCacheActions) || (is_array($noCacheActions) &&
-				!in_array(\Util::camelToHyphen(static::getAction()), \Util::arrayValuesCamelTo($noCacheActions, '-')))) ?
+				!in_array(\Util::camelToHyphen(static::getAction()),
+								   \Util::arrayValuesCamelTo($noCacheActions, '-')))) ?
 				new Cache(static::getUserIdentity()->getUser()) : null;
 	}
 
