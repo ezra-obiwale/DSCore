@@ -46,7 +46,6 @@ final class UserIdentity {
 	}
 
 	private function saveUser(AUser $user, $duration) {
-		//@todo: replace saving in session with file saving
 		\Session::save('USER', $user, $duration);
 		return true;
 	}

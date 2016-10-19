@@ -79,7 +79,6 @@ class Filterer {
 
 	/**
 	 * Makes an element required
-	 * @param string $name Name of the element to filter
 	 * @param boolean|string|array $options Boolean indicates required or not. 
 	 * String indicates required with custom message.
 	 * Array indicates required and has options
@@ -104,7 +103,6 @@ class Filterer {
 
 	/**
 	 * Checks if the value of the element matches the given option
-	 * @param string $name Name of the element to filter
 	 * @param  array $options Keys may include [message]
 	 * @return boolean
 	 * @throws \Exception
@@ -132,7 +130,6 @@ class Filterer {
 
 	/**
 	 * Checks if the value of the element does not match the given option
-	 * @param string $name Name of the element to filter
 	 * @param  array $options Keys may include [message]
 	 * @return boolean
 	 * @throws \Exception
@@ -159,7 +156,7 @@ class Filterer {
 
 	/**
 	 * Checks if the value of the element is a valid email address
-	 * @param string $name Name of the element to filter
+
 	 * @param  array $options Keys may include [message]
 	 * @return boolean
 	 */
@@ -175,7 +172,6 @@ class Filterer {
 
 	/**
 	 * Checks if the values of the element is a valid url
-	 * @param string $name Name of the element to filter
 	 * @param  array $options Keys may include [message]
 	 * @return boolean
 	 */
@@ -191,8 +187,21 @@ class Filterer {
 	}
 
 	/**
+	 * Checks if the contents of the element match the regular expression
+	 * @param  array $options Keys may include [message]
+	 * @return boolean
+	 */
+	public function regex(array $options) {
+		if ($this->elementData != '0' && !$this->elementData) return true;
+		if (!$options['exp']) return true;
+		if (!preg_match($options['exp'], $this->elementData)) return true;
+
+		$this->addError($this->checkMessage('Invalid format', $options));
+		return false;
+	}
+
+	/**
 	 * Checks if the contents of the element are all alphabets
-	 * @param string $name Name of the element to filter
 	 * @param  array $options Keys may include [message]
 	 * @return boolean
 	 */
@@ -208,7 +217,6 @@ class Filterer {
 
 	/**
 	 * Checks if the contents of the element are either alphabets or numbers
-	 * @param string $name Name of the element to filter
 	 * @param  array $options Keys may include [message]
 	 * @return boolean
 	 */
@@ -224,7 +232,6 @@ class Filterer {
 
 	/**
 	 * Checks if the content of the element is decimal
-	 * @param string $name Name of the element to filter
 	 * @param  array $options Keys may include [message]
 	 * @return boolean
 	 */
@@ -237,7 +244,9 @@ class Filterer {
 	}
 
 	/**
-	 * @see Filterer::Digit()
+	 * Checks if the content of the element is a number
+	 * @param  array $options Keys may include [message]
+	 * @return boolean
 	 */
 	public function number(array $options) {
 		if ($this->elementData != '0' && !$this->elementData) return true;
@@ -253,7 +262,6 @@ class Filterer {
 
 	/**
 	 * Checks if the value of the element is greater than the given value
-	 * @param string $name Name of the element to filter
 	 * @param  array $options Keys may include [message]
 	 * @return boolean
 	 */
@@ -280,7 +288,6 @@ class Filterer {
 
 	/**
 	 * Checks if the value of the element is less than the given value
-	 * @param string $name Name of the element to filter
 	 * @param  array $options Keys may include [message]
 	 * @return boolean
 	 */
@@ -307,7 +314,6 @@ class Filterer {
 
 	/**
 	 * Checks if the length of the value of the element is not less than the required length
-	 * @param string $name Name of the element to filter
 	 * @param  array $options Keys may include [message]
 	 * @return boolean
 	 */
@@ -321,7 +327,6 @@ class Filterer {
 
 	/**
 	 * Checks if the length of the value of the element is not more than the required length
-	 * @param string $name Name of the element to filter
 	 * @param  array $options Keys may include [message]
 	 * @return boolean
 	 */
@@ -335,7 +340,6 @@ class Filterer {
 
 	/**
 	 * Checks if the value of the element is greater or equal to the given value
-	 * @param string $name Name of the element to filter
 	 * @param  array $options Keys may include [message]
 	 * @return boolean
 	 */
@@ -362,7 +366,6 @@ class Filterer {
 
 	/**
 	 * Checks if the value of the element is less  or equal to the given value
-	 * @param string $name Name of the element to filter
 	 * @param  array $options Keys may include [message]
 	 * @return boolean
 	 */

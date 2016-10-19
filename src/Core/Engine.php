@@ -378,7 +378,6 @@ class Engine {
 	 */
 	public static function getFlash() {
 		if (static::$flash === null) static::$flash = new Flash();
-
 		return static::$flash;
 	}
 

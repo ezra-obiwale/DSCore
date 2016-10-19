@@ -12,22 +12,17 @@ class Session {
 	private static $writeClosed = false;
 
 	private static function init() {
-		if (!self::$initialized && self::getLifetime()) {
+		if (self::getLifetime()) {
 			ini_set('session.gc_maxlifetime', self::getLifetime());
 			session_set_cookie_params(self::getLifetime());
 		}
-		if (!self::$writeClosed) {
-			session_start();
-			self::$writeClosed = false;
-		}
+		session_start();
 		self::$initialized = true;
 	}
 
 	private static function close() {
-		if (!self::$writeClosed) {
-			session_write_close();
-			self::$writeClosed = true;
-		}
+		if (!static::$writeClosed) session_write_close();
+		static::$writeClosed = true;
 	}
 
 	/**
@@ -43,7 +38,8 @@ class Session {
 	 * @return int
 	 */
 	public static function getLifetime() {
-		if (!self::$lifetime && $sessionExpirationHours = engineGet('Config', 'sessionExpirationHours', false)) {
+		if (!self::$lifetime && $sessionExpirationHours = engineGet('Config', 'sessionExpirationHours',
+															  false)) {
 			self::$lifetime = 60 * 60 * $sessionExpirationHours;
 		}
 
@@ -68,10 +64,12 @@ class Session {
 	 * @param string $key
 	 * @return mixed
 	 */
-	public static function fetch($key) {
+	public static function fetch($key, $remove = false) {
 		if (!self::$initialized) self::init();
-		if (isset($_SESSION[self::$prepend . $key])) return $_SESSION[self::$prepend . $key];
+		if (isset($_SESSION[self::$prepend . $key])) $value = $_SESSION[self::$prepend . $key];
 		if (self::$initialized) self::close();
+		if ($remove) self::remove($key);
+		return $value;
 	}
 
 	/**

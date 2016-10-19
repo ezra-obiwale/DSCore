@@ -23,8 +23,8 @@ class Element extends Object {
 	const ALL_INFO = 3;
 
 	public function __construct(array $data = array(), $preserveArray = false, $preserveKeyOnly = null) {
-		$this->options = new Object();
-		$this->attributes = new Object();
+		$this->options = new Object(); // must exist
+		$this->attributes = new Object(); // must exist
 
 		parent::__construct($data, $preserveArray, $preserveKeyOnly);
 
@@ -39,6 +39,8 @@ class Element extends Object {
 			$this->dId = true;
 		}
 		else $this->dId = false;
+
+		if ($this->filters->required) $this->attributes->required = 'required';
 
 		if ($this->attributes->value) {
 			if (!$this->options->value && $this->options->value != 0)
@@ -233,7 +235,8 @@ class Element extends Object {
 		$filterer->setElementData($this->data);
 
 		if (!is_object($this->data))
-				$filterer->StripTags($this->data, $this->filters->allowTags ?
+				$filterer->StripTags($this->data,
+						 $this->filters->allowTags ?
 							$this->filters->allowTags :
 							($this->filters->allowTags ? $this->filters->allowTags : ''));
 		$valid = true;

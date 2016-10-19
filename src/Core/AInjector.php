@@ -11,6 +11,7 @@ abstract class AInjector extends ACore {
 	 * @param boolean $inject
 	 */
 	final public function __construct($inject = false) {
+		parent::__construct();
 		if ($inject) {
 			$this->doInject();
 		}

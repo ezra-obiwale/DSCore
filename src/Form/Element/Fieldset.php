@@ -18,11 +18,18 @@ class Fieldset extends Element {
 
 	public function __construct(array $data = array(), $preserveArray = false, $preserveKeyOnly = null) {
 		if (!is_object($data['options']['value']) ||
-				(is_object($data['options']['value']) && !is_a($data['options']['value'], 'dScribe\Form\Fieldset'))) {
+				(is_object($data['options']['value']) && !is_a($data['options']['value'],
+												   'dScribe\Form\Fieldset'))) {
 			throw new Exception('Form element "' . $data['name'] .
 			'" must have a value of type "dScribe\Form\Fieldset"');
 		}
 		parent::__construct($data, $preserveArray, $preserveKeyOnly);
+
+		foreach ($this->options->value->getElements() as $elem) {
+			$elem->attributes->id = $this->attributes->id . '_' . $elem->attributes->id;
+			if ($this->options->value->hasModel()) $elem->name = $this->name . '[' . $elem->name . ']';
+			if (isset($this->options->multiple)) $elem->name = $elem->name . '[]';
+		}
 	}
 
 	public function setData($data) {
@@ -47,14 +54,13 @@ class Fieldset extends Element {
 			if (isset($this->options->multiple)) $fieldset->isMultiple();
 			$fieldset = $fieldset->setName($this->name)
 					->render();
-			?>
-			<?php
+
 			if ($this->options->label):
 				$label = $this->options->label->text;
 				if (!$label) $label = $this->options->label;
 				?>
 				<legend><?= $label ?> <?php $this->getMultipleButton($fieldset) ?></legend>
-			<?php
+				<?php
 			endif;
 
 			if (!$this->options->label) $this->getMultipleButton($fieldset);

@@ -37,6 +37,12 @@ class Fieldset extends AValidator {
 	 * @var boolean
 	 */
 	private $multiple;
+	
+	/**
+	 * Array of added fieldsets' names
+	 * @var array
+	 */
+	protected $fieldsets;
 
 	/**
 	 * Class constructor
@@ -111,12 +117,10 @@ class Fieldset extends AValidator {
 	 */
 	final public function setModel(IModel $model) {
 		$this->model = $model;
-		$this->setData($model->toArray(false, true));
+		if (count($model->toArray())) {
+			$this->setData($model->toArray(false, true));
+		}
 		return $this;
-	}
-
-	final protected function loadModel() {
-		
 	}
 
 	/**
@@ -127,16 +131,24 @@ class Fieldset extends AValidator {
 		if ($this->model && $this->isValid()) {
 			$data = $this->getData(true);
 			foreach ($this->fieldsets as $name) {
+				// if fieldset element no longer exists
 				if (!isset($this->elements[$name])) continue;
 
 				$fieldset = $this->elements[$name]->options->value;
-				$fieldsetModel = $fieldset->getModel();
-				$data[$name] = $fieldsetModel ? $fieldsetModel : $fieldset->getData();
+				$data[$name] = $fieldset->hasModel() ? $fieldset->getModel() : $fieldset->getData();
 			}
 			$this->model->populate($data);
 		}
 
 		return $this->model;
+	}
+
+	/**
+	 * Checks if fieldset has a model attached to it
+	 * @return boolean
+	 */
+	public function hasModel() {
+		return $this->model !== null;
 	}
 
 	/**
@@ -173,7 +185,8 @@ class Fieldset extends AValidator {
 			$element = $this->elements[$elementName]->toArray(true);
 			$element['type'] = $newElementType;
 			$elementClass = 'dScribe\Form\Element\\' . ucfirst($element['type']);
-			$this->elements[$elementName] = class_exists($elementClass) ? new $elementClass($element, true, 'values') : new Element($element, true, 'values');
+			$this->elements[$elementName] = class_exists($elementClass) ? new $elementClass($element, true,
+																				   'values') : new Element($element, true, 'values');
 		}
 		return $this;
 	}
@@ -187,7 +200,8 @@ class Fieldset extends AValidator {
 				throw new \Exception('Form elements must of key type');
 			}
 			$elementClass = 'dScribe\Form\Element\\' . ucfirst($element['type']);
-			$element = class_exists($elementClass) ? new $elementClass($element, true, 'values') : new Element($element, true, 'values');
+			$element = class_exists($elementClass) ? new $elementClass($element, true, 'values') : new Element($element,
+																									  true, 'values');
 		}
 		if (@$this->data[$element->name]) {
 			$element->data = $this->data[$element->name];

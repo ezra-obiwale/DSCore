@@ -129,14 +129,6 @@ class Renderer extends AInjector {
 	}
 
 	/**
-	 * Fetches the identity of the current user
-	 * @return \dScribe\Core\UserIdentity
-	 */
-	final protected function userIdentity() {
-		return engineGet('userIdentity');
-	}
-
-	/**
 	 * Loads a layout
 	 * @param string $layoutName Without the extension
 	 * @param array $variables Array of variables to pass into the layout
@@ -164,7 +156,7 @@ class Renderer extends AInjector {
 	private function getLayoutPath($layout = null, $fromTheme = false) {
 		$layout = ($layout === null) ? $this->view->getController()->getLayout() : $layout;
 		if (!$layout) return false;
-
+		
 		if (!$fromTheme && is_readable(MODULES . $this->view->getModule() . DIRECTORY_SEPARATOR . 'View' .
 						DIRECTORY_SEPARATOR . 'layouts' . DIRECTORY_SEPARATOR . $layout .
 						'.phtml'))

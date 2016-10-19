@@ -262,7 +262,8 @@ class View {
 		if ($controller) $return .= '/' . Util::camelToHyphen($controller);
 		if ($action) $return .= '/' . Util::camelToHyphen($action);
 		if (!empty($params))
-				$return .= str_replace('//', '/' . urlencode(' ') . '/', '/' . join('/', $this->encodeParams($params)));
+				$return .= str_replace('//', '/' . urlencode(' ') . '/',
+												 '/' . join('/', $this->encodeParams($params)));
 		if ($hash) $return .= '#' . $hash;
 
 		return engineGet('serverPath') . $return;

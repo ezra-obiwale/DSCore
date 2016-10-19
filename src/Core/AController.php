@@ -54,6 +54,7 @@ abstract class AController extends ACore {
 	 * The magic method __construct() replacement
 	 */
 	final public function __construct() {
+		parent::__construct();
 		$this->request = new Request();
 		$this->view = new View();
 		if (!$this->initializedView) {
@@ -189,13 +190,5 @@ abstract class AController extends ACore {
 	final protected function getConfig() {
 		return call_user_func_array(array(ENGINE, 'getConfig'), func_get_args());
 	}
-
-	/**
-	 * Fetches the identity of the current user
-	 * @return UserIdentity
-	 */
-	final protected function userIdentity() {
-		return engineGet('userIdentity');
-	}
-
+	
 }

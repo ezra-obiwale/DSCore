@@ -5,7 +5,7 @@ namespace dScribe\Core;
 use Session;
 
 class Flash {
-
+	
 	/**
 	 * Flash message
 	 * @var string
@@ -153,7 +153,6 @@ class Flash {
 	 */
 	final public function reset() {
 		$this->messages = $this->successMessages = $this->errorMessages = array();
-
 		return $this;
 	}
 

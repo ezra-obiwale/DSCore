@@ -5,6 +5,17 @@ namespace dScribe\Core;
 abstract class ACore {
 
 	/**
+	 * A clone of the current user
+	 * @var AUser
+	 */
+	protected $currentUser;
+
+	public function __construct() {
+		$this->currentUser = clone($this->userIdentity()->getUser());
+		$this->currentUser->setConnection(engineGet('db'));
+	}
+
+	/**
 	 * Fetches the called class
 	 * @return string
 	 */
@@ -48,6 +59,14 @@ abstract class ACore {
 
 	public function __toString() {
 		return $this->getClass();
+	}
+
+	/**
+	 * Fetches the identity of the current user
+	 * @return UserIdentity
+	 */
+	final protected function userIdentity() {
+		return engineGet('userIdentity');
 	}
 
 	/**

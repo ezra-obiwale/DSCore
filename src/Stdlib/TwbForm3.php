@@ -37,9 +37,6 @@ class TwbForm3 {
 						<?php
 						ob_start();
 						foreach ($element->options->value->getElements() as $elem):
-							$elem->name = isset($element->options->multiple) ?
-									$element->name . '[' . $elem->name . '][]' :
-									$element->name . '[' . $elem->name . ']';
 							$elem->parent = $element->name;
 							static::horizontalElement($elem);
 						endforeach;

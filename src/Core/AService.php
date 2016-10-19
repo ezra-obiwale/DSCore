@@ -36,6 +36,7 @@ class AService extends ACore {
 	 * class constructor
 	 */
 	final public function __construct() {
+		parent::__construct();
 		if ($model = $this->getModule() . '\Models\\' . $this->getClassName())
 				if (class_exists($model)) $this->setModel(new $model);
 		$this->init();
